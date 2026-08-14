@@ -1,0 +1,328 @@
+<%- include('partials/header') %>
+<%- include('partials/navbar') %>
+
+<main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+
+  <%- include('partials/flash') %>
+
+  <!-- Header with Global Official Stats Toggle & Radio Group -->
+  <div class="glass-panel p-6 sm:p-8 flex flex-col md:flex-row md:items-center justify-between gap-6">
+    <div>
+      <div class="flex items-center gap-2 mb-1.5">
+        <span class="badge-live">CROSS-TOURNAMENT META</span>
+        <span id="analysis-filter-badge" class="<%= officialOnly ? 'badge-official' : 'badge-unofficial' %>">
+          <%= officialOnly ? 'OFFICIAL VERIFIED' : 'OFFICIAL + LIVE UNOFFICIAL' %>
+        </span>
+      </div>
+      <h1 class="font-display text-4xl sm:text-5xl font-bold text-white tracking-wide leading-none">
+        Overall Esports Analysis
+      </h1>
+      <p class="text-gray-400 text-sm mt-1.5 max-w-2xl">
+        Aggregated statistics, win rate metrics, consistency ratings, and top fraggers across all tournaments.
+      </p>
+    </div>
+
+    <!-- Toggle Switch & Segmented Radio Button Group at Top -->
+    <div class="glass-toggle-container p-2 flex flex-col sm:flex-row items-center gap-3 shrink-0 shadow-2xl">
+      <span class="text-xs font-mono text-gray-400 uppercase tracking-wider px-2">Data Filter:</span>
+      
+      <div class="inline-flex rounded-xl bg-black/60 p-1 border border-white/10" role="radiogroup" aria-label="Analysis Stats Filter">
+        <label class="touch-manipulation select-none flex items-center gap-2 px-4 py-2 rounded-lg cursor-pointer transition-all duration-300 text-xs sm:text-sm font-mono font-bold active:scale-95 <%= !officialOnly ? 'bg-gradient-to-r from-[#ff4e00] to-amber-500 text-white shadow-lg shadow-[#ff4e00]/25' : 'text-gray-400 hover:text-gray-200' %>" id="label-filter-all">
+          <input type="radio" name="analysis_filter" value="all" <%= !officialOnly ? 'checked' : '' %> class="sr-only analysis-radio-toggle">
+          <svg class="w-4 h-4 <%= !officialOnly ? 'text-white' : 'text-amber-400' %>" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          Include Unofficial (Live)
+        </label>
+        
+        <label class="touch-manipulation select-none flex items-center gap-2 px-4 py-2 rounded-lg cursor-pointer transition-all duration-300 text-xs sm:text-sm font-mono font-bold active:scale-95 <%= officialOnly ? 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-lg shadow-emerald-500/25' : 'text-gray-400 hover:text-gray-200' %>" id="label-filter-official">
+          <input type="radio" name="analysis_filter" value="official" <%= officialOnly ? 'checked' : '' %> class="sr-only analysis-radio-toggle">
+          <svg class="w-4 h-4 <%= officialOnly ? 'text-white' : 'text-emerald-400' %>" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          Official Stats Only
+        </label>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAGFREEFIREMAX PERMANENT CAREER OVERALL ANALYSIS SECTION -->
+  <section class="space-y-4">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div>
+        <div class="flex items-center gap-2">
+          <span class="badge-live animate-pulse">PERMANENT LIVE ADD-UP</span>
+          <span class="text-xs font-mono text-[#ff4e00]">[TAG] TAGFREEFIREMAX ROSTER</span>
+        </div>
+        <h2 class="font-display text-3xl font-bold text-white tracking-wide">Team TAG Overall Analysis</h2>
+        <p class="text-gray-400 text-sm">Real-time cumulative data aggregated from every ongoing and archived tournament.</p>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <span class="text-xs font-mono text-gray-500">Status:</span>
+        <span class="badge-official">LIVE METRICS SYNCED</span>
+      </div>
+    </div>
+
+    <!-- 4 Master Required Metrics -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div class="glass-card p-5 border-white/10 hover:border-[#ff4e00]/50 transition-colors">
+        <div class="flex items-center justify-between text-gray-400 text-xs font-mono mb-2">
+          <span>TOTAL MATCHES</span>
+          <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+        </div>
+        <div id="stat-tag-matches" class="font-display text-4xl font-bold text-white"><%= analysis.tagCareer.total_matches %></div>
+        <p id="stat-tag-matches-sub" class="text-xs text-gray-400 font-mono mt-1">Across <%= analysis.tagCareer.tournaments_played %> Tournaments</p>
+      </div>
+
+      <div class="glass-card p-5 border-white/10 hover:border-[#ff4e00]/50 transition-colors">
+        <div class="flex items-center justify-between text-gray-400 text-xs font-mono mb-2">
+          <span>TOTAL KILLS</span>
+          <svg class="w-4 h-4 text-[#ff4e00]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+        </div>
+        <div id="stat-tag-kills" class="font-display text-4xl font-bold text-[#ff4e00]"><%= analysis.tagCareer.total_kills %></div>
+        <p id="stat-tag-kills-sub" class="text-xs text-[#ff4e00]/80 font-mono mt-1"><%= analysis.tagCareer.avg_kills %> Avg Kills / Match</p>
+      </div>
+
+      <div class="glass-card p-5 border-white/10 hover:border-amber-400/50 transition-colors">
+        <div class="flex items-center justify-between text-gray-400 text-xs font-mono mb-2">
+          <span>TOTAL BOOYAH</span>
+          <svg class="w-4 h-4 text-amber-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+        </div>
+        <div id="stat-tag-booyahs" class="font-display text-4xl font-bold text-amber-400 flex items-center gap-2">
+          <span><%= analysis.tagCareer.total_booyahs %></span>
+          <span class="text-xs font-mono px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 font-normal">WINS</span>
+        </div>
+        <p id="stat-tag-booyahs-sub" class="text-xs text-amber-400/80 font-mono mt-1"><%= analysis.tagCareer.win_rate %>% Squad Win Rate</p>
+      </div>
+
+      <div class="glass-card p-5 border-white/10 hover:border-emerald-400/50 transition-colors">
+        <div class="flex items-center justify-between text-gray-400 text-xs font-mono mb-2">
+          <span>TOTAL KD</span>
+          <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        </div>
+        <div id="stat-tag-kd" class="font-display text-4xl font-bold text-emerald-400"><%= analysis.tagCareer.total_kd %></div>
+        <p id="stat-tag-kd-sub" class="text-xs text-emerald-400/80 font-mono mt-1">Survival Kill/Death Ratio</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Key Meta Metrics Row -->
+  <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+    <div class="glass-card p-5">
+      <div class="flex items-center justify-between text-gray-400 text-xs font-mono mb-2">
+        <span>TOURNAMENTS</span>
+        <svg class="w-4 h-4 text-[#ff4e00]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+      </div>
+      <div id="stat-total-tournaments" class="font-display text-4xl font-bold text-white"><%= analysis.totalTournaments %></div>
+      <p class="text-xs text-gray-400 mt-1">Tournaments Logged</p>
+    </div>
+
+    <div class="glass-card p-5">
+      <div class="flex items-center justify-between text-gray-400 text-xs font-mono mb-2">
+        <span>MATCHES ANALYZED</span>
+        <span id="stat-matches-badge" class="<%= officialOnly ? 'badge-official text-[10px]' : 'badge-unofficial text-[10px]' %>">
+          <%= officialOnly ? 'OFFICIAL' : 'ALL' %>
+        </span>
+      </div>
+      <div id="stat-total-matches" class="font-display text-4xl font-bold text-[#ff4e00]"><%= analysis.totalMatchesCount %></div>
+      <p id="stat-matches-subtitle" class="text-xs text-gray-400 mt-1"><%= officialOnly ? 'Verified official matches' : 'Official + Live matches' %></p>
+    </div>
+
+    <div class="glass-card p-5">
+      <div class="flex items-center justify-between text-gray-400 text-xs font-mono mb-2">
+        <span>MOST CONSISTENT TEAM</span>
+        <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/></svg>
+      </div>
+      <div id="stat-consistent-team-name" class="font-display text-3xl font-bold text-white truncate">
+        <%= analysis.mostConsistentTeam ? analysis.mostConsistentTeam.name : 'N/A' %>
+      </div>
+      <p id="stat-consistent-team-details" class="text-xs text-amber-400 font-mono mt-1">
+        <%= analysis.mostConsistentTeam ? `Win Rate: ${analysis.mostConsistentTeam.win_rate}% • Score: ${analysis.mostConsistentTeam.consistency_score}` : '' %>
+      </p>
+    </div>
+
+    <div class="glass-card p-5">
+      <div class="flex items-center justify-between text-gray-400 text-xs font-mono mb-2">
+        <span>ALL-TIME TOP FRAGGER</span>
+        <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+      </div>
+      <div id="stat-top-fragger-name" class="font-display text-3xl font-bold text-white truncate">
+        <%= analysis.topFragger ? analysis.topFragger.in_game_name : 'N/A' %>
+      </div>
+      <p id="stat-top-fragger-details" class="text-xs text-emerald-400 font-mono mt-1">
+        <%= analysis.topFragger ? `${analysis.topFragger.active_kills} Total Kills • ${analysis.topFragger.team_name}` : '' %>
+      </p>
+    </div>
+  </div>
+
+  <!-- TEAM OVERALL PERFORMANCE LEADERBOARD -->
+  <section class="space-y-4">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+      <div>
+        <h2 class="font-display text-3xl font-bold text-white tracking-wide">All-Time Team Power Rankings</h2>
+        <p class="text-gray-400 text-sm">Aggregated points, kill efficiency, win rates, and consistency scores across all seasons.</p>
+      </div>
+      <span id="rankings-filter-indicator" class="<%= officialOnly ? 'badge-official' : 'badge-unofficial' %> shrink-0">
+        <%= officialOnly ? 'OFFICIAL DATA ONLY' : 'INCLUDING LIVE UNOFFICIAL' %>
+      </span>
+    </div>
+
+    <div class="glass-panel p-4 sm:p-6 overflow-x-auto">
+      <table class="glass-table">
+        <thead>
+          <tr>
+            <th class="w-16 text-center">Rank</th>
+            <th>Team</th>
+            <th class="text-center">Matches</th>
+            <th class="text-center">Total Kills</th>
+            <th class="text-center">Booyahs (Wins)</th>
+            <th class="text-center">Win Rate</th>
+            <th class="text-center">Avg Placement</th>
+            <th class="text-center">Consistency Index</th>
+            <th class="text-right">Total Points</th>
+          </tr>
+        </thead>
+        <tbody id="ranked-teams-tbody">
+          <% if (analysis.rankedTeams.length === 0) { %>
+            <tr>
+              <td colspan="9" class="text-center py-8 text-gray-500">No team stats available for current filter.</td>
+            </tr>
+          <% } else { %>
+            <% analysis.rankedTeams.forEach((t, idx) => { %>
+              <tr class="table-row leaderboard-row <%= idx === 0 ? 'rank-1' : (idx === 1 ? 'rank-2' : (idx === 2 ? 'rank-3' : '')) %>">
+                <td class="text-center font-display text-2xl font-bold <%= idx === 0 ? 'text-amber-400' : (idx === 1 ? 'text-gray-300' : (idx === 2 ? 'text-amber-600' : 'text-gray-500')) %>">
+                  #<%= idx + 1 %>
+                </td>
+                <td>
+                  <div class="flex items-center gap-3">
+                    <img src="<%= t.logo_url %>" alt="" class="w-8 h-8 rounded-lg object-cover bg-gray-900 border border-white/10" onerror="this.src='https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=200&auto=format&fit=crop'">
+                    <div>
+                      <a href="/team/<%= t.team_id %>" class="font-bold text-white hover:text-[#ff4e00] transition-colors">
+                        <%= t.name %>
+                      </a>
+                      <span class="text-xs font-mono text-[#ff4e00] ml-1">[<%= t.tag %>]</span>
+                    </div>
+                  </div>
+                </td>
+                <td class="text-center font-mono text-gray-300"><%= t.total_matches %></td>
+                <td class="text-center font-mono text-gray-300"><%= t.total_kills %></td>
+                <td class="text-center font-display text-xl font-bold text-amber-400"><%= t.booyahs %></td>
+                <td class="text-center font-mono text-emerald-400 font-bold"><%= t.win_rate %>%</td>
+                <td class="text-center font-mono text-gray-300">#<%= t.avg_placement %></td>
+                <td class="text-center font-mono text-amber-300 font-bold"><%= t.consistency_score %></td>
+                <td class="text-right font-display text-2xl font-bold text-[#ff4e00]"><%= t.total_points %></td>
+              </tr>
+            <% }); %>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- TOURNAMENTS PERMANENT ADD-UP BREAKDOWN -->
+  <section class="space-y-4">
+    <div class="flex items-center justify-between">
+      <div>
+        <h2 class="font-display text-3xl font-bold text-white tracking-wide">Tournament Data Collection Feed</h2>
+        <p class="text-gray-400 text-sm">Every ongoing and archived tournament contributing to the permanent overall analysis.</p>
+      </div>
+      <span class="text-xs font-mono text-gray-500">Live Auto-Sync</span>
+    </div>
+
+    <div class="glass-panel p-4 sm:p-6 overflow-x-auto">
+      <table class="glass-table">
+        <thead>
+          <tr>
+            <th>Tournament</th>
+            <th class="text-center">Status</th>
+            <th class="text-center">Total Matches</th>
+            <th class="text-center">TAG Kills</th>
+            <th class="text-center">TAG Booyahs</th>
+            <th class="text-center">TAG K/D</th>
+            <th class="text-center">TAG Points</th>
+            <th class="text-right">Action</th>
+          </tr>
+        </thead>
+        <tbody id="tournaments-breakdown-tbody">
+          <% if (!analysis.tournamentsBreakdown || analysis.tournamentsBreakdown.length === 0) { %>
+            <tr>
+              <td colspan="8" class="text-center py-6 text-gray-500">No tournaments available.</td>
+            </tr>
+          <% } else { %>
+            <% analysis.tournamentsBreakdown.forEach(tb => { %>
+              <tr class="table-row">
+                <td>
+                  <div>
+                    <a href="/tournament/<%= tb.id %>" class="font-bold text-white hover:text-[#ff4e00] transition-colors flex items-center gap-2">
+                      <%= tb.name %>
+                      <% if (tb.is_current) { %>
+                        <span class="badge-live text-[10px]">ONGOING</span>
+                      <% } %>
+                    </a>
+                    <span class="text-xs font-mono text-gray-400"><%= tb.game_mode %></span>
+                  </div>
+                </td>
+                <td class="text-center">
+                  <span class="<%= tb.status === 'ongoing' ? 'badge-live text-[10px]' : 'badge-official text-[10px]' %> uppercase">
+                    <%= tb.status %>
+                  </span>
+                </td>
+                <td class="text-center font-mono text-gray-300">
+                  <%= tb.summary.matches %>
+                  <% if (tb.has_unofficial) { %>
+                    <span class="text-[10px] text-amber-400 font-mono" title="Includes live matches">(+<%= tb.total_matches_count - tb.official_matches_count %> Live)</span>
+                  <% } %>
+                </td>
+                <td class="text-center font-mono text-[#ff4e00] font-bold"><%= tb.summary.kills %></td>
+                <td class="text-center font-display text-xl font-bold text-amber-400"><%= tb.summary.booyahs %></td>
+                <td class="text-center font-mono text-emerald-400 font-bold"><%= tb.summary.kd %></td>
+                <td class="text-center font-mono text-gray-300"><%= tb.summary.points %></td>
+                <td class="text-right">
+                  <a href="/tournament/<%= tb.id %>" class="btn-glass text-xs py-1 px-3 rounded-lg text-gray-300 hover:text-white inline-flex items-center gap-1">
+                    View Scoreboard
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                  </a>
+                </td>
+              </tr>
+            <% }); %>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- TOP PLAYERS & FRAGGERS ACROSS ALL SEASONS -->
+  <section class="space-y-4">
+    <div class="flex items-center justify-between">
+      <div>
+        <h2 class="font-display text-3xl font-bold text-white tracking-wide">Top Fraggers & MVP Leaderboard</h2>
+        <p class="text-gray-400 text-sm">Top individual players ranked by aggregated kills.</p>
+      </div>
+      <span class="text-xs font-mono text-gray-500">Ranked by Total Kills</span>
+    </div>
+
+    <div id="top-players-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <% analysis.topPlayers.forEach((p, idx) => { %>
+        <div class="glass-card player-card p-5 flex items-center justify-between group">
+          <div class="flex items-center gap-3">
+            <span class="font-display text-2xl font-bold <%= idx === 0 ? 'text-amber-400' : (idx === 1 ? 'text-gray-300' : (idx === 2 ? 'text-amber-600' : 'text-gray-600')) %>">
+              #<%= idx + 1 %>
+            </span>
+            <img src="<%= p.avatar_url %>" alt="" class="w-12 h-12 rounded-xl object-cover border border-white/10" onerror="this.src='https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=300&auto=format&fit=crop'">
+            <div>
+              <a href="/player/<%= p.player_id %>" class="font-display text-xl font-bold text-white group-hover:text-[#ff4e00] transition-colors block">
+                <%= p.in_game_name %>
+              </a>
+              <p class="text-xs text-gray-400 font-mono"><%= p.team_name %></p>
+            </div>
+          </div>
+
+          <div class="text-right font-mono">
+            <div class="text-xl font-bold text-[#ff4e00]"><%= p.active_kills %> Kills</div>
+            <div class="text-xs text-gray-400"><%= p.active_avg_kills %> Avg/Match</div>
+          </div>
+        </div>
+      <% }); %>
+    </div>
+  </section>
+
+</main>
+
+<%- include('partials/footer') %>

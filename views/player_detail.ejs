@@ -1,0 +1,258 @@
+<%- include('partials/header') %>
+<%- include('partials/navbar') %>
+
+<main class="flex-1 max-w-5xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+
+  <%- include('partials/flash') %>
+
+  <!-- Player Profile Header Card -->
+  <div class="glass-panel p-6 sm:p-8 flex flex-col sm:flex-row items-center sm:items-start gap-6 border-orange-500/20">
+    <div class="relative shrink-0 group/avatar">
+      <img id="playerMainAvatar" src="<%= player.avatar_url %>" alt="<%= player.in_game_name %>" class="w-28 h-28 sm:w-36 sm:h-36 rounded-2xl object-cover border-2 border-orange-500/40 shadow-2xl bg-slate-800" onerror="this.src='https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=300&auto=format&fit=crop'">
+      <span class="absolute -bottom-2 -right-2 px-2.5 py-1 rounded-lg bg-slate-900 font-mono text-xs font-bold text-amber-400 border border-white/10 shadow-lg">
+        <%= player.team_tag %>
+      </span>
+
+      <% if (isAdmin) { %>
+        <button 
+          type="button" 
+          onclick="document.getElementById('playerQuickPhotoModal').classList.remove('hidden')"
+          class="absolute inset-0 bg-black/60 rounded-2xl opacity-0 group-hover/avatar:opacity-100 flex flex-col items-center justify-center transition-opacity text-white text-xs font-bold p-2 text-center"
+          title="Upload / Change Photo"
+        >
+          <svg class="w-6 h-6 text-orange-400 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+          Change Photo
+        </button>
+      <% } %>
+    </div>
+
+    <div class="space-y-3 text-center sm:text-left flex-1">
+      <div class="flex flex-wrap items-center justify-center sm:justify-start gap-2">
+        <a href="/teams" class="text-xs font-mono text-slate-400 hover:text-orange-400">&larr; Back to Roster</a>
+        <span class="text-slate-600">•</span>
+        <a href="/team/<%= player.team_id %>" class="badge-official font-mono hover:underline"><%= player.team_name %></a>
+        <span class="px-2.5 py-0.5 rounded-full text-xs font-mono bg-white/10 text-slate-300"><%= player.role %></span>
+      </div>
+
+      <h1 class="font-display text-4xl sm:text-5xl font-bold text-white tracking-wide leading-none">
+        <%= player.in_game_name %>
+      </h1>
+
+      <p class="text-sm text-slate-400">
+        <%= player.player_name %>
+      </p>
+
+      <% if (player.free_fire_uid && player.free_fire_uid !== 'N/A') { %>
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-black/40 border border-white/10 font-mono text-xs text-slate-300">
+          <span class="text-slate-500">Free Fire UID:</span>
+          <span class="font-bold text-amber-400"><%= player.free_fire_uid %></span>
+        </div>
+      <% } %>
+    </div>
+  </div>
+
+  <!-- DUAL STATS ANALYSIS: OFFICIAL vs UNOFFICIAL -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+    
+    <!-- 1. OFFICIAL CAREER STATS -->
+    <div class="glass-card p-6 border-emerald-500/30 space-y-6">
+      <div class="flex items-center justify-between border-b border-white/10 pb-3">
+        <div class="flex items-center gap-2">
+          <span class="badge-official">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+            OFFICIAL CAREER STATS
+          </span>
+        </div>
+        <span class="text-xs font-mono text-gray-400">Admin-Confirmed</span>
+      </div>
+
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div class="stat-box border-emerald-500/20 bg-black/40">
+          <div class="stat-box-value text-emerald-400"><%= player.official.kills %></div>
+          <div class="stat-box-label">Total Kills</div>
+        </div>
+        <div class="stat-box border-emerald-500/20 bg-black/40">
+          <div class="stat-box-value text-white"><%= player.official.total_points %></div>
+          <div class="stat-box-label">Total Points</div>
+        </div>
+        <div class="stat-box border-emerald-500/20 bg-black/40">
+          <div class="stat-box-value text-emerald-300">#<%= player.official.avg_placement %></div>
+          <div class="stat-box-label">Avg Placement</div>
+        </div>
+        <div class="stat-box border-emerald-500/20 bg-black/40">
+          <div class="stat-box-value text-gray-200"><%= player.official.matches_played %></div>
+          <div class="stat-box-label">Matches Played</div>
+        </div>
+      </div>
+
+      <div class="p-4 rounded-xl bg-gray-900/60 border border-white/5 space-y-2 text-xs font-mono">
+        <div class="flex justify-between">
+          <span class="text-gray-400">Average Kills / Match:</span>
+          <span class="font-bold text-emerald-300"><%= player.official.avg_kills %></span>
+        </div>
+        <div class="flex justify-between">
+          <span class="text-gray-400">Average Damage / Match:</span>
+          <span class="font-bold text-white"><%= player.official.avg_damage %></span>
+        </div>
+        <div class="flex justify-between">
+          <span class="text-gray-400">Total Headshots:</span>
+          <span class="font-bold text-amber-400"><%= player.official.headshots %></span>
+        </div>
+        <div class="flex justify-between">
+          <span class="text-gray-400">Highest Kills in Single Match:</span>
+          <span class="font-bold text-white"><%= player.official.top_kills_match %> Kills</span>
+        </div>
+        <div class="flex justify-between">
+          <span class="text-gray-400">Verification Status:</span>
+          <span class="text-emerald-400 font-bold">100% Scoreboard Verified</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. UNOFFICIAL / LIVE ESTIMATED STATS -->
+    <div class="glass-card p-6 border-amber-500/30 space-y-6">
+      <div class="flex items-center justify-between border-b border-white/10 pb-3">
+        <div class="flex items-center gap-2">
+          <span class="badge-unofficial">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            LIVE / PROVISIONAL STATS
+          </span>
+        </div>
+        <span class="text-xs font-mono text-amber-400">Stream Updates</span>
+      </div>
+
+      <% if (player.unofficial.has_stats) { %>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div class="stat-box border-amber-500/20 bg-black/40">
+            <div class="stat-box-value text-amber-400"><%= player.unofficial.kills %></div>
+            <div class="stat-box-label">Total Kills</div>
+          </div>
+          <div class="stat-box border-amber-500/20 bg-black/40">
+            <div class="stat-box-value text-white"><%= player.unofficial.total_points %></div>
+            <div class="stat-box-label">Total Points</div>
+          </div>
+          <div class="stat-box border-amber-500/20 bg-black/40">
+            <div class="stat-box-value text-amber-300">#<%= player.unofficial.avg_placement %></div>
+            <div class="stat-box-label">Avg Placement</div>
+          </div>
+          <div class="stat-box border-amber-500/20 bg-black/40">
+            <div class="stat-box-value text-gray-200"><%= player.unofficial.matches_played %></div>
+            <div class="stat-box-label">Matches Played</div>
+          </div>
+        </div>
+
+        <div class="p-4 rounded-xl bg-gray-900/60 border border-white/5 space-y-2 text-xs font-mono">
+          <div class="flex justify-between">
+            <span class="text-gray-400">Average Kills / Match:</span>
+            <span class="font-bold text-amber-300"><%= player.unofficial.avg_kills %></span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-gray-400">Average Damage / Match:</span>
+            <span class="font-bold text-white"><%= player.unofficial.avg_damage %></span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-gray-400">Estimated Headshots:</span>
+            <span class="font-bold text-amber-400"><%= player.unofficial.headshots %></span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-gray-400">Total Career + Live Kills:</span>
+            <span class="font-bold text-[#ff4e00]"><%= player.combined.kills %> Kills</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-gray-400">Status:</span>
+            <span class="text-amber-400 font-bold">Awaiting Admin Confirmation</span>
+          </div>
+        </div>
+      <% } else { %>
+        <!-- Pending State -->
+        <div class="p-8 rounded-xl bg-black/40 border border-white/10 text-center space-y-3">
+          <div class="w-12 h-12 rounded-full bg-amber-500/10 text-amber-400 flex items-center justify-center mx-auto border border-amber-500/20">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          </div>
+          <h3 class="font-display text-2xl font-bold text-gray-200">Unofficial / Live Stats Unavailable</h3>
+          <p class="text-xs text-gray-400 leading-relaxed max-w-md mx-auto">
+            No provisional live-stream stats have been logged for this player. All career data displayed is verified from official tournament referee scoreboards.
+          </p>
+        </div>
+      <% } %>
+    </div>
+
+  </div>
+
+  <% if (isAdmin) { %>
+    <!-- Quick Photo Upload Modal for Admins -->
+    <div id="playerQuickPhotoModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+      <div class="glass-panel max-w-md w-full p-6 space-y-6 border border-orange-500/30 relative animate-smooth-in shadow-2xl bg-slate-950">
+        
+        <button type="button" onclick="document.getElementById('playerQuickPhotoModal').classList.add('hidden')" class="absolute top-4 right-4 text-slate-400 hover:text-white text-2xl font-bold w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/10 transition-colors">
+          &times;
+        </button>
+
+        <div class="border-b border-white/10 pb-3">
+          <h3 class="font-display text-2xl font-bold text-white flex items-center gap-2">
+            <svg class="w-6 h-6 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+            Update Player Photo
+          </h3>
+          <p class="text-xs text-slate-400 mt-1">Upload a new photo for <span class="text-white font-bold"><%= player.in_game_name %></span></p>
+        </div>
+
+        <form action="/admin/players/<%= player.player_id %>/photo" method="POST" enctype="multipart/form-data" class="space-y-4">
+          <input type="hidden" name="redirect_to" value="/player/<%= player.player_id %>">
+          
+          <div class="p-4 rounded-xl bg-slate-900/90 border border-orange-500/20 space-y-3">
+            <div class="flex items-center gap-4">
+              <img id="detailPlayerModalPreview" src="<%= player.avatar_url %>" alt="Preview" class="w-20 h-20 rounded-2xl object-cover border-2 border-orange-500/50 shadow-md bg-slate-800" onerror="this.src='https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=300&auto=format&fit=crop'">
+              <div class="flex-1 space-y-2">
+                <label class="btn-fire w-full cursor-pointer text-xs py-2.5 justify-center flex items-center gap-2">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                  <span id="detailPlayerFileName">Choose Photo File</span>
+                  <input type="file" name="avatar" accept="image/*" class="hidden" onchange="previewPlayerDetailImage(this)">
+                </label>
+                <p class="text-[11px] font-mono text-slate-400">Sharp WebP auto-compressed.</p>
+              </div>
+            </div>
+
+            <div>
+              <label for="detail_avatar_url" class="block text-[11px] font-mono text-slate-400 mb-1">Or Photo URL:</label>
+              <input 
+                type="text" 
+                id="detail_avatar_url" 
+                name="avatar_url" 
+                placeholder="https://..." 
+                class="w-full px-3 py-1.5 rounded-lg bg-black/40 border border-white/10 text-white text-xs font-mono placeholder-slate-600 focus:outline-none focus:border-orange-500"
+                oninput="document.getElementById('detailPlayerModalPreview').src = this.value || '<%= player.avatar_url %>'"
+              >
+            </div>
+          </div>
+
+          <div class="flex items-center gap-3 pt-2">
+            <button type="button" onclick="document.getElementById('playerQuickPhotoModal').classList.add('hidden')" class="btn-glass flex-1 py-2.5 text-xs">
+              Cancel
+            </button>
+            <button type="submit" class="btn-fire flex-1 py-2.5 text-xs">
+              Save Photo
+            </button>
+          </div>
+        </form>
+
+      </div>
+    </div>
+
+    <script>
+      function previewPlayerDetailImage(input) {
+        if (input.files && input.files[0]) {
+          const file = input.files[0];
+          const reader = new FileReader();
+          reader.onload = function(e) {
+            document.getElementById('detailPlayerModalPreview').src = e.target.result;
+          };
+          reader.readAsDataURL(file);
+          document.getElementById('detailPlayerFileName').textContent = file.name.length > 18 ? file.name.substring(0, 15) + '...' : file.name;
+        }
+      }
+    </script>
+  <% } %>
+
+</main>
+
+<%- include('partials/footer') %>

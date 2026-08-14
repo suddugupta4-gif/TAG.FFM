@@ -1,0 +1,149 @@
+<%- include('../partials/header') %>
+<%- include('../partials/navbar') %>
+
+<main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+
+  <%- include('../partials/flash') %>
+
+  <!-- Admin Command Bar -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div>
+      <div class="flex items-center gap-2">
+        <span class="badge-live">ADMIN COMMAND CENTER</span>
+        <span class="text-xs font-mono text-emerald-400">SESSION ACTIVE</span>
+      </div>
+      <h1 class="font-display text-4xl sm:text-5xl font-bold text-white tracking-wide">Tournament Control</h1>
+    </div>
+
+    <!-- Quick Shortcuts -->
+    <div class="flex flex-wrap gap-2">
+      <a href="/admin/matches/new" class="btn-fire text-xs py-2 px-3.5">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+        Log Match Results
+      </a>
+      <a href="/admin/tournaments/new" class="btn-glass text-xs py-2 px-3.5">
+        <svg class="w-4 h-4 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+        New Tournament
+      </a>
+      <a href="/admin/settings" class="btn-glass text-xs py-2 px-3.5">
+        <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/></svg>
+        Site Background
+      </a>
+    </div>
+  </div>
+
+  <!-- Admin Stats Overview -->
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+    <div class="glass-card p-5 border-white/10">
+      <span class="text-xs font-mono text-slate-400 uppercase">Tournaments</span>
+      <div class="font-display text-4xl font-bold text-white mt-1"><%= tournaments.length %></div>
+      <a href="/admin/tournaments" class="text-xs text-orange-400 hover:underline mt-2 inline-block">Manage Tournaments &rarr;</a>
+    </div>
+
+    <div class="glass-card p-5 border-white/10">
+      <span class="text-xs font-mono text-slate-400 uppercase">Total Matches</span>
+      <div class="font-display text-4xl font-bold text-white mt-1"><%= totalMatches %></div>
+      <a href="/admin/matches" class="text-xs text-orange-400 hover:underline mt-2 inline-block">View Scoreboards &rarr;</a>
+    </div>
+
+    <div class="glass-card p-5 border-emerald-500/30">
+      <span class="text-xs font-mono text-emerald-400 uppercase">Official Verified</span>
+      <div class="font-display text-4xl font-bold text-emerald-400 mt-1"><%= officialMatches %></div>
+      <span class="text-[11px] text-slate-400">Locked in database</span>
+    </div>
+
+    <div class="glass-card p-5 border-amber-500/30">
+      <span class="text-xs font-mono text-amber-400 uppercase">Live Unofficial</span>
+      <div class="font-display text-4xl font-bold text-amber-400 mt-1"><%= unofficialMatches %></div>
+      <span class="text-[11px] text-amber-300/80">Pending admin verification</span>
+    </div>
+  </div>
+
+  <!-- Main Management Navigation Grid -->
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+    
+    <!-- 1. Tournaments -->
+    <div class="glass-panel p-6 flex flex-col justify-between group hover:border-orange-500/40">
+      <div>
+        <div class="w-12 h-12 rounded-xl bg-orange-500/20 text-orange-400 flex items-center justify-center mb-4">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+        </div>
+        <h3 class="font-display text-2xl font-bold text-white mb-1">Tournaments</h3>
+        <p class="text-xs text-slate-400">Create tournaments, set featured current tournament, upload banners with Sharp compression.</p>
+      </div>
+      <div class="pt-4 mt-4 border-t border-white/10 flex gap-2">
+        <a href="/admin/tournaments" class="btn-glass text-xs flex-1 justify-center">Manage</a>
+        <a href="/admin/tournaments/new" class="btn-fire text-xs px-2.5">+</a>
+      </div>
+    </div>
+
+    <!-- 2. Match Scoreboard & Verification -->
+    <div class="glass-panel p-6 flex flex-col justify-between group hover:border-emerald-500/40">
+      <div>
+        <div class="w-12 h-12 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center mb-4">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        </div>
+        <h3 class="font-display text-2xl font-bold text-white mb-1">Match Results</h3>
+        <p class="text-xs text-slate-400">Log daily match scores, input placements & kills, toggle Official vs Unofficial status on the fly.</p>
+      </div>
+      <div class="pt-4 mt-4 border-t border-white/10 flex gap-2">
+        <a href="/admin/matches" class="btn-glass text-xs flex-1 justify-center">Scoreboards</a>
+        <a href="/admin/matches/new" class="btn-fire text-xs px-2.5">+</a>
+      </div>
+    </div>
+
+    <!-- 3. Teams & Orgs -->
+    <div class="glass-panel p-6 flex flex-col justify-between group hover:border-amber-500/40">
+      <div>
+        <div class="w-12 h-12 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center mb-4">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+        </div>
+        <h3 class="font-display text-2xl font-bold text-white mb-1">Teams & Rosters</h3>
+        <p class="text-xs text-slate-400">Add esports teams, upload logos, set country and squad tags.</p>
+      </div>
+      <div class="pt-4 mt-4 border-t border-white/10 flex gap-2">
+        <a href="/admin/teams" class="btn-glass text-xs flex-1 justify-center">Teams (<%= teams.length %>)</a>
+      </div>
+    </div>
+
+    <!-- 4. Players & Photos -->
+    <div class="glass-panel p-6 flex flex-col justify-between group hover:border-cyan-500/40">
+      <div>
+        <div class="w-12 h-12 rounded-xl bg-cyan-500/20 text-cyan-400 flex items-center justify-center mb-4">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+        </div>
+        <h3 class="font-display text-2xl font-bold text-white mb-1">Player Cards</h3>
+        <p class="text-xs text-slate-400">Manage player IGNs, roles, Free Fire UIDs, and upload compressed player portrait photos.</p>
+      </div>
+      <div class="pt-4 mt-4 border-t border-white/10 flex gap-2">
+        <a href="/admin/players" class="btn-glass text-xs flex-1 justify-center">Players (<%= players.length %>)</a>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Featured Tournament Quick Status -->
+  <% if (currentTourney) { %>
+    <div class="glass-panel p-6 border-orange-500/30">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <span class="badge-live mb-1"><span class="live-dot"></span> CURRENT FEATURED TOURNAMENT</span>
+          <h3 class="font-display text-3xl font-bold text-white"><%= currentTourney.name %></h3>
+          <p class="text-xs text-slate-400 mt-0.5">Prize: <%= currentTourney.prize_pool %> • Mode: <%= currentTourney.game_mode %></p>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <a href="/admin/matches?tournament_id=<%= currentTourney.id %>" class="btn-fire text-xs py-2 px-4">
+            Manage Matches for this Tournament
+          </a>
+          <a href="/admin/tournaments/<%= currentTourney.id %>/edit" class="btn-glass text-xs py-2 px-3">
+            Edit Details
+          </a>
+        </div>
+      </div>
+    </div>
+  <% } %>
+
+</main>
+
+<%- include('../partials/footer') %>

@@ -1,0 +1,6 @@
+{
+  "name": "TAGFREEFIREMAX",
+  "description": "Free Fire esports tournament tracking website with official/unofficial stats, team/player leaderboards, Neon Postgres integration, and admin management.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

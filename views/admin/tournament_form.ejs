@@ -1,0 +1,241 @@
+<%- include('../partials/header') %>
+<%- include('../partials/navbar') %>
+
+<main class="flex-1 max-w-4xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+
+  <%- include('../partials/flash') %>
+
+  <div>
+    <a href="/admin/tournaments" class="text-xs font-mono text-slate-400 hover:text-orange-400">&larr; Back to Tournaments</a>
+    <h1 class="font-display text-4xl font-bold text-white tracking-wide mt-1">
+      <%= tournament ? `Edit ${tournament.name}` : 'Start / Create New Tournament' %>
+    </h1>
+    <p class="text-slate-400 text-sm">Configure tournament banner poster, prize pool, tournament category, battle royale maps rotation, and match format details.</p>
+  </div>
+
+  <div class="glass-panel p-6 sm:p-8">
+    <form action="<%= tournament ? `/admin/tournaments/${tournament.id}/edit` : '/admin/tournaments/new' %>" method="POST" enctype="multipart/form-data" class="space-y-6">
+      
+      <!-- Tournament Title & Type -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div class="sm:col-span-2">
+          <label for="name" class="block text-xs font-mono text-slate-300 uppercase mb-1">Tournament Title *</label>
+          <input 
+            type="text" 
+            id="name" 
+            name="name" 
+            required 
+            value="<%= tournament ? tournament.name : '' %>"
+            placeholder="e.g. FFWS Spring Invitational 2026"
+            class="w-full px-4 py-2.5 rounded-xl bg-slate-900/80 border border-white/15 text-white placeholder-slate-500 focus:outline-none focus:border-orange-500 text-sm"
+          >
+        </div>
+
+        <div>
+          <label for="tournament_category" class="block text-xs font-mono text-slate-300 uppercase mb-1">Circuit Category *</label>
+          <select 
+            id="tournament_category" 
+            name="is_official_tournament" 
+            class="w-full px-4 py-2.5 rounded-xl bg-slate-900/80 border border-white/15 text-white focus:outline-none focus:border-orange-500 text-sm"
+          >
+            <option value="true">Official Esports Circuit (Garena / FFWS)</option>
+            <option value="false">Unofficial / Local Organizer Cup</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <!-- Game Mode -->
+        <div>
+          <label for="game_mode" class="block text-xs font-mono text-slate-300 uppercase mb-1">Game Mode</label>
+          <input 
+            type="text" 
+            id="game_mode" 
+            name="game_mode" 
+            value="<%= tournament ? tournament.game_mode : 'Battle Royale Squad' %>"
+            placeholder="Battle Royale Squad, Duo, Solo, Clash Squad"
+            class="w-full px-4 py-2.5 rounded-xl bg-slate-900/80 border border-white/15 text-white placeholder-slate-500 focus:outline-none focus:border-orange-500 text-sm"
+          >
+        </div>
+
+        <!-- Prize Pool -->
+        <div>
+          <label for="prize_pool" class="block text-xs font-mono text-slate-300 uppercase mb-1">Prize Pool (PP)</label>
+          <input 
+            type="text" 
+            id="prize_pool" 
+            name="prize_pool" 
+            value="<%= tournament ? tournament.prize_pool : '$150,000' %>"
+            placeholder="$150,000 or ₹1,00,000"
+            class="w-full px-4 py-2.5 rounded-xl bg-slate-900/80 border border-white/15 text-white placeholder-slate-500 focus:outline-none focus:border-orange-500 text-sm font-mono"
+          >
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <!-- Start Date -->
+        <div>
+          <label for="start_date" class="block text-xs font-mono text-slate-300 uppercase mb-1">Start Date</label>
+          <input 
+            type="date" 
+            id="start_date" 
+            name="start_date" 
+            value="<%= tournament && tournament.start_date ? new Date(tournament.start_date).toISOString().split('T')[0] : '' %>"
+            class="w-full px-4 py-2.5 rounded-xl bg-slate-900/80 border border-white/15 text-white focus:outline-none focus:border-orange-500 text-sm"
+          >
+        </div>
+
+        <!-- End Date -->
+        <div>
+          <label for="end_date" class="block text-xs font-mono text-slate-300 uppercase mb-1">End Date</label>
+          <input 
+            type="date" 
+            id="end_date" 
+            name="end_date" 
+            value="<%= tournament && tournament.end_date ? new Date(tournament.end_date).toISOString().split('T')[0] : '' %>"
+            class="w-full px-4 py-2.5 rounded-xl bg-slate-900/80 border border-white/15 text-white focus:outline-none focus:border-orange-500 text-sm"
+          >
+        </div>
+
+        <!-- Status -->
+        <div>
+          <label for="status" class="block text-xs font-mono text-slate-300 uppercase mb-1">Status</label>
+          <select 
+            id="status" 
+            name="status" 
+            class="w-full px-4 py-2.5 rounded-xl bg-slate-900/80 border border-white/15 text-white focus:outline-none focus:border-orange-500 text-sm"
+          >
+            <option value="ongoing" <%= tournament && tournament.status === 'ongoing' ? 'selected' : '' %>>Ongoing / Live Active</option>
+            <option value="completed" <%= tournament && tournament.status === 'completed' ? 'selected' : '' %>>Completed (Archived)</option>
+            <option value="upcoming" <%= tournament && tournament.status === 'upcoming' ? 'selected' : '' %>>Upcoming</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Description & Format -->
+      <div>
+        <label for="description" class="block text-xs font-mono text-slate-300 uppercase mb-1">Tournament Description & Format Details</label>
+        <textarea 
+          id="description" 
+          name="description" 
+          rows="3"
+          placeholder="The supreme Free Fire MAX championship tournament featuring TAGFREEFIREMAX contending for the global title. Point System: 12-9-8-7-6-5-4-3-2-1 + 1pt/Kill."
+          class="w-full px-4 py-2.5 rounded-xl bg-slate-900/80 border border-white/15 text-white placeholder-slate-500 focus:outline-none focus:border-orange-500 text-sm"
+        ><%= tournament ? tournament.description : '' %></textarea>
+      </div>
+
+      <!-- Banner Upload & Custom Banner URL -->
+      <div class="p-5 rounded-2xl bg-black/40 border border-white/10 space-y-4">
+        <label class="block text-xs font-mono text-orange-400 uppercase font-bold">
+          Tournament Hero Banner Poster
+        </label>
+        
+        <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+          <img 
+            id="banner-preview" 
+            src="<%= tournament && tournament.banner_url ? tournament.banner_url : 'https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=1200&auto=format&fit=crop' %>" 
+            alt="Banner Preview" 
+            class="w-48 h-28 rounded-xl object-cover border border-white/20 shadow-lg"
+          >
+          
+          <div class="space-y-3 flex-1">
+            <div class="flex items-center gap-3">
+              <label class="btn-glass cursor-pointer text-xs py-2.5 px-4">
+                <svg class="w-4 h-4 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                Upload Poster Image
+                <input type="file" name="banner" accept="image/*" class="hidden" data-preview-target="banner-preview">
+              </label>
+              <span class="text-xs text-slate-400">Auto-optimized with Sharp</span>
+            </div>
+
+            <div>
+              <label for="banner_url_input" class="block text-[11px] font-mono text-slate-400 mb-1">Or direct Image URL:</label>
+              <input 
+                type="url" 
+                id="banner_url_input" 
+                name="banner_url_input" 
+                value="<%= tournament ? tournament.banner_url : '' %>"
+                placeholder="https://images.unsplash.com/photo-..."
+                class="w-full px-3 py-1.5 rounded-lg bg-slate-900 border border-white/10 text-white text-xs placeholder-slate-600 focus:outline-none focus:border-orange-500 font-mono"
+                oninput="if(this.value){ document.getElementById('banner-preview').src = this.value; }"
+              >
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <% if (!tournament) { %>
+        <!-- Maps Rotation & Match Setup (For New Tournament) -->
+        <div class="p-5 rounded-2xl bg-black/40 border border-white/10 space-y-4">
+          <label class="block text-xs font-mono text-orange-400 uppercase font-bold">
+            Maps Rotation & Initial Match Setup
+          </label>
+          
+          <div class="text-xs text-slate-300">Select Free Fire MAX maps to be featured in this tournament rotation:</div>
+          <div class="grid grid-cols-2 sm:grid-cols-5 gap-3">
+            <label class="p-3 rounded-xl bg-slate-900 border border-white/10 flex items-center gap-2 cursor-pointer hover:border-orange-400">
+              <input type="checkbox" name="selected_maps" value="Bermuda" checked class="rounded bg-slate-800 text-orange-500">
+              <span class="text-xs font-bold text-white">Bermuda</span>
+            </label>
+            <label class="p-3 rounded-xl bg-slate-900 border border-white/10 flex items-center gap-2 cursor-pointer hover:border-orange-400">
+              <input type="checkbox" name="selected_maps" value="Purgatory" checked class="rounded bg-slate-800 text-orange-500">
+              <span class="text-xs font-bold text-white">Purgatory</span>
+            </label>
+            <label class="p-3 rounded-xl bg-slate-900 border border-white/10 flex items-center gap-2 cursor-pointer hover:border-orange-400">
+              <input type="checkbox" name="selected_maps" value="Kalahari" checked class="rounded bg-slate-800 text-orange-500">
+              <span class="text-xs font-bold text-white">Kalahari</span>
+            </label>
+            <label class="p-3 rounded-xl bg-slate-900 border border-white/10 flex items-center gap-2 cursor-pointer hover:border-orange-400">
+              <input type="checkbox" name="selected_maps" value="Alpine" checked class="rounded bg-slate-800 text-orange-500">
+              <span class="text-xs font-bold text-white">Alpine</span>
+            </label>
+            <label class="p-3 rounded-xl bg-slate-900 border border-white/10 flex items-center gap-2 cursor-pointer hover:border-orange-400">
+              <input type="checkbox" name="selected_maps" value="Nexterra" checked class="rounded bg-slate-800 text-orange-500">
+              <span class="text-xs font-bold text-white">Nexterra</span>
+            </label>
+          </div>
+
+          <div class="pt-2">
+            <label for="initial_matches_count" class="block text-xs font-mono text-slate-300 uppercase mb-1">
+              Auto-Seed Initial Match Slots (Optional)
+            </label>
+            <select 
+              id="initial_matches_count" 
+              name="initial_matches_count" 
+              class="w-full sm:w-64 px-4 py-2 rounded-xl bg-slate-900 border border-white/15 text-white focus:outline-none focus:border-orange-500 text-xs font-mono"
+            >
+              <option value="0">Do not auto-generate (Log manually later)</option>
+              <option value="3">Create 3 initial match slots with map rotation</option>
+              <option value="6" selected>Create 6 initial match slots with map rotation (Standard Day)</option>
+              <option value="12">Create 12 initial match slots (Grand Finals 2-Day)</option>
+            </select>
+            <p class="text-[11px] text-slate-400 mt-1">Pre-populates match slots and map details so the banner and match results show immediately.</p>
+          </div>
+        </div>
+      <% } %>
+
+      <!-- Set as Current Featured Tournament Toggle -->
+      <div class="p-4 rounded-xl bg-orange-500/10 border border-orange-500/30 flex items-center justify-between">
+        <div>
+          <span class="font-bold text-sm text-white">Set as Current / Active Tournament</span>
+          <p class="text-xs text-slate-400">Immediately features this tournament on the homepage banner, title box, and live scoreboard.</p>
+        </div>
+        <label class="relative inline-flex items-center cursor-pointer">
+          <input type="checkbox" name="is_current" value="true" class="sr-only peer" <%= (!tournament || tournament.is_current) ? 'checked' : '' %>>
+          <div class="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-orange-500"></div>
+        </label>
+      </div>
+
+      <div class="flex items-center justify-end gap-3 pt-4 border-t border-white/10">
+        <a href="/admin/tournaments" class="btn-glass text-xs py-2.5 px-4">Cancel</a>
+        <button type="submit" class="btn-fire text-xs py-2.5 px-6">
+          <%= tournament ? 'Update Tournament' : 'Start Tournament & Show on Hub' %>
+        </button>
+      </div>
+
+    </form>
+  </div>
+
+</main>
+
+<%- include('../partials/footer') %>

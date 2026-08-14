@@ -1,0 +1,229 @@
+<%- include('../partials/header') %>
+<%- include('../partials/navbar') %>
+
+<main class="flex-1 max-w-4xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+
+  <%- include('../partials/flash') %>
+
+  <!-- Header -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div>
+      <div class="flex items-center gap-2">
+        <a href="/admin" class="text-xs font-mono text-slate-400 hover:text-orange-400">&larr; Admin Dashboard</a>
+      </div>
+      <h1 class="font-display text-4xl font-bold text-white tracking-wide">Platform & Theme Settings</h1>
+      <p class="text-slate-400 text-sm">Customize the global glassmorphism wallpaper and site branding.</p>
+    </div>
+  </div>
+
+  <div class="glass-panel p-6 sm:p-8 space-y-8">
+    
+    <!-- 1. Background Wallpaper Upload & Management -->
+    <div class="space-y-6">
+      <div class="flex items-center justify-between border-b border-white/10 pb-3">
+        <div>
+          <h2 class="font-display text-2xl font-bold text-white flex items-center gap-2">
+            <svg class="w-6 h-6 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+            </svg>
+            Site Background Photo & Theme Wallpaper
+          </h2>
+          <p class="text-xs text-slate-400">Upload a custom high-res esports wallpaper. Processed via Sharp into compressed WebP and seamlessly rendered behind all frosted glass boxes.</p>
+        </div>
+      </div>
+
+      <!-- Current Background Preview & Test Box -->
+      <div class="space-y-2">
+        <span class="text-xs font-mono text-slate-300 uppercase">Active Wallpaper Live Preview</span>
+        <div class="relative h-56 rounded-2xl overflow-hidden border border-white/20 bg-slate-950 flex items-center justify-center group shadow-2xl">
+          <img id="settingsBgPreview" src="<%= currentBg || 'https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=2070&auto=format&fit=crop' %>" alt="Current Wallpaper" class="w-full h-full object-cover">
+          
+          <!-- Demonstration Glass Box -->
+          <div class="absolute inset-0 bg-slate-950/40 backdrop-blur-xs flex items-center justify-center p-6">
+            <div class="glass p-4 rounded-xl border border-white/20 text-center max-w-sm w-full shadow-2xl space-y-1">
+              <span class="badge-official text-[10px] py-0.5">ACTIVE WALLPAPER</span>
+              <p class="font-display text-xl font-bold text-white">Glass UI Preview</p>
+              <p class="text-xs text-slate-300">All player cards, tournaments, tables, and analysis boxes float over this photo.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Background Photo Options Form -->
+      <form action="/admin/settings/background" method="POST" enctype="multipart/form-data" class="space-y-5">
+        
+        <!-- Option A: File Upload -->
+        <div class="p-5 rounded-2xl bg-slate-900/80 border border-orange-500/25 space-y-3">
+          <div class="flex items-center justify-between">
+            <label class="block text-xs font-mono text-orange-400 uppercase font-bold">1. Upload Background Image File</label>
+            <span class="text-[11px] font-mono text-emerald-400">Sharp WebP Compression</span>
+          </div>
+          
+          <div class="flex flex-col sm:flex-row items-center gap-4">
+            <label class="btn-fire cursor-pointer text-xs py-3 px-6 flex items-center gap-2 w-full sm:w-auto justify-center font-bold">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+              <span id="settingsFileLabel">Choose Photo File (JPG / PNG / WEBP)</span>
+              <input type="file" name="background" id="settingsBgFile" accept="image/*" class="hidden" onchange="previewSettingsFile(this)">
+            </label>
+            <button type="submit" class="btn-glass text-xs py-3 px-6 w-full sm:w-auto text-white border-orange-500/40 hover:bg-orange-500/20 font-bold">
+              Upload & Save Wallpaper
+            </button>
+          </div>
+          <p class="text-[11px] text-slate-400">Any resolution up to 4K is accepted. Image will be automatically resized, optimized, and compressed to WebP.</p>
+        </div>
+
+        <!-- Option B: Direct Image URL -->
+        <div class="space-y-2">
+          <label for="settings_bg_url" class="block text-xs font-mono text-slate-300 uppercase">2. Or Provide Direct Image URL</label>
+          <div class="flex gap-2">
+            <input 
+              type="text" 
+              id="settings_bg_url" 
+              name="background_url" 
+              value="<%= currentBg || '' %>"
+              placeholder="https://images.unsplash.com/photo-..." 
+              class="flex-1 px-4 py-2.5 rounded-xl bg-slate-900/90 border border-white/15 text-white font-mono text-xs focus:outline-none focus:border-orange-500"
+              oninput="previewSettingsUrl(this.value)"
+            >
+            <button type="submit" class="btn-glass text-xs py-2.5 px-5 font-bold">
+              Save URL
+            </button>
+          </div>
+        </div>
+
+        <!-- Option C: Presets Quick Select -->
+        <div class="space-y-2 pt-2 border-t border-white/10">
+          <label class="block text-xs font-mono text-slate-300 uppercase">3. Or Pick a Curated Esports Background Theme</label>
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <button 
+              type="button" 
+              onclick="applySettingsPreset('https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=2070&auto=format&fit=crop')"
+              class="p-2.5 rounded-xl bg-slate-900/90 border border-white/10 hover:border-orange-500 text-left transition-all group"
+            >
+              <div class="h-14 rounded-lg bg-cover bg-center mb-1.5" style="background-image: url('https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=300&auto=format&fit=crop');"></div>
+              <span class="text-xs font-mono text-slate-200 group-hover:text-orange-400 font-bold block truncate">Cyber Arena</span>
+            </button>
+
+            <button 
+              type="button" 
+              onclick="applySettingsPreset('https://images.unsplash.com/photo-1511512578047-dfb367046420?q=80&w=2070&auto=format&fit=crop')"
+              class="p-2.5 rounded-xl bg-slate-900/90 border border-white/10 hover:border-orange-500 text-left transition-all group"
+            >
+              <div class="h-14 rounded-lg bg-cover bg-center mb-1.5" style="background-image: url('https://images.unsplash.com/photo-1511512578047-dfb367046420?q=80&w=300&auto=format&fit=crop');"></div>
+              <span class="text-xs font-mono text-slate-200 group-hover:text-orange-400 font-bold block truncate">Neon Stadium</span>
+            </button>
+
+            <button 
+              type="button" 
+              onclick="applySettingsPreset('https://images.unsplash.com/photo-1538481199705-c710c4e965fc?q=80&w=2070&auto=format&fit=crop')"
+              class="p-2.5 rounded-xl bg-slate-900/90 border border-white/10 hover:border-orange-500 text-left transition-all group"
+            >
+              <div class="h-14 rounded-lg bg-cover bg-center mb-1.5" style="background-image: url('https://images.unsplash.com/photo-1538481199705-c710c4e965fc?q=80&w=300&auto=format&fit=crop');"></div>
+              <span class="text-xs font-mono text-slate-200 group-hover:text-orange-400 font-bold block truncate">Kalahari Battle</span>
+            </button>
+
+            <button 
+              type="button" 
+              onclick="applySettingsPreset('https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=2070&auto=format&fit=crop')"
+              class="p-2.5 rounded-xl bg-slate-900/90 border border-white/10 hover:border-orange-500 text-left transition-all group"
+            >
+              <div class="h-14 rounded-lg bg-cover bg-center mb-1.5" style="background-image: url('https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=300&auto=format&fit=crop');"></div>
+              <span class="text-xs font-mono text-slate-200 group-hover:text-orange-400 font-bold block truncate">Dark Ember</span>
+            </button>
+          </div>
+        </div>
+
+      </form>
+    </div>
+
+    <!-- 2. General Settings -->
+    <div class="space-y-4 pt-6 border-t border-white/10">
+      <h2 class="font-display text-2xl font-bold text-white">Site Branding Information</h2>
+
+      <form action="/admin/settings/general" method="POST" class="space-y-4">
+        <div>
+          <label for="site_title" class="block text-xs font-mono text-slate-300 uppercase mb-1">Site Title</label>
+          <input 
+            type="text" 
+            id="site_title" 
+            name="site_title" 
+            value="<%= typeof siteTitle !== 'undefined' ? siteTitle : (typeof settings !== 'undefined' && settings.site_title ? settings.site_title : 'TAGFREEFIREMAX') %>"
+            class="w-full px-4 py-2.5 rounded-xl bg-slate-900/80 border border-white/15 text-white focus:outline-none focus:border-orange-500 text-sm font-semibold"
+          >
+        </div>
+
+        <div>
+          <label for="site_tagline" class="block text-xs font-mono text-slate-300 uppercase mb-1">Tagline</label>
+          <input 
+            type="text" 
+            id="site_tagline" 
+            name="site_tagline" 
+            value="<%= typeof siteTagline !== 'undefined' ? siteTagline : (typeof settings !== 'undefined' && settings.site_tagline ? settings.site_tagline : 'Premier Free Fire MAX Esports Hub') %>"
+            class="w-full px-4 py-2.5 rounded-xl bg-slate-900/80 border border-white/15 text-white focus:outline-none focus:border-orange-500 text-sm font-semibold"
+          >
+        </div>
+
+        <button type="submit" class="btn-fire text-xs py-2.5 px-6 font-bold">
+          Save Settings
+        </button>
+      </form>
+    </div>
+
+    <!-- 3. Fresh Restart & Database Reset Zone -->
+    <div class="space-y-4 pt-6 border-t border-red-500/20">
+      <div class="flex items-center gap-2 text-red-400">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+        </svg>
+        <h2 class="font-display text-2xl font-bold text-white">Restart Fresh Website / Zero Out All Details</h2>
+      </div>
+      <p class="text-xs text-slate-400">
+        This will wipe out all ongoing and past tournaments, matches, and match player scorecards, resetting all career and tournament statistics across the entire website to 0 so you can start completely fresh.
+      </p>
+
+      <form action="/admin/settings/reset-database" method="POST" onsubmit="return confirm('Are you sure you want to reset all website data to 0? All tournaments, matches, and stats will be cleared.')">
+        <button type="submit" class="py-2.5 px-5 rounded-xl bg-red-600/20 hover:bg-red-600/40 text-red-300 hover:text-white border border-red-500/40 text-xs font-mono font-bold transition-all flex items-center gap-2 cursor-pointer">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+          </svg>
+          Reset All Tournaments & Matches to 0
+        </button>
+      </form>
+    </div>
+
+  </div>
+
+  <script>
+    function previewSettingsFile(input) {
+      if (input.files && input.files[0]) {
+        const file = input.files[0];
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          document.getElementById('settingsBgPreview').src = e.target.result;
+          const bgLayer = document.querySelector('.site-bg-layer');
+          if (bgLayer) bgLayer.style.backgroundImage = `url("${e.target.result}")`;
+        };
+        reader.readAsDataURL(file);
+        const label = document.getElementById('settingsFileLabel');
+        if (label) label.textContent = file.name;
+      }
+    }
+
+    function previewSettingsUrl(url) {
+      if (url && url.trim().startsWith('http')) {
+        document.getElementById('settingsBgPreview').src = url.trim();
+        const bgLayer = document.querySelector('.site-bg-layer');
+        if (bgLayer) bgLayer.style.backgroundImage = `url("${url.trim()}")`;
+      }
+    }
+
+    function applySettingsPreset(url) {
+      const urlInput = document.getElementById('settings_bg_url');
+      if (urlInput) urlInput.value = url;
+      previewSettingsUrl(url);
+    }
+  </script>
+
+</main>
+
+<%- include('../partials/footer') %>

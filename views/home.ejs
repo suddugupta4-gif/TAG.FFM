@@ -1,0 +1,550 @@
+<%- include('partials/header') %>
+<%- include('partials/navbar') %>
+
+<main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
+
+  <%- include('partials/flash') %>
+
+  <!-- ========================================================================= -->
+  <!-- 1. TOP OF EVERYTHING: GLOBAL OFFICIAL / UNOFFICIAL MODE SELECTOR           -->
+  <!-- ========================================================================= -->
+  <section class="w-full relative z-20" id="global-mode-selector-section">
+    <div class="glass-panel p-3.5 sm:p-4 border-white/15 bg-[#0a0c14]/90 backdrop-blur-2xl shadow-2xl rounded-2xl">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
+        <!-- Label & Context -->
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-[#ff4e00]/20 to-amber-500/10 border border-[#ff4e00]/30 flex items-center justify-center text-[#ff4e00] shadow-lg shrink-0">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/>
+            </svg>
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="text-xs font-mono font-bold text-gray-400 uppercase tracking-wider">GLOBAL DATA FILTER</span>
+              <span id="active-mode-indicator" class="badge-official text-[10px] py-0.5">OFFICIAL MODE</span>
+            </div>
+            <h2 class="text-sm sm:text-base font-bold text-white tracking-tight">Select Tournament Type to Filter All Data</h2>
+          </div>
+        </div>
+
+        <!-- 3-Way Smooth Touch Mode Selector Buttons -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 p-1.5 rounded-xl bg-black/60 border border-white/10" id="mode-switcher-container">
+          
+          <!-- 1. OFFICIAL TOURNAMENT -->
+          <button 
+            type="button"
+            id="btn-mode-official" 
+            data-mode="official"
+            class="global-mode-btn touch-manipulation select-none py-2 px-3.5 rounded-lg font-mono text-xs font-bold flex items-center justify-center sm:justify-start gap-2 transition-all duration-300 cursor-pointer active:scale-95 bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shadow-lg shadow-emerald-950/40">
+            <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 shadow-sm shadow-emerald-400 shrink-0"></span>
+            <div class="text-left leading-tight">
+              <div class="font-bold flex items-center gap-1">
+                <span>Official</span>
+                <span class="text-[10px] opacity-75 font-normal hidden sm:inline">(Esports)</span>
+              </div>
+              <div class="text-[9px] text-emerald-400/80 font-normal font-sans hidden lg:block">Official Garena / FFWS</div>
+            </div>
+          </button>
+
+          <!-- 2. UNOFFICIAL (LOCAL TOURNAMENT ORGANIZER) -->
+          <button 
+            type="button"
+            id="btn-mode-unofficial" 
+            data-mode="unofficial"
+            class="global-mode-btn touch-manipulation select-none py-2 px-3.5 rounded-lg font-mono text-xs font-bold flex items-center justify-center sm:justify-start gap-2 transition-all duration-300 cursor-pointer active:scale-95 bg-black/30 text-gray-400 hover:text-amber-300 hover:bg-amber-500/10 border border-transparent">
+            <span class="w-2.5 h-2.5 rounded-full bg-amber-400/50 shrink-0"></span>
+            <div class="text-left leading-tight">
+              <div class="font-bold flex items-center gap-1">
+                <span>Unofficial</span>
+                <span class="text-[10px] opacity-75 font-normal hidden sm:inline">(Local)</span>
+              </div>
+              <div class="text-[9px] text-gray-500 font-normal font-sans hidden lg:block">Local Organizer / Scrims</div>
+            </div>
+          </button>
+
+          <!-- 3. ALL / COMBINED -->
+          <button 
+            type="button"
+            id="btn-mode-all" 
+            data-mode="all"
+            class="global-mode-btn touch-manipulation select-none py-2 px-3.5 rounded-lg font-mono text-xs font-bold flex items-center justify-center sm:justify-start gap-2 transition-all duration-300 cursor-pointer active:scale-95 bg-black/30 text-gray-400 hover:text-[#ff4e00] hover:bg-[#ff4e00]/10 border border-transparent">
+            <span class="w-2.5 h-2.5 rounded-full bg-[#ff4e00]/50 shrink-0"></span>
+            <div class="text-left leading-tight">
+              <div class="font-bold flex items-center gap-1">
+                <span>All Data</span>
+                <span class="text-[10px] opacity-75 font-normal hidden sm:inline">(Combined)</span>
+              </div>
+              <div class="text-[9px] text-gray-500 font-normal font-sans hidden lg:block">Overall Add-Up Total</div>
+            </div>
+          </button>
+
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================================= -->
+  <!-- 2. OVERALL ANALYSIS BOX (DIRECTLY AFTER OFFICIAL / UNOFFICIAL SELECTION)   -->
+  <!-- ========================================================================= -->
+  <section class="glass-panel p-5 sm:p-7 border-white/15 bg-gradient-to-b from-[#0e101a] to-[#08090f] shadow-2xl rounded-2xl space-y-5" id="overall-analysis-section">
+    
+    <!-- Analysis Box Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/10 pb-4">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-orange-500/20 border border-orange-500/30 flex items-center justify-center text-orange-400 shrink-0">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+          </svg>
+        </div>
+        <div>
+          <span class="text-xs font-mono text-gray-400 uppercase tracking-wider block">TAG SQUAD SQUAD CAREER & TOURNAMENT ANALYSIS</span>
+          <h2 class="text-lg sm:text-xl font-display font-bold text-white tracking-wide" id="stat-card-title">
+            Official Tournament Stats & Performance
+          </h2>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <span class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-mono font-bold bg-[#ff4e00]/20 text-[#ff4e00] border border-[#ff4e00]/30 animate-pulse">
+          <span class="w-1.5 h-1.5 rounded-full bg-[#ff4e00] mr-1.5"></span>
+          LIVE ADD-UP
+        </span>
+        <a href="/analysis" class="btn-glass text-xs py-1.5 px-3 flex items-center gap-1.5">
+          <span>In-Depth Analysis</span>
+          <svg class="w-3.5 h-3.5 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
+          </svg>
+        </a>
+      </div>
+    </div>
+
+    <!-- 4 Core Required Metrics Grid (TOTAL MATCHES, TOTAL KILLS, TOTAL BOOYAH, TOTAL KD) -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4" id="home-four-metrics-grid">
+      
+      <!-- 1. TOTAL MATCHES -->
+      <div class="stat-box p-4 rounded-xl bg-black/40 border border-white/10 hover:border-emerald-400/40 transition-all duration-300 flex flex-col justify-between">
+        <div class="text-xs text-gray-400 font-mono flex items-center justify-between mb-1">
+          <span>TOTAL MATCHES</span>
+          <span class="w-2 h-2 rounded-full bg-emerald-400/70"></span>
+        </div>
+        <div class="stat-box-value text-3xl sm:text-4xl font-display font-bold text-white flex items-baseline gap-1 my-1">
+          <span id="hero-stat-matches" class="transition-all duration-300">
+            <%= currentTourneySummary ? currentTourneySummary.official.matches : officialMatches.length %>
+          </span>
+          <span class="text-xs text-gray-500 font-mono font-normal">MATCHES</span>
+        </div>
+        <div id="hero-stat-matches-sub" class="text-xs text-emerald-400 font-mono transition-all">
+          Official Tournament Circuit
+        </div>
+      </div>
+
+      <!-- 2. TOTAL KILLS -->
+      <div class="stat-box p-4 rounded-xl bg-black/40 border border-white/10 hover:border-[#ff4e00]/40 transition-all duration-300 flex flex-col justify-between">
+        <div class="text-xs text-gray-400 font-mono flex items-center justify-between mb-1">
+          <span>TOTAL KILLS</span>
+          <span class="w-2 h-2 rounded-full bg-[#ff4e00]"></span>
+        </div>
+        <div class="stat-box-value text-3xl sm:text-4xl font-display font-bold text-[#ff4e00] my-1">
+          <span id="hero-stat-kills" class="transition-all duration-300">
+            <%= currentTourneySummary ? currentTourneySummary.official.kills : 0 %>
+          </span>
+        </div>
+        <div id="hero-stat-kills-sub" class="text-xs text-gray-400 font-mono transition-all">
+          <%= currentTourneySummary ? currentTourneySummary.official.avg_kills : '0.0' %> kills/match avg
+        </div>
+      </div>
+
+      <!-- 3. TOTAL BOOYAH -->
+      <div class="stat-box p-4 rounded-xl bg-black/40 border border-white/10 hover:border-amber-400/40 transition-all duration-300 flex flex-col justify-between">
+        <div class="text-xs text-gray-400 font-mono flex items-center justify-between mb-1">
+          <span>TOTAL BOOYAH</span>
+          <svg class="w-3.5 h-3.5 text-amber-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+        </div>
+        <div class="stat-box-value text-3xl sm:text-4xl font-display font-bold text-amber-400 my-1 flex items-center gap-1.5">
+          <span id="hero-stat-booyahs" class="transition-all duration-300">
+            <%= currentTourneySummary ? currentTourneySummary.official.booyahs : 0 %>
+          </span>
+          <span class="text-xs text-amber-400/70 font-mono font-normal">VICTORIES</span>
+        </div>
+        <div id="hero-stat-booyahs-sub" class="text-xs text-amber-400/80 font-mono transition-all">
+          <%= currentTourneySummary ? currentTourneySummary.official.win_rate : '0.0' %>% Win Rate
+        </div>
+      </div>
+
+      <!-- 4. TOTAL KD -->
+      <div class="stat-box p-4 rounded-xl bg-black/40 border border-white/10 hover:border-emerald-400/40 transition-all duration-300 flex flex-col justify-between">
+        <div class="text-xs text-gray-400 font-mono flex items-center justify-between mb-1">
+          <span>TOTAL KD</span>
+          <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+        </div>
+        <div class="stat-box-value text-3xl sm:text-4xl font-display font-bold text-emerald-400 my-1">
+          <span id="hero-stat-kd" class="transition-all duration-300">
+            <%= currentTourneySummary ? currentTourneySummary.official.kd : '0.00' %>
+          </span>
+        </div>
+        <div id="hero-stat-kd-sub" class="text-xs text-emerald-400/80 font-mono transition-all">
+          Kills per Elimination
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Secondary Overall Performance Indicators & Context -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-3 pt-2">
+      <!-- Total Points -->
+      <div class="p-3 rounded-xl bg-black/30 border border-white/5 flex items-center justify-between">
+        <span class="text-xs text-gray-400 font-mono">Total Points Scored</span>
+        <span id="hero-stat-points" class="font-bold text-white font-mono text-sm">
+          <%= currentTourneySummary ? currentTourneySummary.official.points : 0 %> PTS
+        </span>
+      </div>
+
+      <!-- Tournaments Participated -->
+      <div class="p-3 rounded-xl bg-black/30 border border-white/5 flex items-center justify-between">
+        <span class="text-xs text-gray-400 font-mono">Career Tournaments</span>
+        <span class="font-bold text-orange-400 font-mono text-sm">
+          <%= careerSummary ? careerSummary.official.tournaments_played : allTournaments.length %> Tournaments
+        </span>
+      </div>
+
+      <!-- Squad Status -->
+      <div class="p-3 rounded-xl bg-black/30 border border-white/5 flex items-center justify-between">
+        <span class="text-xs text-gray-400 font-mono">Squad Status</span>
+        <span class="font-bold text-emerald-400 font-mono text-xs flex items-center gap-1">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+          Active Esports Roster
+        </span>
+      </div>
+    </div>
+
+    <!-- Mode Context Alert Banner -->
+    <div id="hero-context-box" class="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/25 text-emerald-300 text-xs flex items-start gap-2.5 transition-all">
+      <svg class="w-4 h-4 shrink-0 mt-0.5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+      </svg>
+      <span id="hero-context-text">
+        Showing verified official tournament data. All kills, Booyahs, matches, and K/D are verified esports records.
+      </span>
+    </div>
+
+  </section>
+
+  <!-- ========================================================================= -->
+  <!-- 3. BANNER AND TITLE BOX WITH MAP AND DETAILS OF MATCH                     -->
+  <!-- ========================================================================= -->
+  <% if (currentTournament) { %>
+    <section class="relative glass-panel overflow-hidden p-6 sm:p-8 md:p-10 border-white/15 shadow-2xl rounded-2xl transition-all duration-500 space-y-6" id="tournament-banner-title-box">
+      
+      <!-- Dynamic Banner Poster Backdrop -->
+      <div id="hero-banner-bg" class="absolute inset-0 z-0 opacity-30 bg-cover bg-center transition-all duration-500" style="background-image: url('<%= currentTournament.banner_url %>'); filter: blur(1px);"></div>
+      <div class="absolute inset-0 bg-gradient-to-r from-[#050508] via-[#050508]/90 to-[#050508]/40 z-0"></div>
+
+      <div class="relative z-10 space-y-6">
+        
+        <!-- Header Tags & Prize Pool -->
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <div class="flex flex-wrap items-center gap-2.5">
+            <span id="hero-status-badge" class="badge-live">
+              <span class="live-dot"></span>
+              CURRENT TOURNAMENT
+            </span>
+            <span id="hero-type-badge" class="badge-official">
+              <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+              OFFICIAL CIRCUIT
+            </span>
+            <span class="px-2.5 py-0.5 rounded-md text-xs font-mono bg-white/10 text-gray-200 border border-white/15">
+              <%= currentTournament.game_mode %>
+            </span>
+          </div>
+
+          <div id="hero-prize-badge" class="px-3.5 py-1.5 rounded-xl font-mono text-sm bg-gradient-to-r from-[#ff4e00]/20 to-amber-500/20 text-orange-400 border border-[#ff4e00]/40 font-bold flex items-center gap-2 shadow-lg shadow-orange-950/40">
+            <svg class="w-4 h-4 text-amber-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+            <span>Prize Pool: <strong><%= currentTournament.prize_pool %></strong></span>
+          </div>
+        </div>
+
+        <!-- Tournament Main Title & Description -->
+        <div class="space-y-3">
+          <h1 id="hero-tournament-title" class="font-display text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-white leading-tight">
+            <%= currentTournament.name %>
+          </h1>
+
+          <p id="hero-tournament-desc" class="text-gray-300 text-sm sm:text-base max-w-3xl leading-relaxed">
+            <%= currentTournament.description || 'Premier Free Fire MAX championship tournament featuring TAGFREEFIREMAX contending for the global title.' %>
+          </p>
+        </div>
+
+        <!-- MAPS PLAYED & MATCH DETAILS CARD -->
+        <div class="p-4 sm:p-5 rounded-2xl bg-black/60 border border-white/10 space-y-4">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-white/10 pb-3">
+            <div class="flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-orange-500"></span>
+              <h3 class="font-mono text-xs uppercase font-bold text-white tracking-wider">Tournament Maps & Match Format</h3>
+            </div>
+            <div class="text-xs text-slate-400 font-mono">
+              Total Matches: <strong class="text-white"><%= matches.length %> Matches Scheduled/Logged</strong>
+            </div>
+          </div>
+
+          <!-- Interactive Map Pills Distribution -->
+          <div class="space-y-2">
+            <div class="text-xs text-gray-400 font-mono">Battle Royale Maps Rotation:</div>
+            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2.5" id="maps-pills-container">
+              
+              <!-- 1. Bermuda -->
+              <div class="p-2.5 rounded-xl bg-slate-900/90 border border-white/10 flex items-center justify-between hover:border-orange-500/40 transition-all">
+                <div class="flex items-center gap-2">
+                  <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                  <span class="font-bold text-xs text-white">Bermuda</span>
+                </div>
+                <span class="text-[11px] font-mono text-orange-400 bg-white/5 px-2 py-0.5 rounded">
+                  <%= mapList.find(m => m.name.toLowerCase() === 'bermuda')?.count || (matches.filter(m => m.map_name === 'Bermuda').length) || 1 %>M
+                </span>
+              </div>
+
+              <!-- 2. Purgatory -->
+              <div class="p-2.5 rounded-xl bg-slate-900/90 border border-white/10 flex items-center justify-between hover:border-orange-500/40 transition-all">
+                <div class="flex items-center gap-2">
+                  <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+                  <span class="font-bold text-xs text-white">Purgatory</span>
+                </div>
+                <span class="text-[11px] font-mono text-orange-400 bg-white/5 px-2 py-0.5 rounded">
+                  <%= mapList.find(m => m.name.toLowerCase() === 'purgatory')?.count || (matches.filter(m => m.map_name === 'Purgatory').length) || 1 %>M
+                </span>
+              </div>
+
+              <!-- 3. Kalahari -->
+              <div class="p-2.5 rounded-xl bg-slate-900/90 border border-white/10 flex items-center justify-between hover:border-orange-500/40 transition-all">
+                <div class="flex items-center gap-2">
+                  <span class="w-2 h-2 rounded-full bg-orange-400"></span>
+                  <span class="font-bold text-xs text-white">Kalahari</span>
+                </div>
+                <span class="text-[11px] font-mono text-orange-400 bg-white/5 px-2 py-0.5 rounded">
+                  <%= mapList.find(m => m.name.toLowerCase() === 'kalahari')?.count || (matches.filter(m => m.map_name === 'Kalahari').length) || 0 %>M
+                </span>
+              </div>
+
+              <!-- 4. Alpine -->
+              <div class="p-2.5 rounded-xl bg-slate-900/90 border border-white/10 flex items-center justify-between hover:border-orange-500/40 transition-all">
+                <div class="flex items-center gap-2">
+                  <span class="w-2 h-2 rounded-full bg-cyan-400"></span>
+                  <span class="font-bold text-xs text-white">Alpine</span>
+                </div>
+                <span class="text-[11px] font-mono text-orange-400 bg-white/5 px-2 py-0.5 rounded">
+                  <%= mapList.find(m => m.name.toLowerCase() === 'alpine')?.count || (matches.filter(m => m.map_name === 'Alpine').length) || 0 %>M
+                </span>
+              </div>
+
+              <!-- 5. Nexterra -->
+              <div class="p-2.5 rounded-xl bg-slate-900/90 border border-white/10 flex items-center justify-between hover:border-orange-500/40 transition-all">
+                <div class="flex items-center gap-2">
+                  <span class="w-2 h-2 rounded-full bg-purple-400"></span>
+                  <span class="font-bold text-xs text-white">Nexterra</span>
+                </div>
+                <span class="text-[11px] font-mono text-orange-400 bg-white/5 px-2 py-0.5 rounded">
+                  <%= mapList.find(m => m.name.toLowerCase() === 'nexterra')?.count || (matches.filter(m => m.map_name === 'Nexterra').length) || 0 %>M
+                </span>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- Format Specifications -->
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs font-mono text-slate-400 pt-1">
+            <div class="flex items-center gap-2">
+              <svg class="w-4 h-4 text-orange-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+              <span>12 Squads per Battle</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <svg class="w-4 h-4 text-emerald-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/></svg>
+              <span>Point System: 12-9-8-7-6-5-4-3-2-1</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <svg class="w-4 h-4 text-amber-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+              <span>Kill Bonus: +1 PT per Elimination</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Action CTA Buttons -->
+        <div class="flex flex-wrap items-center gap-3 pt-2">
+          <a href="/tournament/<%= currentTournament.id %>" class="btn-fire">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+            </svg>
+            View Full Tournament Hub & Standings
+          </a>
+          <a href="#matches-feed-container" class="btn-glass">
+            <svg class="w-4 h-4 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"/>
+            </svg>
+            Jump to Match Results & Maps
+          </a>
+        </div>
+
+      </div>
+    </section>
+  <% } else { %>
+    <section class="glass-panel p-8 text-center space-y-4 border-dashed border-white/20">
+      <div class="w-14 h-14 rounded-2xl bg-orange-500/20 text-orange-400 mx-auto flex items-center justify-center border border-orange-500/30">
+        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+        </svg>
+      </div>
+      <div class="space-y-1">
+        <h2 class="font-display text-3xl font-bold text-white">Fresh Season — No Ongoing Tournament</h2>
+        <p class="text-xs text-slate-400 max-w-md mx-auto">All ongoing tournaments and match statistics have been reset to 0. Ready to start fresh! Log match scores or create tournaments in the admin command center.</p>
+      </div>
+      <div class="flex items-center justify-center gap-3 pt-2">
+        <a href="/admin/tournaments/new" class="btn-fire text-xs py-2.5 px-5">
+          + Create First Tournament
+        </a>
+        <a href="/admin/matches/new" class="btn-glass text-xs py-2.5 px-5">
+          + Log First Match
+        </a>
+      </div>
+    </section>
+  <% } %>
+
+  <!-- ========================================================================= -->
+  <!-- 4. MATCH RESULTS & MAPS + TOP PLAYERS (LAST AS ITS)                       -->
+  <!-- ========================================================================= -->
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    
+    <!-- MATCH RESULTS LIST -->
+    <div class="lg:col-span-2 space-y-4">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <h3 class="font-display text-2xl font-bold text-white tracking-wide">Match Results & Maps</h3>
+          <span id="match-count-badge" class="px-2 py-0.5 rounded-md text-xs font-mono bg-white/5 text-gray-300 border border-white/10">
+            <%= officialMatches.length %> Matches
+          </span>
+        </div>
+        <span id="match-filter-indicator" class="badge-official text-[10px]">OFFICIAL MATCHES</span>
+      </div>
+
+      <!-- No matches state -->
+      <div id="no-matches-message" class="glass-card p-8 text-center text-gray-400 <%= matches.length === 0 ? '' : 'hidden' %>">
+        <p class="font-mono text-sm">No matches logged yet (0 Matches). Ready to record fresh esports results.</p>
+      </div>
+
+      <!-- Match Cards Container -->
+      <div class="space-y-4" id="matches-feed-container">
+        <% matches.forEach(match => { %>
+          <div 
+            class="match-card glass-card p-5 border-l-4 <%= match.is_official ? 'border-l-emerald-500' : 'border-l-amber-500' %> transition-all duration-300"
+            data-is-official="<%= match.is_official ? 'true' : 'false' %>">
+            
+            <div class="flex flex-wrap items-center justify-between gap-2 border-b border-white/5 pb-3 mb-3">
+              <div class="flex items-center gap-3">
+                <span class="font-display text-2xl font-bold text-white">MATCH #<%= match.match_number %></span>
+                <span class="px-2.5 py-0.5 rounded-md bg-white/5 font-mono text-xs text-gray-300 border border-white/5 flex items-center gap-1.5">
+                  <span class="w-1.5 h-1.5 rounded-full bg-orange-400"></span>
+                  Map: <%= match.map_name %>
+                </span>
+              </div>
+
+              <div class="flex items-center gap-3">
+                <% if (match.is_official) { %>
+                  <span class="badge-official">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                    OFFICIAL TOURNAMENT
+                  </span>
+                <% } else { %>
+                  <span class="badge-unofficial">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    LOCAL ORGANIZER
+                  </span>
+                <% } %>
+              </div>
+            </div>
+
+            <% if (match.notes) { %>
+              <p class="text-xs text-gray-400 mb-3 italic"><%= match.notes %></p>
+            <% } %>
+
+            <!-- Match Team Placement Grid -->
+            <% if (match.results && match.results.length > 0) { %>
+              <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 text-xs">
+                <% match.results.slice(0, 6).forEach(res => { %>
+                  <div class="flex items-center justify-between p-2.5 rounded-lg <%= res.placement === 1 ? 'bg-amber-500/15 border border-amber-500/30' : 'bg-black/30 border border-white/5' %>">
+                    <div class="flex items-center gap-2 truncate">
+                      <span class="font-bold font-mono <%= res.placement === 1 ? 'text-amber-400' : 'text-gray-500' %>">#<%= res.placement %></span>
+                      <span class="font-semibold text-gray-200 truncate"><%= res.team_name %></span>
+                    </div>
+                    <div class="font-mono text-gray-300 flex items-center gap-2">
+                      <span class="text-[#ff4e00] font-bold"><%= res.kills %>K</span>
+                      <span class="font-bold text-white"><%= res.total_points %>PTS</span>
+                    </div>
+                  </div>
+                <% }); %>
+              </div>
+            <% } %>
+          </div>
+        <% }); %>
+      </div>
+    </div>
+
+    <!-- TOP FRAGGERS & MVP SPOTLIGHT (UPDATES TO ACTIVE MODE) -->
+    <div class="space-y-4">
+      <div class="flex items-center justify-between">
+        <h3 class="font-display text-2xl font-bold text-white tracking-wide">Top Fraggers (MVP)</h3>
+        <span id="top-players-badge" class="badge-official text-[10px]">OFFICIAL</span>
+      </div>
+      
+      <div class="glass-panel p-5 space-y-4" id="top-players-container">
+        
+        <!-- Rendered Top Player Cards -->
+        <% allPlayerStats.forEach((p, idx) => { %>
+          <div 
+            class="top-player-row flex items-center justify-between p-3 rounded-xl bg-black/30 border border-white/5 hover:border-[#ff4e00]/30 transition-all"
+            data-official-kills="<%= p.official.kills %>"
+            data-official-matches="<%= p.official.matches_played %>"
+            data-unofficial-kills="<%= p.unofficial.kills %>"
+            data-unofficial-matches="<%= p.unofficial.matches_played %>"
+            data-combined-kills="<%= p.combined.kills %>"
+            data-combined-matches="<%= p.combined.matches_played %>">
+            
+            <div class="flex items-center gap-3">
+              <span class="player-rank-num font-display text-xl font-bold <%= idx === 0 ? 'text-amber-400' : 'text-gray-600' %>">
+                #<%= idx + 1 %>
+              </span>
+              <img src="<%= p.avatar_url %>" alt="<%= p.in_game_name %>" class="w-10 h-10 rounded-full object-cover border border-white/10" onerror="this.src='https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=300&auto=format&fit=crop'">
+              <div>
+                <a href="/player/<%= p.player_id %>" class="font-bold text-sm text-white hover:text-[#ff4e00] transition-colors block">
+                  <%= p.in_game_name %>
+                </a>
+                <p class="text-xs text-gray-400 font-mono"><%= p.role || 'Player' %></p>
+              </div>
+            </div>
+
+            <div class="text-right font-mono">
+              <div class="player-kills-val text-base font-bold text-[#ff4e00]"><%= p.official.kills %> Kills</div>
+              <div class="player-matches-val text-[10px] text-gray-500"><%= p.official.matches_played %> Matches</div>
+            </div>
+          </div>
+        <% }); %>
+
+        <div class="pt-2">
+          <a href="/teams" class="btn-glass w-full text-center text-xs py-2.5 justify-center flex items-center gap-2">
+            <span>View Complete Squad Profiles</span>
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+          </a>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</main>
+
+<!-- Inject Server Stats JSON for smooth client transitions -->
+<script id="server-stats-data" type="application/json">
+  <%- JSON.stringify({
+    currentTourneySummary: currentTourneySummary || null,
+    careerSummary: careerSummary || null,
+    currentTournament: currentTournament || null
+  }) %>
+</script>
+
+<%- include('partials/footer') %>

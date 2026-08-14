@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= typeof title !== 'undefined' ? title : 'TAGFREEFIREMAX — Free Fire MAX Esports Tournament Tracker' %></title>
+  
+  <!-- Tailwind CSS CDN for maximum runtime stability -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            ffprimary: '#ff4e00',
+            ffgold: '#f59e0b',
+            ffemerald: '#10b981',
+            ffcyan: '#06b6d4'
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Outfit:wght@300;400;500;600;700;800&family=Teko:wght@500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Custom Stylesheet -->
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body class="bg-[#050508] text-gray-100 min-h-screen flex flex-col antialiased selection:bg-[#ff4e00] selection:text-white">
+  <!-- Sophisticated Dark Ambient Glow -->
+  <div class="site-ambient-glow"></div>
+  <div class="site-ambient-glow-bottom"></div>
+
+  <!-- Dynamic Site Background Layer with Blur -->
+  <div class="site-bg-layer" style="background-image: url('<%= (typeof settings !== 'undefined' && settings.site_background_url) ? settings.site_background_url : 'https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=2070&auto=format&fit=crop' %>');"></div>
+  <div class="site-bg-overlay"></div>

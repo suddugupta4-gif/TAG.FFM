@@ -1,0 +1,145 @@
+<%- include('../partials/header') %>
+<%- include('../partials/navbar') %>
+
+<main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+
+  <%- include('../partials/flash') %>
+
+  <!-- Header -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div>
+      <div class="flex items-center gap-2">
+        <a href="/admin" class="text-xs font-mono text-slate-400 hover:text-orange-400">&larr; Admin Dashboard</a>
+      </div>
+      <h1 class="font-display text-4xl font-bold text-white tracking-wide">Match Results & Official Verification</h1>
+      <p class="text-slate-400 text-sm">Lock in confirmed scoreboard results or keep provisional live match scores.</p>
+    </div>
+
+    <a href="/admin/matches/new?tournament_id=<%= selectedTourneyId %>" class="btn-fire text-xs py-2 px-4 flex items-center gap-2">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+      Log New Match Result
+    </a>
+  </div>
+
+  <!-- Tournament Filter Selector -->
+  <div class="glass-panel p-4 flex flex-wrap items-center justify-between gap-4">
+    <div class="flex items-center gap-3">
+      <span class="text-xs font-mono text-slate-300 uppercase">Selected Tournament:</span>
+      <select onchange="window.location.href='/admin/matches?tournament_id='+this.value" class="px-3 py-1.5 rounded-lg bg-slate-900 border border-white/20 text-white text-xs font-mono focus:outline-none focus:border-orange-500">
+        <% tournaments.forEach(t => { %>
+          <option value="<%= t.id %>" <%= t.id === selectedTourneyId ? 'selected' : '' %>>
+            <%= t.name %> <%= t.is_current ? '(CURRENT)' : '' %>
+          </option>
+        <% }); %>
+      </select>
+    </div>
+
+    <div class="flex items-center gap-3 text-xs font-mono">
+      <span class="badge-official">Official: <%= matches.filter(m => m.is_official).length %></span>
+      <span class="badge-unofficial">Unofficial: <%= matches.filter(m => !m.is_official).length %></span>
+    </div>
+  </div>
+
+  <!-- Match List with Instant Official Toggle Buttons -->
+  <div class="space-y-4">
+    <% if (matches.length === 0) { %>
+      <div class="glass-card p-12 text-center text-slate-400">
+        <p>No matches recorded for this tournament yet.</p>
+        <a href="/admin/matches/new?tournament_id=<%= selectedTourneyId %>" class="btn-fire text-xs mt-4 inline-flex">
+          Log First Match
+        </a>
+      </div>
+    <% } else { %>
+      <% matches.forEach(match => { %>
+        <div class="glass-card p-6 border-l-4 <%= match.is_official ? 'border-l-emerald-500' : 'border-l-amber-500' %>">
+          <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/10 pb-4 mb-4">
+            <div class="flex items-center gap-3">
+              <span class="font-display text-3xl font-bold text-white">MATCH #<%= match.match_number %></span>
+              <span class="px-2.5 py-0.5 rounded-md bg-white/10 font-mono text-xs text-slate-300">
+                Map: <%= match.map_name %>
+              </span>
+              <span class="text-xs font-mono text-slate-500">
+                <%= new Date(match.played_at).toLocaleDateString() %>
+              </span>
+            </div>
+
+            <!-- OFFICIAL / UNOFFICIAL STATUS TOGGLE -->
+            <div class="flex items-center gap-3">
+              <span id="match-badge-<%= match.id %>" class="<%= match.is_official ? 'badge-official' : 'badge-unofficial' %>">
+                <% if (match.is_official) { %>
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                  OFFICIAL
+                <% } else { %>
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                  UNOFFICIAL
+                <% } %>
+              </span>
+
+              <!-- Live AJAX Toggle Button -->
+              <button 
+                type="button" 
+                class="admin-toggle-official-btn btn-glass text-xs <%= match.is_official ? 'text-amber-400 hover:text-amber-300' : 'text-emerald-400 hover:text-emerald-300' %>"
+                data-match-id="<%= match.id %>"
+                data-is-official="<%= match.is_official %>"
+              >
+                <% if (match.is_official) { %>
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                  Set Unofficial
+                <% } else { %>
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                  Confirm Official
+                <% } %>
+              </button>
+
+              <form action="/admin/matches/<%= match.id %>/delete" method="POST" onsubmit="return confirm('Delete this match and all team scores?');" class="inline">
+                <button type="submit" class="btn-glass text-xs py-1.5 px-2 text-red-400 hover:bg-red-500/20" title="Delete Match">
+                  &times;
+                </button>
+              </form>
+            </div>
+          </div>
+
+          <% if (match.notes) { %>
+            <p class="text-xs text-slate-400 italic mb-4"><%= match.notes %></p>
+          <% } %>
+
+          <!-- Scoreboard Table for Match -->
+          <% if (match.results && match.results.length > 0) { %>
+            <div class="overflow-x-auto">
+              <table class="w-full text-xs font-mono text-left">
+                <thead class="text-slate-400 border-b border-white/5">
+                  <tr>
+                    <th class="py-1.5 px-2">Place</th>
+                    <th class="py-1.5 px-2">Team</th>
+                    <th class="py-1.5 px-2 text-center">Kills</th>
+                    <th class="py-1.5 px-2 text-center">Placement Pts</th>
+                    <th class="py-1.5 px-2 text-center">Kill Pts</th>
+                    <th class="py-1.5 px-2 text-right">Total Score</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-white/5">
+                  <% match.results.forEach(r => { %>
+                    <tr class="<%= r.placement === 1 ? 'text-amber-400 font-bold bg-amber-500/10' : 'text-slate-300' %>">
+                      <td class="py-2 px-2">#<%= r.placement %></td>
+                      <td class="py-2 px-2 flex items-center gap-2 font-sans font-semibold">
+                        <img src="<%= r.team_logo %>" alt="" class="w-4 h-4 rounded object-cover" onerror="this.style.display='none'">
+                        <%= r.team_name %> [<%= r.team_tag %>]
+                      </td>
+                      <td class="py-2 px-2 text-center"><%= r.kills %></td>
+                      <td class="py-2 px-2 text-center text-slate-400"><%= r.placement_points %></td>
+                      <td class="py-2 px-2 text-center text-slate-400"><%= r.kill_points %></td>
+                      <td class="py-2 px-2 text-right font-bold text-white"><%= r.total_points %> PTS</td>
+                    </tr>
+                  <% }); %>
+                </tbody>
+              </table>
+            </div>
+          <% } %>
+        </div>
+      <% }); %>
+    <% } %>
+  </div>
+
+</main>
+
+<%- include('../partials/footer') %>

@@ -1,0 +1,111 @@
+<header class="sticky top-0 z-50 glass-header border-b border-white/5">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex items-center justify-between h-20">
+      
+      <!-- Brand Logo -->
+      <a href="/" class="flex items-center gap-3 group">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-[#ff4e00] to-orange-800 flex items-center justify-center shadow-lg shadow-[#ff4e00]/20 group-hover:scale-105 transition-transform duration-200 border border-white/15">
+          <svg class="w-5 h-5 text-white" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+          </svg>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="font-display text-2xl sm:text-3xl font-black tracking-wider text-[#ff4e00] group-hover:text-white transition-colors">
+              TAGFREEFIRE<span class="text-white">MAX</span>
+            </span>
+          </div>
+          <p class="text-[10px] text-gray-500 uppercase font-mono tracking-widest -mt-1 hidden sm:block">ESPORTS COMMAND CENTER</p>
+        </div>
+      </a>
+
+      <!-- Desktop Nav Links -->
+      <nav class="hidden md:flex items-center gap-1.5">
+        <a href="/" class="px-3.5 py-2 rounded-lg text-xs font-semibold uppercase tracking-wider transition-all duration-150 <%= currentPath === '/' ? 'bg-[#ff4e00]/10 text-[#ff4e00] border border-[#ff4e00]/30 shadow-sm shadow-[#ff4e00]/10' : 'text-gray-400 hover:text-white hover:bg-white/5' %>">
+          Home / Live
+        </a>
+        <a href="/tournaments" class="px-3.5 py-2 rounded-lg text-xs font-semibold uppercase tracking-wider transition-all duration-150 <%= currentPath.startsWith('/tournaments') ? 'bg-[#ff4e00]/10 text-[#ff4e00] border border-[#ff4e00]/30 shadow-sm shadow-[#ff4e00]/10' : 'text-gray-400 hover:text-white hover:bg-white/5' %>">
+          Tournaments
+        </a>
+        <a href="/teams" class="px-3.5 py-2 rounded-lg text-xs font-semibold uppercase tracking-wider transition-all duration-150 <%= currentPath.startsWith('/teams') || currentPath.startsWith('/player') || currentPath.startsWith('/team') ? 'bg-[#ff4e00]/10 text-[#ff4e00] border border-[#ff4e00]/30 shadow-sm shadow-[#ff4e00]/10' : 'text-gray-400 hover:text-white hover:bg-white/5' %>">
+          Roster & Players
+        </a>
+        <a href="/analysis" class="px-3.5 py-2 rounded-lg text-xs font-semibold uppercase tracking-wider transition-all duration-150 <%= currentPath === '/analysis' ? 'bg-[#ff4e00]/10 text-[#ff4e00] border border-[#ff4e00]/30 shadow-sm shadow-[#ff4e00]/10' : 'text-gray-400 hover:text-white hover:bg-white/5' %> flex items-center gap-1.5">
+          <svg class="w-3.5 h-3.5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+          </svg>
+          Overall Analysis
+        </a>
+      </nav>
+
+      <!-- Right Action / Admin & Background button -->
+      <div class="flex items-center gap-2 sm:gap-3">
+        <!-- Background Photo Customizer Button -->
+        <button 
+          type="button" 
+          onclick="openBackgroundModal()"
+          class="btn-glass text-xs py-1.5 px-2.5 sm:px-3 text-slate-300 hover:text-orange-400 hover:border-orange-500/50 flex items-center gap-1.5"
+          title="Change Site Background Wallpaper"
+        >
+          <svg class="w-3.5 h-3.5 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+          </svg>
+          <span class="hidden sm:inline font-mono">Wallpaper</span>
+        </button>
+
+        <% if (isAdmin) { %>
+          <a href="/admin" class="btn-fire text-xs py-1.5 px-3 flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
+            Admin
+          </a>
+          <a href="/admin/logout" class="btn-glass text-xs py-1.5 px-2.5 text-gray-400 hover:text-red-400" title="Logout">
+            Logout
+          </a>
+        <% } else { %>
+          <a href="/admin/login" class="btn-glass text-xs py-1.5 px-3 flex items-center gap-1.5 text-gray-400 hover:text-white">
+            <svg class="w-3.5 h-3.5 text-[#ff4e00]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+            </svg>
+            <span class="hidden sm:inline">Admin</span>
+          </a>
+        <% } %>
+
+        <!-- Mobile Menu Toggle Button -->
+        <button id="mobile-menu-btn" class="md:hidden p-2 rounded-lg bg-white/5 border border-white/10 text-gray-400 hover:text-white focus:outline-none" aria-label="Open Navigation">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"/>
+          </svg>
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Mobile Drawer Menu -->
+  <div id="mobile-menu" class="hidden md:hidden border-t border-white/5 bg-[#050508]/95 backdrop-blur-xl px-4 py-4 space-y-2">
+    <a href="/" class="block px-3 py-2 rounded-md text-sm font-medium <%= currentPath === '/' ? 'bg-[#ff4e00]/15 text-[#ff4e00]' : 'text-gray-400' %>">
+      Home / Live
+    </a>
+    <a href="/tournaments" class="block px-3 py-2 rounded-md text-sm font-medium <%= currentPath.startsWith('/tournaments') ? 'bg-[#ff4e00]/15 text-[#ff4e00]' : 'text-gray-400' %>">
+      Tournaments
+    </a>
+    <a href="/teams" class="block px-3 py-2 rounded-md text-sm font-medium <%= currentPath.startsWith('/teams') || currentPath.startsWith('/player') || currentPath.startsWith('/team') ? 'bg-[#ff4e00]/15 text-[#ff4e00]' : 'text-gray-400' %>">
+      Roster & Players
+    </a>
+    <a href="/analysis" class="block px-3 py-2 rounded-md text-sm font-medium <%= currentPath === '/analysis' ? 'bg-[#ff4e00]/15 text-[#ff4e00]' : 'text-gray-400' %>">
+      Overall Analysis
+    </a>
+    <% if (isAdmin) { %>
+      <div class="pt-2 border-t border-white/5 flex gap-2">
+        <a href="/admin" class="flex-1 btn-fire text-center text-xs py-2">Admin Dashboard</a>
+        <a href="/admin/logout" class="btn-glass text-center text-xs py-2 text-red-400">Logout</a>
+      </div>
+    <% } else { %>
+      <div class="pt-2 border-t border-white/5">
+        <a href="/admin/login" class="block w-full py-2 px-3 text-center rounded-lg bg-white/5 border border-white/10 text-xs font-semibold text-gray-300 hover:text-white hover:bg-white/10">
+          Admin Access Login
+        </a>
+      </div>
+    <% } %>
+  </div>
+</header>

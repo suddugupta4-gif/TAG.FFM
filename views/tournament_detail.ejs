@@ -1,0 +1,291 @@
+<%- include('partials/header') %>
+<%- include('partials/navbar') %>
+
+<main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+
+  <%- include('partials/flash') %>
+
+  <!-- Tournament Header -->
+  <div class="relative glass-panel overflow-hidden p-6 sm:p-8">
+    <div class="absolute inset-0 z-0 opacity-30 bg-cover bg-center" style="background-image: url('<%= tournament.banner_url %>'); filter: blur(3px);"></div>
+    <div class="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-950/85 to-slate-950/40 z-0"></div>
+
+    <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+      <div class="space-y-3 max-w-3xl">
+        <div class="flex flex-wrap items-center gap-2">
+          <a href="/tournaments" class="text-xs font-mono text-slate-400 hover:text-orange-400">&larr; Back to Archives</a>
+          <span class="text-slate-600">•</span>
+          <% if (tournament.is_current) { %>
+            <span class="badge-live"><span class="live-dot"></span> CURRENT TOURNAMENT</span>
+          <% } else { %>
+            <span class="px-2.5 py-0.5 rounded-full text-xs font-mono bg-white/10 text-slate-300">ARCHIVED</span>
+          <% } %>
+          <span class="badge-official"><%= tournament.game_mode %></span>
+        </div>
+
+        <h1 class="font-display text-4xl sm:text-5xl font-bold text-white tracking-wide leading-none">
+          <%= tournament.name %>
+        </h1>
+
+        <p class="text-sm text-slate-300">
+          <%= tournament.description || 'Full tournament matches and scoreboard tracking.' %>
+        </p>
+
+        <div class="flex flex-wrap gap-4 text-xs font-mono text-slate-400 pt-2">
+          <div><span class="text-slate-500">Prize Pool:</span> <span class="text-amber-400 font-bold"><%= tournament.prize_pool %></span></div>
+          <div><span class="text-slate-500">Matches Tracked:</span> <span id="header-matches-count" class="text-white font-bold"><%= matches.length %></span></div>
+          <div><span class="text-slate-500">Verified Official:</span> <span class="text-emerald-400 font-bold"><%= matches.filter(m => m.is_official).length %></span></div>
+        </div>
+      </div>
+
+      <!-- Top Official / Unofficial Touch Selection Pill -->
+      <div class="flex flex-col sm:items-end gap-2 shrink-0">
+        <span class="text-[11px] font-mono text-slate-400 uppercase tracking-wider">Select Stats Mode</span>
+        <div class="inline-flex p-1 rounded-2xl bg-black/60 border border-white/15 backdrop-blur-xl shadow-2xl">
+          <button 
+            id="btn-mode-combined" 
+            type="button"
+            class="touch-manipulation select-none py-2.5 px-4 sm:px-5 rounded-xl font-mono text-xs sm:text-sm font-bold flex items-center gap-2 transition-all duration-300 cursor-pointer active:scale-95 <%= !isOfficialOnly ? 'bg-gradient-to-r from-[#ff4e00] to-amber-500 text-white shadow-lg shadow-[#ff4e00]/25' : 'text-slate-400 hover:text-white' %>"
+            onclick="setTournamentFilter('combined')"
+          >
+            <svg class="w-4 h-4 <%= !isOfficialOnly ? 'text-white animate-pulse' : 'text-amber-400' %>" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            <span>Include Unofficial (Live)</span>
+          </button>
+          
+          <button 
+            id="btn-mode-official" 
+            type="button"
+            class="touch-manipulation select-none py-2.5 px-4 sm:px-5 rounded-xl font-mono text-xs sm:text-sm font-bold flex items-center gap-2 transition-all duration-300 cursor-pointer active:scale-95 <%= isOfficialOnly ? 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-lg shadow-emerald-500/25' : 'text-slate-400 hover:text-white' %>"
+            onclick="setTournamentFilter('official')"
+          >
+            <svg class="w-4 h-4 <%= isOfficialOnly ? 'text-white' : 'text-emerald-400' %>" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            <span>Official Only</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4 Core Tournament Summary Metrics (Smooth Animated Cards) -->
+  <% if (typeof tournamentSummary !== 'undefined' && tournamentSummary) { %>
+    <% const activeSummary = isOfficialOnly ? tournamentSummary.official : tournamentSummary.combined; %>
+    <div id="stats-cards-grid" class="grid grid-cols-2 lg:grid-cols-4 gap-4 transition-all duration-300">
+      <div class="glass-card p-5 hover:border-white/25 transition-all duration-300">
+        <div class="flex items-center justify-between text-gray-400 text-xs font-mono mb-2">
+          <span>TOTAL MATCHES</span>
+          <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+        </div>
+        <div id="card-total-matches" class="font-display text-4xl font-bold text-white transition-transform duration-300"><%= activeSummary.matches %></div>
+        <p id="card-total-matches-sub" class="text-xs text-gray-400 font-mono mt-1"><%= isOfficialOnly ? 'Official Verified' : 'All Matches (Live Sync)' %></p>
+      </div>
+
+      <div class="glass-card p-5 hover:border-[#ff4e00]/40 transition-all duration-300">
+        <div class="flex items-center justify-between text-gray-400 text-xs font-mono mb-2">
+          <span>TOTAL KILLS</span>
+          <svg class="w-4 h-4 text-[#ff4e00]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+        </div>
+        <div id="card-total-kills" class="font-display text-4xl font-bold text-[#ff4e00] transition-transform duration-300"><%= activeSummary.kills %></div>
+        <p id="card-total-kills-sub" class="text-xs text-[#ff4e00]/80 font-mono mt-1"><%= activeSummary.avg_kills %> Avg Kills / Match</p>
+      </div>
+
+      <div class="glass-card p-5 hover:border-amber-400/40 transition-all duration-300">
+        <div class="flex items-center justify-between text-gray-400 text-xs font-mono mb-2">
+          <span>TOTAL BOOYAH</span>
+          <svg class="w-4 h-4 text-amber-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+        </div>
+        <div id="card-total-booyah" class="font-display text-4xl font-bold text-amber-400 flex items-center gap-2 transition-transform duration-300">
+          <span id="card-booyah-num"><%= activeSummary.booyahs %></span>
+          <span class="text-xs font-mono px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 font-normal">WINS</span>
+        </div>
+        <p id="card-total-booyah-sub" class="text-xs text-amber-400/80 font-mono mt-1"><%= activeSummary.win_rate %>% Win Rate</p>
+      </div>
+
+      <div class="glass-card p-5 hover:border-emerald-400/40 transition-all duration-300">
+        <div class="flex items-center justify-between text-gray-400 text-xs font-mono mb-2">
+          <span>TOTAL KD</span>
+          <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        </div>
+        <div id="card-total-kd" class="font-display text-4xl font-bold text-emerald-400 transition-transform duration-300"><%= activeSummary.kd %></div>
+        <p id="card-total-kd-sub" class="text-xs text-emerald-400/80 font-mono mt-1">Survival Kill/Death Ratio</p>
+      </div>
+    </div>
+  <% } %>
+
+  <!-- MATCHES & SCOREBOARDS -->
+  <section class="space-y-6">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-white/10 pb-4">
+      <div>
+        <h2 class="font-display text-3xl font-bold text-white tracking-wide">Match History & Scoreboards</h2>
+        <p id="matches-filter-hint" class="text-slate-400 text-xs sm:text-sm font-mono mt-0.5">
+          <%= isOfficialOnly ? 'Showing verified official matches only' : 'Showing all matches including live provisional results' %>
+        </p>
+      </div>
+      <div class="flex items-center gap-2">
+        <span id="matches-badge-count" class="px-3 py-1 rounded-lg bg-white/5 border border-white/10 text-xs font-mono text-slate-300">
+          <%= isOfficialOnly ? matches.filter(m => m.is_official).length : matches.length %> Matches Displayed
+        </span>
+      </div>
+    </div>
+
+    <% if (matches.length === 0) { %>
+      <div class="glass-card p-8 text-center text-slate-400">
+        No matches recorded yet for this tournament.
+      </div>
+    <% } else { %>
+      <div id="matches-list-grid" class="grid grid-cols-1 md:grid-cols-2 gap-6 transition-all duration-300">
+        <% matches.forEach(match => { %>
+          <div 
+            class="match-card-item glass-card p-6 border-l-4 <%= match.is_official ? 'border-l-emerald-500' : 'border-l-amber-500' %> flex flex-col justify-between transition-all duration-300 <%= (isOfficialOnly && !match.is_official) ? 'hidden' : '' %>"
+            data-official="<%= match.is_official %>"
+          >
+            <div>
+              <div class="flex items-center justify-between border-b border-white/10 pb-3 mb-4">
+                <div>
+                  <span class="font-display text-3xl font-bold text-white">MATCH #<%= match.match_number %></span>
+                  <div class="flex items-center gap-2 mt-0.5">
+                    <span class="text-xs font-mono text-orange-400 bg-orange-500/10 px-2 py-0.5 rounded">
+                      Map: <%= match.map_name %>
+                    </span>
+                  </div>
+                </div>
+
+                <div>
+                  <% if (match.is_official) { %>
+                    <span class="badge-official">
+                      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                      OFFICIAL
+                    </span>
+                  <% } else { %>
+                    <span class="badge-unofficial">
+                      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                      UNOFFICIAL / LIVE
+                    </span>
+                  <% } %>
+                </div>
+              </div>
+
+              <% if (match.notes) { %>
+                <p class="text-xs text-slate-400 mb-4 italic"><%= match.notes %></p>
+              <% } %>
+
+              <!-- Match Team Results Table -->
+              <% if (match.results && match.results.length > 0) { %>
+                <div class="space-y-1.5">
+                  <% match.results.forEach(res => { %>
+                    <div class="flex items-center justify-between p-2 rounded-lg text-xs <%= res.placement === 1 ? 'bg-amber-500/20 border border-amber-500/30' : 'bg-black/30' %>">
+                      <div class="flex items-center gap-2">
+                        <span class="font-bold font-mono <%= res.placement === 1 ? 'text-amber-400 font-display text-base' : 'text-slate-400' %>">#<%= res.placement %></span>
+                        <img src="<%= res.team_logo %>" alt="" class="w-5 h-5 rounded object-cover" onerror="this.style.display='none'">
+                        <span class="font-semibold text-slate-200"><%= res.team_name %></span>
+                      </div>
+                      <div class="flex items-center gap-3 font-mono">
+                        <span class="text-slate-400"><%= res.kills %> Kills</span>
+                        <span class="font-bold text-white"><%= res.total_points %> Pts</span>
+                      </div>
+                    </div>
+                  <% }); %>
+                </div>
+              <% } %>
+            </div>
+
+            <div class="pt-4 mt-4 border-t border-white/10 text-right">
+              <span class="text-[11px] font-mono text-slate-500">
+                <%= new Date(match.played_at).toLocaleDateString() %>
+              </span>
+            </div>
+          </div>
+        <% }); %>
+      </div>
+    <% } %>
+  </section>
+
+  <!-- Embedded Summary Data for Instant Smooth Touch Transitions -->
+  <% if (typeof tournamentSummary !== 'undefined' && tournamentSummary) { %>
+    <script>
+      const tourneySummaryData = <%- JSON.stringify(tournamentSummary) %>;
+      const tournamentId = <%= tournament.id %>;
+
+      function setTournamentFilter(mode) {
+        const btnCombined = document.getElementById('btn-mode-combined');
+        const btnOfficial = document.getElementById('btn-mode-official');
+        const matchesHint = document.getElementById('matches-filter-hint');
+        const matchesBadge = document.getElementById('matches-badge-count');
+
+        const cardMatches = document.getElementById('card-total-matches');
+        const cardMatchesSub = document.getElementById('card-total-matches-sub');
+        const cardKills = document.getElementById('card-total-kills');
+        const cardKillsSub = document.getElementById('card-total-kills-sub');
+        const cardBooyahNum = document.getElementById('card-booyah-num');
+        const cardBooyahSub = document.getElementById('card-total-booyah-sub');
+        const cardKd = document.getElementById('card-total-kd');
+
+        const isOfficial = (mode === 'official');
+        const data = isOfficial ? tourneySummaryData.official : tourneySummaryData.combined;
+
+        // Smooth button transitions
+        if (isOfficial) {
+          btnOfficial.className = 'touch-manipulation select-none py-2.5 px-4 sm:px-5 rounded-xl font-mono text-xs sm:text-sm font-bold flex items-center gap-2 transition-all duration-300 cursor-pointer active:scale-95 bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-lg shadow-emerald-500/25';
+          btnCombined.className = 'touch-manipulation select-none py-2.5 px-4 sm:px-5 rounded-xl font-mono text-xs sm:text-sm font-bold flex items-center gap-2 transition-all duration-300 cursor-pointer active:scale-95 text-slate-400 hover:text-white';
+          if (matchesHint) matchesHint.textContent = 'Showing verified official matches only';
+        } else {
+          btnCombined.className = 'touch-manipulation select-none py-2.5 px-4 sm:px-5 rounded-xl font-mono text-xs sm:text-sm font-bold flex items-center gap-2 transition-all duration-300 cursor-pointer active:scale-95 bg-gradient-to-r from-[#ff4e00] to-amber-500 text-white shadow-lg shadow-[#ff4e00]/25';
+          btnOfficial.className = 'touch-manipulation select-none py-2.5 px-4 sm:px-5 rounded-xl font-mono text-xs sm:text-sm font-bold flex items-center gap-2 transition-all duration-300 cursor-pointer active:scale-95 text-slate-400 hover:text-white';
+          if (matchesHint) matchesHint.textContent = 'Showing all matches including live provisional results';
+        }
+
+        // Smoothly animate the card values
+        [cardMatches, cardKills, cardBooyahNum, cardKd].forEach(el => {
+          if (el) {
+            el.classList.add('opacity-40', 'scale-95');
+          }
+        });
+
+        setTimeout(() => {
+          if (cardMatches) cardMatches.textContent = data.matches;
+          if (cardMatchesSub) cardMatchesSub.textContent = isOfficial ? 'Official Verified' : 'All Matches (Live Sync)';
+          if (cardKills) cardKills.textContent = data.kills;
+          if (cardKillsSub) cardKillsSub.textContent = `${data.avg_kills} Avg Kills / Match`;
+          if (cardBooyahNum) cardBooyahNum.textContent = data.booyahs;
+          if (cardBooyahSub) cardBooyahSub.textContent = `${data.win_rate}% Win Rate`;
+          if (cardKd) cardKd.textContent = data.kd;
+
+          [cardMatches, cardKills, cardBooyahNum, cardKd].forEach(el => {
+            if (el) {
+              el.classList.remove('opacity-40', 'scale-95');
+            }
+          });
+        }, 150);
+
+        // Smoothly filter match cards
+        let visibleCount = 0;
+        const matchCards = document.querySelectorAll('.match-card-item');
+        matchCards.forEach(card => {
+          const matchIsOfficial = card.getAttribute('data-official') === 'true';
+          if (isOfficial && !matchIsOfficial) {
+            card.classList.add('hidden');
+          } else {
+            card.classList.remove('hidden');
+            visibleCount++;
+          }
+        });
+
+        if (matchesBadge) {
+          matchesBadge.textContent = `${visibleCount} Matches Displayed`;
+        }
+
+        // Update URL state without page reload
+        try {
+          const newUrl = `/tournament/${tournamentId}?mode=${mode}`;
+          window.history.replaceState({ path: newUrl }, '', newUrl);
+        } catch (e) {}
+      }
+    </script>
+  <% } %>
+
+</main>
+
+<%- include('partials/footer') %>

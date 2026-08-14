@@ -1,0 +1,249 @@
+<%- include('partials/header') %>
+<%- include('partials/navbar') %>
+
+<main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-10">
+
+  <%- include('partials/flash') %>
+
+  <!-- Exclusive Team Header Banner: TAGFREEFIREMAX -->
+  <div class="glass-panel p-6 sm:p-8 flex flex-col md:flex-row items-center md:items-start gap-6 border-orange-500/30 relative overflow-hidden">
+    <div class="absolute -right-20 -bottom-20 w-80 h-80 bg-orange-500/10 rounded-full blur-3xl pointer-events-none"></div>
+    
+    <img src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=400&auto=format&fit=crop" alt="TAGFREEFIREMAX" class="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl object-cover bg-slate-900 border-2 border-orange-500/40 shadow-xl shrink-0" onerror="this.src='https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=200&auto=format&fit=crop'">
+    
+    <div class="space-y-3 text-center md:text-left flex-1 relative z-10">
+      <div class="flex flex-wrap items-center justify-center md:justify-start gap-2">
+        <span class="badge-official font-mono">[TAG]</span>
+        <span class="px-2.5 py-0.5 rounded-full text-xs font-mono bg-white/10 text-slate-300">Global / India</span>
+        <span class="px-2.5 py-0.5 rounded-full text-xs font-mono bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">Official Single Squad</span>
+      </div>
+
+      <h1 class="font-display text-4xl sm:text-5xl font-bold text-white tracking-wide leading-none">
+        TAGFREEFIREMAX
+      </h1>
+
+      <p class="text-sm text-slate-400 max-w-2xl">
+        Official Free Fire MAX competitive esports squad roster featuring 5 elite pro athletes: <strong class="text-white">TAG KD, TAG SHOTO, TAG WOLVIN, TAG SAHIL, and TAG LOUIS</strong>.
+      </p>
+
+      <div class="flex flex-wrap items-center justify-center md:justify-start gap-3 pt-1">
+        <a href="/team/1" class="btn-glass text-xs py-2 px-4">
+          View Team Profile & Match History &rarr;
+        </a>
+        <a href="/analysis" class="btn-fire text-xs py-2 px-4">
+          Roster Performance Analytics
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4 Core Career Aggregate Metrics for TAGFREEFIREMAX -->
+  <% if (typeof careerSummary !== 'undefined' && careerSummary) { %>
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div class="glass-card p-5">
+        <div class="flex items-center justify-between text-gray-400 text-xs font-mono mb-2">
+          <span>TOTAL MATCHES</span>
+          <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+        </div>
+        <div class="font-display text-4xl font-bold text-white"><%= careerSummary.combined.total_matches %></div>
+        <p class="text-xs text-gray-400 font-mono mt-1"><%= careerSummary.official.total_matches %> Official Verified</p>
+      </div>
+
+      <div class="glass-card p-5">
+        <div class="flex items-center justify-between text-gray-400 text-xs font-mono mb-2">
+          <span>TOTAL KILLS</span>
+          <svg class="w-4 h-4 text-[#ff4e00]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+        </div>
+        <div class="font-display text-4xl font-bold text-[#ff4e00]"><%= careerSummary.combined.total_kills %></div>
+        <p class="text-xs text-[#ff4e00]/80 font-mono mt-1"><%= careerSummary.combined.avg_kills %> Avg Kills / Match</p>
+      </div>
+
+      <div class="glass-card p-5">
+        <div class="flex items-center justify-between text-gray-400 text-xs font-mono mb-2">
+          <span>TOTAL BOOYAH</span>
+          <svg class="w-4 h-4 text-amber-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+        </div>
+        <div class="font-display text-4xl font-bold text-amber-400 flex items-center gap-2">
+          <span><%= careerSummary.combined.total_booyahs %></span>
+          <span class="text-xs font-mono px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 font-normal">WINS</span>
+        </div>
+        <p class="text-xs text-amber-400/80 font-mono mt-1"><%= careerSummary.combined.win_rate %>% Squad Win Rate</p>
+      </div>
+
+      <div class="glass-card p-5">
+        <div class="flex items-center justify-between text-gray-400 text-xs font-mono mb-2">
+          <span>TOTAL KD</span>
+          <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        </div>
+        <div class="font-display text-4xl font-bold text-emerald-400"><%= careerSummary.combined.total_kd %></div>
+        <p class="text-xs text-emerald-400/80 font-mono mt-1">Survival Kill/Death Ratio</p>
+      </div>
+    </div>
+  <% } %>
+
+  <!-- PLAYERS SECTION WITH DUAL STATS BLOCKS (OFFICIAL VS UNOFFICIAL/LIVE) -->
+  <section class="space-y-6">
+    <div class="flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <h2 class="font-display text-3xl font-bold text-white tracking-wide">TAGFREEFIREMAX Official Roster (5 Players)</h2>
+        <span class="badge-official">5 Active Pros</span>
+      </div>
+      <p class="text-xs font-mono text-slate-400 hidden sm:block">Toggle between Official & Live stats on any card</p>
+    </div>
+
+    <!-- Player Cards Grid (5 Players) -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <% allPlayers.forEach(p => { %>
+        <div class="player-card glass-card p-6 flex flex-col justify-between group border-white/10 hover:border-orange-500/40">
+          <div>
+            <!-- Player Top Bar: Photo, IGN, Role, Team -->
+            <div class="flex items-start gap-4 mb-4">
+              <div class="relative shrink-0">
+                <img src="<%= p.avatar_url %>" alt="<%= p.in_game_name %>" class="w-16 h-16 rounded-2xl object-cover border-2 border-orange-500/30 group-hover:border-orange-500 shadow-md bg-slate-800" onerror="this.src='https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=300&auto=format&fit=crop'">
+                <span class="absolute -bottom-1 -right-1 px-1.5 py-0.5 rounded bg-slate-900 text-[10px] font-mono font-bold text-amber-400 border border-white/10">
+                  TAG
+                </span>
+              </div>
+
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2">
+                  <a href="/player/<%= p.player_id %>" class="font-display text-2xl font-bold text-white group-hover:text-orange-400 transition-colors truncate">
+                    <%= p.in_game_name %>
+                  </a>
+                </div>
+                <p class="text-xs text-slate-400 truncate"><%= p.player_name %></p>
+                <div class="flex items-center gap-2 mt-1">
+                  <span class="px-2 py-0.5 rounded bg-white/10 text-[11px] font-mono text-slate-300">
+                    <%= p.role %>
+                  </span>
+                  <% if (p.free_fire_uid && p.free_fire_uid !== 'N/A') { %>
+                    <span class="text-[10px] font-mono text-slate-500 truncate">UID: <%= p.free_fire_uid %></span>
+                  <% } %>
+                </div>
+              </div>
+            </div>
+
+            <!-- Stats Dual-Tab Toggle Controls -->
+            <div class="p-1 rounded-xl bg-black/40 border border-white/10 flex gap-1 mb-4">
+              <button type="button" class="touch-manipulation select-none player-stat-tab-btn flex-1 py-2 px-2 rounded-lg text-xs font-mono font-bold flex items-center justify-center gap-1.5 transition-all duration-200 cursor-pointer active:scale-95 bg-emerald-500/20 text-emerald-300 border border-emerald-400/50" data-target="official">
+                <svg class="w-3.5 h-3.5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                Official Stats
+              </button>
+              <button type="button" class="touch-manipulation select-none player-stat-tab-btn flex-1 py-2 px-2 rounded-lg text-xs font-mono font-bold flex items-center justify-center gap-1.5 transition-all duration-200 cursor-pointer active:scale-95 bg-black/20 text-gray-400 border border-transparent" data-target="unofficial">
+                <svg class="w-3.5 h-3.5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                Unofficial / Live Stats
+              </button>
+            </div>
+
+            <!-- 1. OFFICIAL STATS TAB -->
+            <div class="player-stats-official space-y-3">
+              <div class="grid grid-cols-2 gap-2">
+                <div class="stat-box border-emerald-500/20 bg-black/40">
+                  <div class="stat-box-value text-emerald-400"><%= p.official.kills %></div>
+                  <div class="stat-box-label">Total Kills</div>
+                </div>
+                <div class="stat-box border-emerald-500/20 bg-black/40">
+                  <div class="stat-box-value text-white"><%= p.official.total_points %></div>
+                  <div class="stat-box-label">Total Points</div>
+                </div>
+                <div class="stat-box border-emerald-500/20 bg-black/40">
+                  <div class="stat-box-value text-emerald-300">#<%= p.official.avg_placement %></div>
+                  <div class="stat-box-label">Avg Placement</div>
+                </div>
+                <div class="stat-box border-emerald-500/20 bg-black/40">
+                  <div class="stat-box-value text-gray-200"><%= p.official.matches_played %></div>
+                  <div class="stat-box-label">Matches Played</div>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-2 gap-2 text-xs font-mono bg-gray-900/40 p-2.5 rounded-lg border border-white/5">
+                <div>
+                  <span class="text-gray-400">Avg Kills:</span>
+                  <span class="font-bold text-emerald-300 ml-1"><%= p.official.avg_kills %></span>
+                </div>
+                <div>
+                  <span class="text-gray-400">Avg DMG:</span>
+                  <span class="font-bold text-white ml-1"><%= p.official.avg_damage %></span>
+                </div>
+                <div>
+                  <span class="text-gray-400">Headshots:</span>
+                  <span class="font-bold text-amber-400 ml-1"><%= p.official.headshots %></span>
+                </div>
+                <div>
+                  <span class="text-gray-400">Status:</span>
+                  <span class="font-bold text-emerald-400 ml-1">Verified</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- 2. UNOFFICIAL / LIVE STATS TAB (HIDDEN BY DEFAULT) -->
+            <div class="player-stats-unofficial space-y-3 hidden">
+              <% if (p.unofficial.has_stats) { %>
+                <div class="grid grid-cols-2 gap-2">
+                  <div class="stat-box border-amber-500/20 bg-black/40">
+                    <div class="stat-box-value text-amber-400"><%= p.unofficial.kills %></div>
+                    <div class="stat-box-label">Total Kills</div>
+                  </div>
+                  <div class="stat-box border-amber-500/20 bg-black/40">
+                    <div class="stat-box-value text-white"><%= p.unofficial.total_points %></div>
+                    <div class="stat-box-label">Total Points</div>
+                  </div>
+                  <div class="stat-box border-amber-500/20 bg-black/40">
+                    <div class="stat-box-value text-amber-300">#<%= p.unofficial.avg_placement %></div>
+                    <div class="stat-box-label">Avg Placement</div>
+                  </div>
+                  <div class="stat-box border-amber-500/20 bg-black/40">
+                    <div class="stat-box-value text-gray-200"><%= p.unofficial.matches_played %></div>
+                    <div class="stat-box-label">Matches Played</div>
+                  </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2 text-xs font-mono bg-gray-900/40 p-2.5 rounded-lg border border-white/5">
+                  <div>
+                    <span class="text-gray-400">Avg Kills:</span>
+                    <span class="font-bold text-amber-300 ml-1"><%= p.unofficial.avg_kills %></span>
+                  </div>
+                  <div>
+                    <span class="text-gray-400">Avg DMG:</span>
+                    <span class="font-bold text-white ml-1"><%= p.unofficial.avg_damage %></span>
+                  </div>
+                  <div>
+                    <span class="text-gray-400">Headshots:</span>
+                    <span class="font-bold text-amber-400 ml-1"><%= p.unofficial.headshots %></span>
+                  </div>
+                  <div>
+                    <span class="text-gray-400">Status:</span>
+                    <span class="font-bold text-amber-400 ml-1">Live/Provisional</span>
+                  </div>
+                </div>
+              <% } else { %>
+                <!-- Unavailable / Pending Placeholder -->
+                <div class="p-5 rounded-xl bg-black/40 border border-white/10 text-center space-y-2">
+                  <div class="w-10 h-10 rounded-full bg-amber-500/10 text-amber-400 flex items-center justify-center mx-auto border border-amber-500/20">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                  </div>
+                  <h4 class="font-display text-lg font-bold text-gray-200">Unofficial Data Pending</h4>
+                  <p class="text-xs text-gray-400 leading-relaxed">
+                    No unconfirmed live stream stats recorded. All current matches for this player are 100% verified official.
+                  </p>
+                </div>
+              <% } %>
+            </div>
+
+          </div>
+
+          <div class="pt-4 mt-4 border-t border-white/10 flex items-center justify-between">
+            <span class="text-xs text-slate-400 font-mono">Team: TAGFREEFIREMAX</span>
+            <a href="/player/<%= p.player_id %>" class="btn-glass text-xs py-1 px-3">
+              Full Profile &rarr;
+            </a>
+          </div>
+        </div>
+      <% }); %>
+    </div>
+  </section>
+
+</main>
+
+<%- include('partials/footer') %>
+
