@@ -37,5 +37,5 @@
   <div class="site-ambient-glow-bottom"></div>
 
   <!-- Dynamic Site Background Layer with Blur -->
-  <div class="site-bg-layer" style="background-image: url('<%= (typeof settings !== 'undefined' && settings.site_background_url) ? settings.site_background_url : 'https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=2070&auto=format&fit=crop' %>');"></div>
+  <div id="site-global-bg-layer" class="site-bg-layer" style="background-image: url('<%- (typeof settings !== 'undefined' && settings.site_background_url) ? settings.site_background_url : 'https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=2070&auto=format&fit=crop' %>');"></div>
   <div class="site-bg-overlay"></div>

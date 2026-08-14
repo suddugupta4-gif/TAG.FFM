@@ -1,6 +1,11 @@
 // TAGFREEFIREMAX Client Scripts
 
 document.addEventListener('DOMContentLoaded', () => {
+  // Purge any legacy client-side background overrides so official admin background is always shown
+  try {
+    localStorage.removeItem('tagff_custom_bg');
+  } catch (e) {}
+
   // 0. TOP OF EVERYTHING - Global Mode Selector (Official vs Unofficial vs All)
   const modeButtons = document.querySelectorAll('.global-mode-btn');
   const serverStatsScript = document.getElementById('server-stats-data');

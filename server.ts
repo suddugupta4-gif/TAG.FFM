@@ -4,7 +4,7 @@ import session from 'express-session';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import { initDb } from './config/db.js';
+import { initDb, ensureDbReady } from './config/db.js';
 import { TournamentService } from './services/tournamentService.js';
 import publicRoutes from './routes/publicRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
@@ -47,6 +47,7 @@ app.use(express.static(path.join(process.cwd(), 'public')));
 // Global Request Logger, Site Context & Session Helper injection (Runs for ALL routes including /admin)
 app.use(async (req: Request, res: Response, next: NextFunction) => {
   try {
+    await ensureDbReady();
     const settings = await TournamentService.getSiteSettings();
     res.locals.settings = settings || {};
   } catch (e) {

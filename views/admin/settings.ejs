@@ -34,12 +34,20 @@
 
       <!-- Current Background Preview & Test Box -->
       <div class="space-y-2">
-        <span class="text-xs font-mono text-slate-300 uppercase">Active Wallpaper Live Preview</span>
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-mono text-slate-300 uppercase">Active Wallpaper Live Preview</span>
+          <form action="/admin/settings/background" method="POST" class="inline">
+            <input type="hidden" name="background_url" value="https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=2070&auto=format&fit=crop">
+            <button type="submit" class="text-xs font-mono text-slate-400 hover:text-orange-400 underline">
+              Reset to Default Wallpaper
+            </button>
+          </form>
+        </div>
         <div class="relative h-56 rounded-2xl overflow-hidden border border-white/20 bg-slate-950 flex items-center justify-center group shadow-2xl">
-          <img id="settingsBgPreview" src="<%= currentBg || 'https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=2070&auto=format&fit=crop' %>" alt="Current Wallpaper" class="w-full h-full object-cover">
+          <img id="settingsBgPreview" src="<%- currentBg || 'https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=2070&auto=format&fit=crop' %>" alt="Current Wallpaper" class="w-full h-full object-cover">
           
           <!-- Demonstration Glass Box -->
-          <div class="absolute inset-0 bg-slate-950/40 backdrop-blur-xs flex items-center justify-center p-6">
+          <div class="absolute inset-0 bg-slate-950/30 backdrop-blur-xs flex items-center justify-center p-6">
             <div class="glass p-4 rounded-xl border border-white/20 text-center max-w-sm w-full shadow-2xl space-y-1">
               <span class="badge-official text-[10px] py-0.5">ACTIVE WALLPAPER</span>
               <p class="font-display text-xl font-bold text-white">Glass UI Preview</p>

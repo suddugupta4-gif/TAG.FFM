@@ -35,8 +35,10 @@
     </div>
   </footer>
 
-  <!-- Background Photo Customizer Modal -->
-  <%- include('background_modal') %>
+  <% if (isAdmin) { %>
+    <!-- Background Photo Customizer Modal (Admin Only) -->
+    <%- include('background_modal') %>
+  <% } %>
 
   <!-- Scripts -->
   <script src="/js/main.js"></script>

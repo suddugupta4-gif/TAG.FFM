@@ -1,4 +1,4 @@
-<!-- Background Photo Customizer Modal (Glass UI) -->
+<!-- Background Photo Customizer Modal (Admin Only) -->
 <div id="backgroundModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
   <div class="glass-modal max-w-xl w-full p-6 sm:p-7 space-y-6 relative animate-smooth-in">
     
@@ -15,29 +15,29 @@
     <!-- Modal Header -->
     <div class="border-b border-white/10 pb-3">
       <div class="flex items-center gap-2">
-        <span class="badge-official text-[10px] py-0.5">THEME ENGINE</span>
-        <span class="text-xs font-mono text-orange-400">GLASS UI WALLPAPER</span>
+        <span class="badge-official text-[10px] py-0.5">ADMIN THEME CONTROL</span>
+        <span class="text-xs font-mono text-orange-400">GLOBAL WEBSITE WALLPAPER</span>
       </div>
       <h3 class="font-display text-3xl font-bold text-white tracking-wide mt-1 flex items-center gap-2">
         <svg class="w-6 h-6 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
         </svg>
-        Site Background Photo
+        Admin Background Customizer
       </h3>
-      <p class="text-xs text-slate-300 mt-1">Upload your custom background photo file or pick an esports arena wallpaper. Every box renders with dynamic frosted glass UI over the photo.</p>
+      <p class="text-xs text-slate-300 mt-1">Upload a background photo file or enter an image URL. It saves to the database for all visitors.</p>
     </div>
 
     <!-- Live Preview Box -->
     <div class="space-y-2">
       <div class="flex items-center justify-between text-xs font-mono">
         <span class="text-slate-300 uppercase">Live Wallpaper Preview</span>
-        <span id="bgStatusBadge" class="text-emerald-400">Ready</span>
+        <span id="bgStatusBadge" class="text-emerald-400">Active</span>
       </div>
       <div class="relative h-36 rounded-xl overflow-hidden border border-white/20 bg-slate-950 shadow-inner group">
-        <img id="bgModalLivePreview" src="https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=2070&auto=format&fit=crop" alt="Wallpaper Preview" class="w-full h-full object-cover">
+        <img id="bgModalLivePreview" src="<%- (typeof settings !== 'undefined' && settings.site_background_url) ? settings.site_background_url : 'https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=2070&auto=format&fit=crop' %>" alt="Wallpaper Preview" class="w-full h-full object-cover">
         
         <!-- Demonstration Glass Box over preview -->
-        <div class="absolute inset-0 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-black/30 backdrop-blur-xs flex items-center justify-center p-4">
           <div class="glass p-3 rounded-lg border border-white/20 text-center shadow-lg">
             <span class="text-xs font-mono font-bold text-orange-400">FROSTED GLASS UI TEST</span>
             <p class="text-[11px] text-white/90">All cards, panels & tables adapt over your background</p>
@@ -46,127 +46,97 @@
       </div>
     </div>
 
-    <!-- Upload & URL Tabs / Options -->
-    <% if (isAdmin) { %>
-      <!-- Admin Server-Side Persistence Form -->
-      <form action="/admin/settings/background" method="POST" enctype="multipart/form-data" class="space-y-4" id="adminBgForm">
-        
-        <!-- 1. File Upload with Sharp Compression -->
-        <div class="p-3.5 rounded-xl bg-slate-900/80 border border-orange-500/25 space-y-2">
-          <label class="block text-xs font-mono text-orange-400 uppercase font-bold">Option 1: Upload Photo File (Sharp WebP Auto-Compression)</label>
-          <div class="flex items-center gap-3">
-            <label class="btn-fire cursor-pointer text-xs py-2.5 px-4 flex-1 justify-center flex items-center gap-2">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-              <span id="bgModalFileName">Choose Background File</span>
-              <input type="file" name="background" id="bgModalFileInput" accept="image/*" class="hidden" onchange="handleBgFileSelect(this)">
-            </label>
-            <button type="submit" class="btn-glass text-xs py-2.5 px-4 border-orange-500/40 text-white hover:bg-orange-500/20">
-              Save to Server
-            </button>
-          </div>
-          <p class="text-[11px] font-mono text-slate-400">Max quality up to 4K. Compressed to WebP.</p>
-        </div>
-
-        <!-- 2. Direct URL -->
-        <div class="space-y-1.5">
-          <label for="bg_url_input" class="block text-xs font-mono text-slate-300 uppercase">Option 2: Direct Image URL</label>
-          <div class="flex gap-2">
-            <input 
-              type="text" 
-              id="bg_url_input" 
-              name="background_url" 
-              placeholder="https://images.unsplash.com/..." 
-              class="flex-1 px-3.5 py-2 rounded-xl bg-slate-900/90 border border-white/15 text-white text-xs font-mono focus:outline-none focus:border-orange-500"
-              oninput="handleBgUrlChange(this.value)"
-            >
-            <button type="submit" class="btn-glass text-xs py-2 px-4 whitespace-nowrap">
-              Apply URL
-            </button>
-          </div>
-        </div>
-
-      </form>
-    <% } else { %>
-      <!-- Client-Side Live Customizer for Visitors -->
-      <div class="space-y-3">
-        <div class="p-3.5 rounded-xl bg-slate-900/80 border border-orange-500/25 space-y-2">
-          <label class="block text-xs font-mono text-orange-400 uppercase font-bold">Upload Custom Photo (Local Preview)</label>
-          <label class="btn-fire cursor-pointer text-xs py-2.5 px-4 w-full justify-center flex items-center gap-2">
+    <!-- Admin Server-Side Persistence Form -->
+    <form action="/admin/settings/background" method="POST" enctype="multipart/form-data" class="space-y-4" id="adminBgForm">
+      
+      <!-- 1. File Upload with Sharp Compression -->
+      <div class="p-3.5 rounded-xl bg-slate-900/80 border border-orange-500/25 space-y-2">
+        <label class="block text-xs font-mono text-orange-400 uppercase font-bold">1. Upload Photo File (Sharp WebP Auto-Compression)</label>
+        <div class="flex items-center gap-3">
+          <label class="btn-fire cursor-pointer text-xs py-2.5 px-4 flex-1 justify-center flex items-center gap-2">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-            <span id="visitorBgFileName">Select Photo File</span>
-            <input type="file" id="visitorBgFileInput" accept="image/*" class="hidden" onchange="handleVisitorBgFile(this)">
+            <span id="bgModalFileName">Choose Background File</span>
+            <input type="file" name="background" id="bgModalFileInput" accept="image/*" class="hidden" onchange="handleBgFileSelect(this)">
           </label>
+          <button type="submit" class="btn-glass text-xs py-2.5 px-4 border-orange-500/40 text-white hover:bg-orange-500/20">
+            Save File
+          </button>
         </div>
+        <p class="text-[11px] font-mono text-slate-400">Any resolution up to 4K. Compressed to WebP.</p>
+      </div>
 
-        <div class="space-y-1.5">
-          <label for="visitor_bg_url" class="block text-xs font-mono text-slate-300 uppercase">Or Paste Photo URL:</label>
-          <div class="flex gap-2">
-            <input 
-              type="text" 
-              id="visitor_bg_url" 
-              placeholder="https://..." 
-              class="flex-1 px-3.5 py-2 rounded-xl bg-slate-900/90 border border-white/15 text-white text-xs font-mono focus:outline-none focus:border-orange-500"
-              oninput="handleBgUrlChange(this.value)"
-            >
-            <button type="button" onclick="applyVisitorBgUrl()" class="btn-glass text-xs py-2 px-4">
-              Apply
-            </button>
-          </div>
+      <!-- 2. Direct URL -->
+      <div class="space-y-1.5">
+        <label for="bg_url_input" class="block text-xs font-mono text-slate-300 uppercase">2. Or Paste Direct Image URL</label>
+        <div class="flex gap-2">
+          <input 
+            type="text" 
+            id="bg_url_input" 
+            name="background_url" 
+            value="<%- (typeof settings !== 'undefined' && settings.site_background_url) ? settings.site_background_url : '' %>"
+            placeholder="https://images.unsplash.com/..." 
+            class="flex-1 px-3.5 py-2 rounded-xl bg-slate-900/90 border border-white/15 text-white text-xs font-mono focus:outline-none focus:border-orange-500"
+            oninput="handleBgUrlChange(this.value)"
+          >
+          <button type="submit" class="btn-glass text-xs py-2 px-4 whitespace-nowrap">
+            Save URL
+          </button>
         </div>
       </div>
-    <% } %>
 
-    <!-- 3. Curated Esports Presets -->
-    <div class="space-y-2 pt-2 border-t border-white/10">
-      <label class="block text-xs font-mono text-slate-300 uppercase">Option 3: Curated Esports Themes</label>
-      <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
-        <button 
-          type="button" 
-          onclick="selectPresetBg('https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=2070&auto=format&fit=crop', 'Esports Arena')"
-          class="p-2 rounded-lg bg-slate-900 border border-white/10 hover:border-orange-500 text-left transition-all group"
-        >
-          <div class="h-12 rounded bg-cover bg-center mb-1" style="background-image: url('https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=300&auto=format&fit=crop');"></div>
-          <span class="text-[11px] font-mono text-slate-300 group-hover:text-orange-400 block truncate font-bold">Cyber Arena</span>
-        </button>
+      <!-- 3. Curated Esports Presets -->
+      <div class="space-y-2 pt-2 border-t border-white/10">
+        <label class="block text-xs font-mono text-slate-300 uppercase">3. Or Pick Curated Esports Theme</label>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          <button 
+            type="button" 
+            onclick="selectPresetBg('https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=2070&auto=format&fit=crop', 'Cyber Arena')"
+            class="p-2 rounded-lg bg-slate-900 border border-white/10 hover:border-orange-500 text-left transition-all group"
+          >
+            <div class="h-12 rounded bg-cover bg-center mb-1" style="background-image: url('https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=300&auto=format&fit=crop');"></div>
+            <span class="text-[11px] font-mono text-slate-300 group-hover:text-orange-400 block truncate font-bold">Cyber Arena</span>
+          </button>
 
-        <button 
-          type="button" 
-          onclick="selectPresetBg('https://images.unsplash.com/photo-1511512578047-dfb367046420?q=80&w=2070&auto=format&fit=crop', 'Neon Stadium')"
-          class="p-2 rounded-lg bg-slate-900 border border-white/10 hover:border-orange-500 text-left transition-all group"
-        >
-          <div class="h-12 rounded bg-cover bg-center mb-1" style="background-image: url('https://images.unsplash.com/photo-1511512578047-dfb367046420?q=80&w=300&auto=format&fit=crop');"></div>
-          <span class="text-[11px] font-mono text-slate-300 group-hover:text-orange-400 block truncate font-bold">Neon Stadium</span>
-        </button>
+          <button 
+            type="button" 
+            onclick="selectPresetBg('https://images.unsplash.com/photo-1511512578047-dfb367046420?q=80&w=2070&auto=format&fit=crop', 'Neon Stadium')"
+            class="p-2 rounded-lg bg-slate-900 border border-white/10 hover:border-orange-500 text-left transition-all group"
+          >
+            <div class="h-12 rounded bg-cover bg-center mb-1" style="background-image: url('https://images.unsplash.com/photo-1511512578047-dfb367046420?q=80&w=300&auto=format&fit=crop');"></div>
+            <span class="text-[11px] font-mono text-slate-300 group-hover:text-orange-400 block truncate font-bold">Neon Stadium</span>
+          </button>
 
-        <button 
-          type="button" 
-          onclick="selectPresetBg('https://images.unsplash.com/photo-1538481199705-c710c4e965fc?q=80&w=2070&auto=format&fit=crop', 'Kalahari Battle')"
-          class="p-2 rounded-lg bg-slate-900 border border-white/10 hover:border-orange-500 text-left transition-all group"
-        >
-          <div class="h-12 rounded bg-cover bg-center mb-1" style="background-image: url('https://images.unsplash.com/photo-1538481199705-c710c4e965fc?q=80&w=300&auto=format&fit=crop');"></div>
-          <span class="text-[11px] font-mono text-slate-300 group-hover:text-orange-400 block truncate font-bold">Kalahari Battle</span>
-        </button>
+          <button 
+            type="button" 
+            onclick="selectPresetBg('https://images.unsplash.com/photo-1538481199705-c710c4e965fc?q=80&w=2070&auto=format&fit=crop', 'Kalahari Battle')"
+            class="p-2 rounded-lg bg-slate-900 border border-white/10 hover:border-orange-500 text-left transition-all group"
+          >
+            <div class="h-12 rounded bg-cover bg-center mb-1" style="background-image: url('https://images.unsplash.com/photo-1538481199705-c710c4e965fc?q=80&w=300&auto=format&fit=crop');"></div>
+            <span class="text-[11px] font-mono text-slate-300 group-hover:text-orange-400 block truncate font-bold">Kalahari Battle</span>
+          </button>
 
-        <button 
-          type="button" 
-          onclick="selectPresetBg('https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=2070&auto=format&fit=crop', 'Dark Ember')"
-          class="p-2 rounded-lg bg-slate-900 border border-white/10 hover:border-orange-500 text-left transition-all group"
-        >
-          <div class="h-12 rounded bg-cover bg-center mb-1" style="background-image: url('https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=300&auto=format&fit=crop');"></div>
-          <span class="text-[11px] font-mono text-slate-300 group-hover:text-orange-400 block truncate font-bold">Dark Ember</span>
+          <button 
+            type="button" 
+            onclick="selectPresetBg('https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=2070&auto=format&fit=crop', 'Dark Ember')"
+            class="p-2 rounded-lg bg-slate-900 border border-white/10 hover:border-orange-500 text-left transition-all group"
+          >
+            <div class="h-12 rounded bg-cover bg-center mb-1" style="background-image: url('https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=300&auto=format&fit=crop');"></div>
+            <span class="text-[11px] font-mono text-slate-300 group-hover:text-orange-400 block truncate font-bold">Dark Ember</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Footer Controls -->
+      <div class="flex items-center justify-between pt-2 border-t border-white/10 text-xs">
+        <a href="/admin/settings" class="text-orange-400 hover:underline font-mono">
+          Full Settings Page &rarr;
+        </a>
+        <button type="submit" class="btn-fire py-2 px-5">
+          Save Changes
         </button>
       </div>
-    </div>
 
-    <!-- Footer Controls -->
-    <div class="flex items-center justify-between pt-2 border-t border-white/10 text-xs">
-      <button type="button" onclick="resetToDefaultBg()" class="text-slate-400 hover:text-white font-mono underline">
-        Reset to Default
-      </button>
-      <button type="button" onclick="closeBackgroundModal()" class="btn-fire py-2 px-5">
-        Done
-      </button>
-    </div>
+    </form>
 
   </div>
 </div>
@@ -176,15 +146,6 @@
     const modal = document.getElementById('backgroundModal');
     if (modal) {
       modal.classList.remove('hidden');
-      const bgLayer = document.querySelector('.site-bg-layer');
-      if (bgLayer) {
-        const currentStyle = bgLayer.style.backgroundImage;
-        const currentUrl = currentStyle ? currentStyle.replace(/url\(['"]?(.*?)['"]?\)/i, '$1') : '';
-        if (currentUrl) {
-          const previewImg = document.getElementById('bgModalLivePreview');
-          if (previewImg) previewImg.src = currentUrl;
-        }
-      }
     }
   }
 
@@ -201,37 +162,12 @@
         const previewImg = document.getElementById('bgModalLivePreview');
         if (previewImg) previewImg.src = e.target.result;
         
-        // Also update background layer immediately for live feel
         const bgLayer = document.querySelector('.site-bg-layer');
         if (bgLayer) bgLayer.style.backgroundImage = `url("${e.target.result}")`;
       };
       reader.readAsDataURL(file);
 
       const label = document.getElementById('bgModalFileName');
-      if (label) label.textContent = file.name.length > 20 ? file.name.substring(0, 17) + '...' : file.name;
-    }
-  }
-
-  function handleVisitorBgFile(input) {
-    if (input.files && input.files[0]) {
-      const file = input.files[0];
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        const dataUrl = e.target.result;
-        const previewImg = document.getElementById('bgModalLivePreview');
-        if (previewImg) previewImg.src = dataUrl;
-        
-        const bgLayer = document.querySelector('.site-bg-layer');
-        if (bgLayer) bgLayer.style.backgroundImage = `url("${dataUrl}")`;
-
-        try {
-          localStorage.setItem('tagff_custom_bg', dataUrl);
-        } catch(err) {
-          console.log('Local storage payload too large');
-        }
-      };
-      reader.readAsDataURL(file);
-      const label = document.getElementById('visitorBgFileName');
       if (label) label.textContent = file.name.length > 20 ? file.name.substring(0, 17) + '...' : file.name;
     }
   }
@@ -245,17 +181,6 @@
     }
   }
 
-  function applyVisitorBgUrl() {
-    const input = document.getElementById('visitor_bg_url');
-    if (input && input.value.trim()) {
-      const url = input.value.trim();
-      const bgLayer = document.querySelector('.site-bg-layer');
-      if (bgLayer) bgLayer.style.backgroundImage = `url("${url}")`;
-      localStorage.setItem('tagff_custom_bg', url);
-      closeBackgroundModal();
-    }
-  }
-
   function selectPresetBg(url, name) {
     const previewImg = document.getElementById('bgModalLivePreview');
     if (previewImg) previewImg.src = url;
@@ -265,37 +190,7 @@
 
     const adminUrlInput = document.getElementById('bg_url_input');
     if (adminUrlInput) adminUrlInput.value = url;
-
-    const visitorUrlInput = document.getElementById('visitor_bg_url');
-    if (visitorUrlInput) visitorUrlInput.value = url;
-
-    localStorage.setItem('tagff_custom_bg', url);
   }
-
-  function resetToDefaultBg() {
-    const defaultUrl = 'https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=2070&auto=format&fit=crop';
-    const previewImg = document.getElementById('bgModalLivePreview');
-    if (previewImg) previewImg.src = defaultUrl;
-    
-    const bgLayer = document.querySelector('.site-bg-layer');
-    if (bgLayer) bgLayer.style.backgroundImage = `url("${defaultUrl}")`;
-
-    localStorage.removeItem('tagff_custom_bg');
-
-    const adminUrlInput = document.getElementById('bg_url_input');
-    if (adminUrlInput) adminUrlInput.value = defaultUrl;
-  }
-
-  // Check on load if client has custom local background
-  document.addEventListener('DOMContentLoaded', () => {
-    const savedBg = localStorage.getItem('tagff_custom_bg');
-    if (savedBg) {
-      const bgLayer = document.querySelector('.site-bg-layer');
-      if (bgLayer && !bgLayer.getAttribute('data-server-override')) {
-        bgLayer.style.backgroundImage = `url("${savedBg}")`;
-      }
-    }
-  });
 
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') closeBackgroundModal();

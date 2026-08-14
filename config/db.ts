@@ -40,6 +40,14 @@ const memoryDb: InMemoryData = {
 };
 
 let autoIncrementId = 100;
+let initDbPromise: Promise<void> | null = null;
+
+export function ensureDbReady(): Promise<void> {
+  if (!initDbPromise) {
+    initDbPromise = initDb();
+  }
+  return initDbPromise;
+}
 
 export async function initDb(): Promise<void> {
   const connectionString = process.env.DATABASE_URL;
@@ -59,9 +67,9 @@ export async function initDb(): Promise<void> {
       client.release();
       isPostgresActive = true;
 
-      // Run schema migrations and fresh restart
+      // Run schema migrations to ensure all tables & columns exist
       await createTablesIfNotExist();
-      await resetAllWebsiteData();
+      await ensureSeedDataIfEmpty();
       return;
     } catch (err: any) {
       console.warn('PostgreSQL connection attempt failed. Falling back to local storage engine.', err.message);
@@ -80,6 +88,7 @@ async function createTablesIfNotExist() {
   if (!pool) return;
   const client = await pool.connect();
   try {
+    // 1. Create base tables if they do not exist
     await client.query(`
       CREATE TABLE IF NOT EXISTS tournaments (
         id SERIAL PRIMARY KEY,
@@ -160,6 +169,78 @@ async function createTablesIfNotExist() {
         updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       );
     `);
+
+    // 2. Automatic Alter Migrations: guarantee all columns exist even on pre-existing Postgres databases
+    await client.query(`
+      ALTER TABLE tournaments ADD COLUMN IF NOT EXISTS is_current BOOLEAN DEFAULT FALSE;
+      ALTER TABLE tournaments ADD COLUMN IF NOT EXISTS game_mode VARCHAR(100) DEFAULT 'Battle Royale Squad';
+      ALTER TABLE tournaments ADD COLUMN IF NOT EXISTS banner_url TEXT;
+      ALTER TABLE tournaments ADD COLUMN IF NOT EXISTS start_date DATE;
+      ALTER TABLE tournaments ADD COLUMN IF NOT EXISTS end_date DATE;
+      ALTER TABLE tournaments ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'ongoing';
+      ALTER TABLE tournaments ADD COLUMN IF NOT EXISTS prize_pool VARCHAR(100) DEFAULT '$0';
+      ALTER TABLE tournaments ADD COLUMN IF NOT EXISTS description TEXT;
+      ALTER TABLE tournaments ADD COLUMN IF NOT EXISTS created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP;
+      ALTER TABLE tournaments ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP;
+
+      ALTER TABLE teams ADD COLUMN IF NOT EXISTS name VARCHAR(255);
+      ALTER TABLE teams ADD COLUMN IF NOT EXISTS tag VARCHAR(20);
+      ALTER TABLE teams ADD COLUMN IF NOT EXISTS logo_url TEXT;
+      ALTER TABLE teams ADD COLUMN IF NOT EXISTS country VARCHAR(100) DEFAULT 'Global';
+      ALTER TABLE teams ADD COLUMN IF NOT EXISTS created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP;
+
+      ALTER TABLE players ADD COLUMN IF NOT EXISTS team_id INTEGER;
+      ALTER TABLE players ADD COLUMN IF NOT EXISTS name VARCHAR(255);
+      ALTER TABLE players ADD COLUMN IF NOT EXISTS in_game_name VARCHAR(100);
+      ALTER TABLE players ADD COLUMN IF NOT EXISTS role VARCHAR(100) DEFAULT 'Rusher';
+      ALTER TABLE players ADD COLUMN IF NOT EXISTS avatar_url TEXT;
+      ALTER TABLE players ADD COLUMN IF NOT EXISTS free_fire_uid VARCHAR(100);
+      ALTER TABLE players ADD COLUMN IF NOT EXISTS created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP;
+
+      ALTER TABLE matches ADD COLUMN IF NOT EXISTS tournament_id INTEGER;
+      ALTER TABLE matches ADD COLUMN IF NOT EXISTS match_number INTEGER;
+      ALTER TABLE matches ADD COLUMN IF NOT EXISTS map_name VARCHAR(100) DEFAULT 'Bermuda';
+      ALTER TABLE matches ADD COLUMN IF NOT EXISTS played_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP;
+      ALTER TABLE matches ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'completed';
+      ALTER TABLE matches ADD COLUMN IF NOT EXISTS is_official BOOLEAN DEFAULT FALSE;
+      ALTER TABLE matches ADD COLUMN IF NOT EXISTS notes TEXT;
+      ALTER TABLE matches ADD COLUMN IF NOT EXISTS created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP;
+
+      ALTER TABLE match_team_results ADD COLUMN IF NOT EXISTS match_id INTEGER;
+      ALTER TABLE match_team_results ADD COLUMN IF NOT EXISTS team_id INTEGER;
+      ALTER TABLE match_team_results ADD COLUMN IF NOT EXISTS placement INTEGER;
+      ALTER TABLE match_team_results ADD COLUMN IF NOT EXISTS kills INTEGER DEFAULT 0;
+      ALTER TABLE match_team_results ADD COLUMN IF NOT EXISTS placement_points INTEGER DEFAULT 0;
+      ALTER TABLE match_team_results ADD COLUMN IF NOT EXISTS kill_points INTEGER DEFAULT 0;
+      ALTER TABLE match_team_results ADD COLUMN IF NOT EXISTS total_points INTEGER DEFAULT 0;
+      ALTER TABLE match_team_results ADD COLUMN IF NOT EXISTS is_official BOOLEAN DEFAULT FALSE;
+      ALTER TABLE match_team_results ADD COLUMN IF NOT EXISTS created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP;
+
+      ALTER TABLE match_player_stats ADD COLUMN IF NOT EXISTS match_id INTEGER;
+      ALTER TABLE match_player_stats ADD COLUMN IF NOT EXISTS player_id INTEGER;
+      ALTER TABLE match_player_stats ADD COLUMN IF NOT EXISTS team_id INTEGER;
+      ALTER TABLE match_player_stats ADD COLUMN IF NOT EXISTS kills INTEGER DEFAULT 0;
+      ALTER TABLE match_player_stats ADD COLUMN IF NOT EXISTS damage INTEGER DEFAULT 0;
+      ALTER TABLE match_player_stats ADD COLUMN IF NOT EXISTS headshots INTEGER DEFAULT 0;
+      ALTER TABLE match_player_stats ADD COLUMN IF NOT EXISTS survival_time_sec INTEGER DEFAULT 0;
+      ALTER TABLE match_player_stats ADD COLUMN IF NOT EXISTS is_official BOOLEAN DEFAULT FALSE;
+      ALTER TABLE match_player_stats ADD COLUMN IF NOT EXISTS created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP;
+    `);
+  } finally {
+    client.release();
+  }
+}
+
+async function ensureSeedDataIfEmpty() {
+  if (!pool) return;
+  const client = await pool.connect();
+  try {
+    const teamsCount = await client.query('SELECT COUNT(*) as count FROM teams');
+    if (parseInt(teamsCount.rows[0]?.count || '0', 10) === 0) {
+      await populatePostgresSeed();
+    }
+  } catch (err) {
+    console.warn('Error checking/seeding initial team:', err);
   } finally {
     client.release();
   }
@@ -291,6 +372,7 @@ function seedMemoryDb() {
 
 export const db: DbClient = {
   async query(text: string, params: any[] = []): Promise<{ rows: any[]; rowCount: number }> {
+    await ensureDbReady();
     if (isPostgresActive && pool) {
       const result = await pool.query(text, params);
       return { rows: result.rows, rowCount: result.rowCount || 0 };
