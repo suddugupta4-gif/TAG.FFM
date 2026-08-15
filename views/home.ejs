@@ -298,7 +298,7 @@
                   <span class="font-bold text-xs text-white">Bermuda</span>
                 </div>
                 <span class="text-[11px] font-mono text-orange-400 bg-white/5 px-2 py-0.5 rounded">
-                  <%= mapList.find(m => m.name.toLowerCase() === 'bermuda')?.count || (matches.filter(m => m.map_name === 'Bermuda').length) || 1 %>M
+                  <%= (typeof matches !== 'undefined' ? matches : []).filter(m => (m.map_name || '').toLowerCase() === 'bermuda').length %>M
                 </span>
               </div>
 
@@ -309,7 +309,7 @@
                   <span class="font-bold text-xs text-white">Purgatory</span>
                 </div>
                 <span class="text-[11px] font-mono text-orange-400 bg-white/5 px-2 py-0.5 rounded">
-                  <%= mapList.find(m => m.name.toLowerCase() === 'purgatory')?.count || (matches.filter(m => m.map_name === 'Purgatory').length) || 1 %>M
+                  <%= (typeof matches !== 'undefined' ? matches : []).filter(m => (m.map_name || '').toLowerCase() === 'purgatory').length %>M
                 </span>
               </div>
 
@@ -320,7 +320,7 @@
                   <span class="font-bold text-xs text-white">Kalahari</span>
                 </div>
                 <span class="text-[11px] font-mono text-orange-400 bg-white/5 px-2 py-0.5 rounded">
-                  <%= mapList.find(m => m.name.toLowerCase() === 'kalahari')?.count || (matches.filter(m => m.map_name === 'Kalahari').length) || 0 %>M
+                  <%= (typeof matches !== 'undefined' ? matches : []).filter(m => (m.map_name || '').toLowerCase() === 'kalahari').length %>M
                 </span>
               </div>
 
@@ -331,7 +331,7 @@
                   <span class="font-bold text-xs text-white">Alpine</span>
                 </div>
                 <span class="text-[11px] font-mono text-orange-400 bg-white/5 px-2 py-0.5 rounded">
-                  <%= mapList.find(m => m.name.toLowerCase() === 'alpine')?.count || (matches.filter(m => m.map_name === 'Alpine').length) || 0 %>M
+                  <%= (typeof matches !== 'undefined' ? matches : []).filter(m => (m.map_name || '').toLowerCase() === 'alpine').length %>M
                 </span>
               </div>
 
@@ -342,7 +342,7 @@
                   <span class="font-bold text-xs text-white">Nexterra</span>
                 </div>
                 <span class="text-[11px] font-mono text-orange-400 bg-white/5 px-2 py-0.5 rounded">
-                  <%= mapList.find(m => m.name.toLowerCase() === 'nexterra')?.count || (matches.filter(m => m.map_name === 'Nexterra').length) || 0 %>M
+                  <%= (typeof matches !== 'undefined' ? matches : []).filter(m => (m.map_name || '').toLowerCase() === 'nexterra').length %>M
                 </span>
               </div>
 

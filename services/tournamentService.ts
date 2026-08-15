@@ -20,9 +20,7 @@ export const ALL_FREE_FIRE_MAPS = [
   'Purgatory',
   'Kalahari',
   'Alpine',
-  'Nexterra',
-  'Bermuda Remastered',
-  'Solaria'
+  'Nexterra'
 ];
 
 export const MAP_METADATA: { [key: string]: { description: string; banner: string; color: string } } = {
@@ -50,16 +48,6 @@ export const MAP_METADATA: { [key: string]: { description: string; banner: strin
     description: 'Futuristic battleground with anti-gravity Grav Labs and Deca Square.',
     banner: 'https://images.unsplash.com/photo-1511512578047-dfb367046420?q=80&w=600&auto=format&fit=crop',
     color: 'from-purple-500/20 to-indigo-600/10 border-purple-500/30'
-  },
-  'Bermuda Remastered': {
-    description: 'Next-gen remastered edition featuring Nurek Dam and Samurai Garden.',
-    banner: 'https://images.unsplash.com/photo-1579373903781-fd5c0c30c4cd?q=80&w=600&auto=format&fit=crop',
-    color: 'from-rose-500/20 to-pink-600/10 border-rose-500/30'
-  },
-  'Solaria': {
-    description: 'High-tech solar facility and modern tactical battle arena.',
-    banner: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=600&auto=format&fit=crop',
-    color: 'from-amber-600/20 to-orange-700/10 border-amber-600/30'
   }
 };
 
@@ -1095,31 +1083,19 @@ export class TournamentService {
       const mapTeamStats: { [mapName: string]: { [teamId: number]: { name: string; tag: string; kills: number; booyahs: number; points: number } } } = {};
 
       matchesList.forEach(m => {
-        const standardMap = ALL_FREE_FIRE_MAPS.find(name => name.toLowerCase() === (m.map_name || '').toLowerCase()) || m.map_name || 'Bermuda';
-        if (!mapMap[standardMap]) {
-          mapMap[standardMap] = {
-            map_name: standardMap,
-            display_name: standardMap,
-            description: 'Competitive Free Fire MAX Arena',
-            banner_url: 'https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=600&auto=format&fit=crop',
-            color: 'from-orange-500/20 to-red-600/10 border-orange-500/30',
-            matches_played: 0,
-            official_matches: 0,
-            unofficial_matches: 0,
-            total_kills: 0,
-            tag_matches: 0,
-            tag_kills: 0,
-            tag_booyahs: 0,
-            tag_kd: '0.00',
-            tag_avg_kills: '0.0',
-            tag_win_rate: '0.0',
-            tag_total_points: 0,
-            top_team: null,
-            top_player: null
-          };
+        const rawMap = (m.map_name || '').trim();
+        let standardMap = ALL_FREE_FIRE_MAPS.find(name => name.toLowerCase() === rawMap.toLowerCase());
+        if (!standardMap) {
+          if (rawMap.toLowerCase().includes('purgatory')) standardMap = 'Purgatory';
+          else if (rawMap.toLowerCase().includes('kalahari')) standardMap = 'Kalahari';
+          else if (rawMap.toLowerCase().includes('alpine')) standardMap = 'Alpine';
+          else if (rawMap.toLowerCase().includes('nexterra')) standardMap = 'Nexterra';
+          else standardMap = 'Bermuda';
         }
 
         const mapObj = mapMap[standardMap];
+        if (!mapObj) return;
+
         mapObj.matches_played++;
         if (m.is_official) mapObj.official_matches++;
         else mapObj.unofficial_matches++;

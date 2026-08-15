@@ -13,15 +13,22 @@ const upload = multer({
 });
 
 const ADMIN_AUTH_TOKEN = 'tag_admin_authorized_sujal_2026';
+const OFFICIAL_FF_MAPS = ['Bermuda', 'Purgatory', 'Kalahari', 'Alpine', 'Nexterra'];
 
-// Admin Authentication Middleware
+function resolveMapName(rawMap?: string, defaultMap = 'Bermuda'): string {
+  if (!rawMap || rawMap === 'Random' || rawMap === 'random') {
+    return OFFICIAL_FF_MAPS[Math.floor(Math.random() * OFFICIAL_FF_MAPS.length)];
+  }
+  return rawMap;
+}
+
+// Admin Authentication Middleware (Enforces password authentication)
 export function requireAdmin(req: Request, res: Response, next: NextFunction) {
   const isSessionAdmin = Boolean(req.session && (req.session as any).isAdmin);
-  const isCookieAdmin = req.cookies?.tag_admin_token === ADMIN_AUTH_TOKEN || req.cookies?.tag_admin_session === '1';
-  const isQueryAdmin = req.query?.auth_token === ADMIN_AUTH_TOKEN;
+  const isCookieAdmin = req.cookies?.tag_admin_token === ADMIN_AUTH_TOKEN && req.cookies?.tag_admin_session === '1';
   const isHeaderAdmin = req.headers['x-admin-token'] === ADMIN_AUTH_TOKEN;
 
-  if (isSessionAdmin || isCookieAdmin || isQueryAdmin || isHeaderAdmin) {
+  if (isSessionAdmin || isCookieAdmin || isHeaderAdmin) {
     if (req.session) {
       (req.session as any).isAdmin = true;
     }
@@ -256,17 +263,17 @@ router.post('/tournaments/new', upload.single('banner'), async (req: Request, re
         match_3_map || 'Kalahari',
         match_4_map || 'Alpine',
         match_5_map || 'Nexterra',
-        match_6_map || 'Bermuda Remastered'
+        match_6_map || 'Random'
       ];
 
       const matchConfigs = [];
       for (let i = 1; i <= Math.min(6, matchCount); i++) {
-        const chosenMap = customMaps[i - 1] || 'Bermuda';
+        const chosenMap = resolveMapName(customMaps[i - 1], i === 6 ? 'Bermuda' : 'Bermuda');
         matchConfigs.push({
           match_number: i,
           map_name: chosenMap,
           is_official: isOfficialBool,
-          notes: `Match #${i} • ${chosenMap} Rotation`
+          notes: `Match #${i} • ${chosenMap} Rotation${i === 6 && customMaps[i-1] === 'Random' ? ' (Random Decider)' : ''}`
         });
       }
 
@@ -458,18 +465,19 @@ router.post('/matches/batch', async (req: Request, res: Response) => {
       match_3_map || 'Kalahari',
       match_4_map || 'Alpine',
       match_5_map || 'Nexterra',
-      match_6_map || 'Bermuda Remastered'
+      match_6_map || 'Random'
     ];
 
     const matchConfigs = [];
     for (let i = 0; i < count; i++) {
       const matchNum = startMatchNumber + i;
-      const mapName = mapSelections[i] || 'Bermuda';
+      const rawMap = mapSelections[i] || 'Bermuda';
+      const mapName = resolveMapName(rawMap);
       matchConfigs.push({
         match_number: matchNum,
         map_name: mapName,
         is_official: isOfficialBool,
-        notes: `Match #${matchNum} • ${mapName} Rotation`
+        notes: `Match #${matchNum} • ${mapName} Rotation${rawMap === 'Random' ? ' (Random Map)' : ''}`
       });
     }
 
