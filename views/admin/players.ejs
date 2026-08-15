@@ -375,10 +375,18 @@
     }
   });
 
-  document.getElementById('editPlayerModal')?.addEventListener('click', function(e) {
-    if (e.target === this) {
-      closeEditPlayerModal();
-    }
+  document.addEventListener('DOMContentLoaded', function() {
+    <% if (typeof openEditId !== 'undefined' && openEditId && typeof targetPlayer !== 'undefined' && targetPlayer) { %>
+      openEditPlayerModal(
+        '<%= targetPlayer.player_id || targetPlayer.id %>',
+        '<%= (targetPlayer.in_game_name || "").replace(/\'/g, "\\\'") %>',
+        '<%= (targetPlayer.player_name || targetPlayer.name || "").replace(/\'/g, "\\\'") %>',
+        '<%= targetPlayer.team_id || "" %>',
+        '<%= targetPlayer.role || "Rusher" %>',
+        '<%= targetPlayer.free_fire_uid || "" %>',
+        '<%= (targetPlayer.avatar_url || "").replace(/\'/g, "\\\'") %>'
+      );
+    <% } %>
   });
 </script>
 

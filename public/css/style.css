@@ -1,11 +1,11 @@
 /* TAGFREEFIREMAX — "Sophisticated Dark" Design Theme */
 
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Teko:wght@500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Rajdhani:wght@500;600;700;800&family=Teko:wght@500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
 
 :root {
-  --ff-font-display: 'Teko', sans-serif;
-  --ff-font-body: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  --ff-font-mono: 'JetBrains Mono', monospace;
+  --ff-font-display: 'Teko', 'Rajdhani', 'Impact', sans-serif;
+  --ff-font-body: 'Outfit', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --ff-font-mono: 'JetBrains Mono', 'Courier New', monospace;
 
   /* Sophisticated Dark Color Tokens */
   --ff-primary: #ff4e00;
@@ -15,12 +15,12 @@
   --ff-cyan: #06b6d4;
 
   --canvas-bg: #050508;
-  --glass-bg: rgba(18, 20, 32, 0.7);
+  --glass-bg: rgba(18, 20, 32, 0.75);
   --glass-bg-hover: rgba(28, 30, 48, 0.85);
-  --glass-border: rgba(255, 255, 255, 0.12);
-  --glass-border-hover: rgba(255, 78, 0, 0.4);
-  --glass-card: rgba(18, 20, 32, 0.65);
-  --glass-header: rgba(8, 10, 18, 0.85);
+  --glass-border: rgba(255, 255, 255, 0.14);
+  --glass-border-hover: rgba(255, 78, 0, 0.45);
+  --glass-card: rgba(18, 20, 32, 0.7);
+  --glass-header: rgba(8, 10, 18, 0.88);
 }
 
 * {
@@ -37,6 +37,22 @@ body {
   position: relative;
   overflow-x: hidden;
   line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Text Glow Utilities */
+.text-glow {
+  text-shadow: 0 0 16px rgba(255, 78, 0, 0.6), 0 0 30px rgba(255, 78, 0, 0.25);
+}
+.text-glow-gold {
+  text-shadow: 0 0 16px rgba(245, 158, 11, 0.6), 0 0 30px rgba(245, 158, 11, 0.25);
+}
+.text-glow-emerald {
+  text-shadow: 0 0 16px rgba(16, 185, 129, 0.6), 0 0 30px rgba(16, 185, 129, 0.25);
+}
+.text-glow-cyan {
+  text-shadow: 0 0 16px rgba(6, 182, 212, 0.6), 0 0 30px rgba(6, 182, 212, 0.25);
 }
 
 /* Ambient Radial Glow & Background Overlays */

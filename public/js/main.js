@@ -6,6 +6,22 @@ document.addEventListener('DOMContentLoaded', () => {
     localStorage.removeItem('tagff_custom_bg');
   } catch (e) {}
 
+  // 0. Auto-sync admin token to cookies and admin links (prevents multiple password prompts in iframes)
+  const savedToken = localStorage.getItem('tag_admin_token');
+  if (savedToken) {
+    if (!document.cookie.includes('tag_admin_token=')) {
+      document.cookie = `tag_admin_token=${savedToken}; path=/; max-age=2592000; SameSite=Lax`;
+    }
+    // Append token to admin links seamlessly
+    document.querySelectorAll('a[href^="/admin"]').forEach(a => {
+      const href = a.getAttribute('href');
+      if (href && !href.includes('auth_token=') && !href.includes('/admin/logout')) {
+        const separator = href.includes('?') ? '&' : '?';
+        a.setAttribute('href', `${href}${separator}auth_token=${savedToken}`);
+      }
+    });
+  }
+
   // 0. TOP OF EVERYTHING - Global Mode Selector (Official vs Unofficial vs All)
   const modeButtons = document.querySelectorAll('.global-mode-btn');
   const serverStatsScript = document.getElementById('server-stats-data');

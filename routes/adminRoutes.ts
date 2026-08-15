@@ -484,6 +484,15 @@ router.get('/teams', async (req: Request, res: Response) => {
   });
 });
 
+// GET fallback for teams edit/new
+router.get('/teams/:id/edit', (req: Request, res: Response) => {
+  res.redirect('/admin/teams');
+});
+
+router.get('/teams/new', (req: Request, res: Response) => {
+  res.redirect('/admin/teams');
+});
+
 router.post('/teams/new', upload.single('logo'), async (req: Request, res: Response) => {
   try {
     const { name, tag, country, logo_url_input } = req.body;
@@ -597,6 +606,29 @@ router.get('/players', async (req: Request, res: Response) => {
     success: req.query.success as string || null,
     error: req.query.error as string || null
   });
+});
+
+// GET /players/:id/edit - Redirect or serve edit page smoothly
+router.get('/players/:id/edit', async (req: Request, res: Response) => {
+  const id = parseInt(req.params.id, 10);
+  const players = await TournamentService.getAllPlayers();
+  const teams = await TournamentService.getAllTeams();
+  const targetPlayer = await TournamentService.getPlayerStats(id);
+
+  res.render('admin/players', {
+    title: 'Player Roster Management — Admin',
+    players,
+    teams,
+    openEditId: id,
+    targetPlayer,
+    success: req.query.success as string || null,
+    error: req.query.error as string || null
+  });
+});
+
+// GET /players/new - Redirect to roster page
+router.get('/players/new', (req: Request, res: Response) => {
+  res.redirect('/admin/players');
 });
 
 // Create Player with Photo Upload + Sharp Compression + Cloudinary
