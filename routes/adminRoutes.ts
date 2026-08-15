@@ -215,7 +215,13 @@ router.post('/tournaments/new', upload.single('banner'), async (req: Request, re
       banner_url_input,
       is_official_tournament,
       initial_matches_count,
-      selected_maps
+      selected_maps,
+      match_1_map,
+      match_2_map,
+      match_3_map,
+      match_4_map,
+      match_5_map,
+      match_6_map
     } = req.body;
 
     let bannerUrl = banner_url_input?.trim() || 'https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=1200&auto=format&fit=crop';
@@ -241,58 +247,35 @@ router.post('/tournaments/new', upload.single('banner'), async (req: Request, re
 
     const newTournamentId = insertResult.rows[0].id;
 
-    // Handle auto-seed matches with map rotation if requested
+    // Handle auto-seed matches with map rotation if requested (Matches 1-6)
     const matchCount = parseInt(initial_matches_count, 10) || 0;
     if (matchCount > 0) {
-      let mapsPool: string[] = [];
-      if (Array.isArray(selected_maps)) {
-        mapsPool = selected_maps;
-      } else if (typeof selected_maps === 'string') {
-        mapsPool = [selected_maps];
+      const customMaps = [
+        match_1_map || 'Bermuda',
+        match_2_map || 'Purgatory',
+        match_3_map || 'Kalahari',
+        match_4_map || 'Alpine',
+        match_5_map || 'Nexterra',
+        match_6_map || 'Bermuda Remastered'
+      ];
+
+      const matchConfigs = [];
+      for (let i = 1; i <= Math.min(6, matchCount); i++) {
+        const chosenMap = customMaps[i - 1] || 'Bermuda';
+        matchConfigs.push({
+          match_number: i,
+          map_name: chosenMap,
+          is_official: isOfficialBool,
+          notes: `Match #${i} • ${chosenMap} Rotation`
+        });
       }
-      if (mapsPool.length === 0) {
-        mapsPool = ['Bermuda', 'Purgatory', 'Kalahari', 'Alpine', 'Nexterra'];
-      }
 
-      // Fetch teams to create basic match results
-      const teamsRes = await db.query('SELECT id, name, tag FROM teams LIMIT 12');
-      const teams = teamsRes.rows;
-
-      for (let i = 1; i <= matchCount; i++) {
-        const mapName = mapsPool[(i - 1) % mapsPool.length];
-        const matchRes = await db.query(`
-          INSERT INTO matches (tournament_id, match_number, map_name, is_official, notes)
-          VALUES ($1, $2, $3, $4, $5)
-          RETURNING id
-        `, [
-          newTournamentId, 
-          i, 
-          mapName, 
-          isOfficialBool, 
-          `Round ${i} • ${mapName} Rotation`
-        ]);
-
-        const matchId = matchRes.rows[0].id;
-
-        // If teams exist, initialize match placements
-        if (teams.length > 0) {
-          for (let p = 0; p < teams.length; p++) {
-            const team = teams[p];
-            const placement = p + 1;
-            const placementPts = placement === 1 ? 12 : (placement === 2 ? 9 : (placement === 3 ? 8 : (placement === 4 ? 7 : (placement === 5 ? 6 : (placement === 6 ? 5 : (placement === 7 ? 4 : (placement === 8 ? 3 : (placement === 9 ? 2 : (placement === 10 ? 1 : 0)))))))));
-            const kills = team.tag === 'TAG' ? (placement === 1 ? 9 : 5) : Math.floor(Math.random() * 4);
-            const totalPoints = placementPts + kills;
-
-            await db.query(`
-              INSERT INTO match_results (match_id, team_id, placement, kills, placement_points, total_points)
-              VALUES ($1, $2, $3, $4, $5, $6)
-            `, [matchId, team.id, placement, kills, placementPts, totalPoints]);
-          }
-        }
-      }
+      // Automatically create and save all 1-6 matches into history with complete scoreboard
+      await TournamentService.createBatchMatches(newTournamentId, matchConfigs);
     }
 
-    res.redirect('/admin/tournaments?success=' + encodeURIComponent('Tournament started and featured successfully!'));
+    TournamentService.invalidateCache();
+    res.redirect('/admin/tournaments?success=' + encodeURIComponent('Tournament created with matches 1–6 and automatically saved to history!'));
   } catch (err: any) {
     res.status(500).render('error', { message: 'Failed to create tournament: ' + err.message });
   }
@@ -439,9 +422,63 @@ router.post('/matches/new', async (req: Request, res: Response) => {
       }
     }
 
+    TournamentService.invalidateCache();
     res.redirect(`/admin/matches?tournament_id=${tournament_id}&success=` + encodeURIComponent(`Match #${match_number} saved as ${isOfficialBool ? 'OFFICIAL' : 'UNOFFICIAL / LIVE'}.`));
   } catch (err: any) {
     res.status(500).render('error', { message: 'Failed to create match: ' + err.message });
+  }
+});
+
+// Batch Create Matches 1-6 (POST)
+router.post('/matches/batch', async (req: Request, res: Response) => {
+  try {
+    const { 
+      tournament_id, 
+      match_count, 
+      is_official,
+      match_1_map,
+      match_2_map,
+      match_3_map,
+      match_4_map,
+      match_5_map,
+      match_6_map
+    } = req.body;
+
+    const tourneyId = parseInt(tournament_id, 10);
+    const count = Math.min(6, Math.max(1, parseInt(match_count, 10) || 6));
+    const isOfficialBool = is_official === 'true' || is_official === 'on' || is_official === true;
+
+    // Get current match count to number appropriately
+    const existingMatches = await TournamentService.getTournamentMatches(tourneyId);
+    const startMatchNumber = existingMatches.length > 0 ? Math.max(...existingMatches.map(m => m.match_number)) + 1 : 1;
+
+    const mapSelections = [
+      match_1_map || 'Bermuda',
+      match_2_map || 'Purgatory',
+      match_3_map || 'Kalahari',
+      match_4_map || 'Alpine',
+      match_5_map || 'Nexterra',
+      match_6_map || 'Bermuda Remastered'
+    ];
+
+    const matchConfigs = [];
+    for (let i = 0; i < count; i++) {
+      const matchNum = startMatchNumber + i;
+      const mapName = mapSelections[i] || 'Bermuda';
+      matchConfigs.push({
+        match_number: matchNum,
+        map_name: mapName,
+        is_official: isOfficialBool,
+        notes: `Match #${matchNum} • ${mapName} Rotation`
+      });
+    }
+
+    // Auto-save batch matches into database and history
+    await TournamentService.createBatchMatches(tourneyId, matchConfigs);
+
+    res.redirect(`/admin/matches?tournament_id=${tourneyId}&success=` + encodeURIComponent(`Successfully created and archived ${count} matches (Matches #${startMatchNumber} to #${startMatchNumber + count - 1}) into History!`));
+  } catch (err: any) {
+    res.status(500).render('error', { message: 'Failed to batch create matches: ' + err.message });
   }
 });
 

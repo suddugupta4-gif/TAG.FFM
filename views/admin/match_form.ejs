@@ -35,9 +35,22 @@
           </select>
         </div>
 
-        <!-- Match Number -->
+        <!-- Match Number with Quick 1-6 Selectors -->
         <div>
-          <label for="match_number" class="block text-xs font-mono text-slate-300 uppercase mb-1">Match Number *</label>
+          <div class="flex items-center justify-between mb-1">
+            <label for="match_number" class="block text-xs font-mono text-slate-300 uppercase">Match Number *</label>
+            <div class="flex items-center gap-1">
+              <% for (let m = 1; m <= 6; m++) { %>
+                <button 
+                  type="button" 
+                  class="px-1.5 py-0.5 rounded text-[10px] font-mono bg-white/10 text-slate-300 hover:bg-orange-500 hover:text-white transition-colors"
+                  onclick="document.getElementById('match_number').value = '<%= m %>'; selectMapForMatch('<%= m %>');"
+                >
+                  #<%= m %>
+                </button>
+              <% } %>
+            </div>
+          </div>
           <input 
             type="number" 
             id="match_number" 
@@ -49,7 +62,7 @@
           >
         </div>
 
-        <!-- Map Name -->
+        <!-- Map Name (All 7 Free Fire Maps) -->
         <div>
           <label for="map_name" class="block text-xs font-mono text-slate-300 uppercase mb-1">Battle Royale Map *</label>
           <select 
@@ -63,9 +76,28 @@
             <option value="Kalahari">Kalahari</option>
             <option value="Alpine">Alpine</option>
             <option value="Nexterra">Nexterra</option>
+            <option value="Bermuda Remastered">Bermuda Remastered</option>
+            <option value="Solaria">Solaria</option>
           </select>
         </div>
       </div>
+
+      <script>
+        function selectMapForMatch(num) {
+          const rotation = {
+            '1': 'Bermuda',
+            '2': 'Purgatory',
+            '3': 'Kalahari',
+            '4': 'Alpine',
+            '5': 'Nexterra',
+            '6': 'Bermuda Remastered'
+          };
+          const select = document.getElementById('map_name');
+          if (select && rotation[num]) {
+            select.value = rotation[num];
+          }
+        }
+      </script>
 
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <!-- Date -->

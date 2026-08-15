@@ -15,6 +15,75 @@ export interface StandingsRow {
   has_unofficial_matches: boolean;
 }
 
+export const ALL_FREE_FIRE_MAPS = [
+  'Bermuda',
+  'Purgatory',
+  'Kalahari',
+  'Alpine',
+  'Nexterra',
+  'Bermuda Remastered',
+  'Solaria'
+];
+
+export const MAP_METADATA: { [key: string]: { description: string; banner: string; color: string } } = {
+  'Bermuda': {
+    description: 'The iconic battleground featuring Clock Tower, Peak, and Mill.',
+    banner: 'https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=600&auto=format&fit=crop',
+    color: 'from-orange-500/20 to-red-600/10 border-orange-500/30'
+  },
+  'Purgatory': {
+    description: 'Lush island terrain with vast open fields, bridges, and Brasilia.',
+    banner: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?q=80&w=600&auto=format&fit=crop',
+    color: 'from-emerald-500/20 to-teal-600/10 border-emerald-500/30'
+  },
+  'Kalahari': {
+    description: 'High-intensity desert canyon warfare featuring Command Post and Refinery.',
+    banner: 'https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?q=80&w=600&auto=format&fit=crop',
+    color: 'from-amber-500/20 to-yellow-600/10 border-amber-500/30'
+  },
+  'Alpine': {
+    description: 'Snowy high-altitude peaks, cable car stations, and Snowfall outposts.',
+    banner: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?q=80&w=600&auto=format&fit=crop',
+    color: 'from-cyan-500/20 to-blue-600/10 border-cyan-500/30'
+  },
+  'Nexterra': {
+    description: 'Futuristic battleground with anti-gravity Grav Labs and Deca Square.',
+    banner: 'https://images.unsplash.com/photo-1511512578047-dfb367046420?q=80&w=600&auto=format&fit=crop',
+    color: 'from-purple-500/20 to-indigo-600/10 border-purple-500/30'
+  },
+  'Bermuda Remastered': {
+    description: 'Next-gen remastered edition featuring Nurek Dam and Samurai Garden.',
+    banner: 'https://images.unsplash.com/photo-1579373903781-fd5c0c30c4cd?q=80&w=600&auto=format&fit=crop',
+    color: 'from-rose-500/20 to-pink-600/10 border-rose-500/30'
+  },
+  'Solaria': {
+    description: 'High-tech solar facility and modern tactical battle arena.',
+    banner: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=600&auto=format&fit=crop',
+    color: 'from-amber-600/20 to-orange-700/10 border-amber-600/30'
+  }
+};
+
+export interface MapStatDetail {
+  map_name: string;
+  display_name: string;
+  description: string;
+  banner_url: string;
+  color: string;
+  matches_played: number;
+  official_matches: number;
+  unofficial_matches: number;
+  total_kills: number;
+  tag_matches: number;
+  tag_kills: number;
+  tag_booyahs: number;
+  tag_kd: string;
+  tag_avg_kills: string;
+  tag_win_rate: string;
+  tag_total_points: number;
+  top_team: { name: string; tag: string; kills: number; booyahs: number; points: number } | null;
+  top_player: { name: string; kills: number; team_tag: string; avatar_url: string } | null;
+}
+
 export interface PlayerStatsSummary {
   player_id: number;
   player_name: string;
@@ -919,5 +988,418 @@ export class TournamentService {
         tagPlayers: sortedPlayers.filter(p => p.team_tag === 'TAG' || p.team_name.includes('TAG'))
       };
     }, 10000);
+  }
+
+  // Get Map Analysis across all tournaments or for a specific tournament
+  static async getMapAnalysis(officialOnly: boolean = false, tournamentId?: number): Promise<{ maps: MapStatDetail[]; overall: any }> {
+    const cacheKey = `map_analysis_${officialOnly}_${tournamentId || 'all'}`;
+    return getOrSetCache(cacheKey, async () => {
+      const [tournaments, teams, players] = await Promise.all([
+        this.getAllTournaments(),
+        this.getAllTeams(),
+        this.getAllPlayers()
+      ]);
+
+      const tagTeam = teams.find(t => t.tag === 'TAG' || t.name.includes('TAG')) || teams[0];
+      const tagTeamId = tagTeam?.id || 1;
+
+      let matchesList: any[] = [];
+      if (isPostgresActive) {
+        let query = `
+          SELECT m.*, t.name as tournament_name
+          FROM matches m
+          JOIN tournaments t ON t.id = m.tournament_id
+          WHERE 1=1
+        `;
+        const params: any[] = [];
+        if (officialOnly) {
+          query += ' AND m.is_official = TRUE';
+        }
+        if (tournamentId) {
+          params.push(tournamentId);
+          query += ` AND m.tournament_id = $${params.length}`;
+        }
+        query += ' ORDER BY m.played_at ASC';
+        const res = await db.query(query, params);
+        matchesList = res.rows;
+      } else {
+        matchesList = memoryDb.matches.filter(m => {
+          if (officialOnly && !m.is_official) return false;
+          if (tournamentId && m.tournament_id !== tournamentId) return false;
+          return true;
+        }).map(m => {
+          const t = memoryDb.tournaments.find(tourney => tourney.id === m.tournament_id);
+          return { ...m, tournament_name: t?.name || 'Tournament' };
+        });
+      }
+
+      // Fetch team results for these matches
+      let allResults: any[] = [];
+      if (matchesList.length > 0) {
+        const matchIds = matchesList.map(m => m.id);
+        if (isPostgresActive) {
+          const res = await db.query(`
+            SELECT r.*, t.name as team_name, t.tag as team_tag
+            FROM match_team_results r
+            JOIN teams t ON t.id = r.team_id
+            WHERE r.match_id = ANY($1::int[])
+          `, [matchIds]);
+          allResults = res.rows;
+        } else {
+          allResults = memoryDb.match_team_results.filter(r => matchIds.includes(r.match_id)).map(r => {
+            const t = memoryDb.teams.find(tm => tm.id === r.team_id);
+            return { ...r, team_name: t?.name, team_tag: t?.tag };
+          });
+        }
+      }
+
+      // Group results by match
+      const resultsByMatch: { [matchId: number]: any[] } = {};
+      allResults.forEach(r => {
+        if (!resultsByMatch[r.match_id]) resultsByMatch[r.match_id] = [];
+        resultsByMatch[r.match_id].push(r);
+      });
+
+      // Prepare Map statistics map
+      const mapMap: { [mapName: string]: MapStatDetail } = {};
+
+      ALL_FREE_FIRE_MAPS.forEach(mapName => {
+        const meta = MAP_METADATA[mapName] || {
+          description: 'Competitive Free Fire MAX Arena',
+          banner: 'https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=600&auto=format&fit=crop',
+          color: 'from-slate-500/20 to-slate-800/20 border-slate-500/30'
+        };
+
+        mapMap[mapName] = {
+          map_name: mapName,
+          display_name: mapName,
+          description: meta.description,
+          banner_url: meta.banner,
+          color: meta.color,
+          matches_played: 0,
+          official_matches: 0,
+          unofficial_matches: 0,
+          total_kills: 0,
+          tag_matches: 0,
+          tag_kills: 0,
+          tag_booyahs: 0,
+          tag_kd: '0.00',
+          tag_avg_kills: '0.0',
+          tag_win_rate: '0.0',
+          tag_total_points: 0,
+          top_team: null,
+          top_player: null
+        };
+      });
+
+      const mapTeamStats: { [mapName: string]: { [teamId: number]: { name: string; tag: string; kills: number; booyahs: number; points: number } } } = {};
+
+      matchesList.forEach(m => {
+        const standardMap = ALL_FREE_FIRE_MAPS.find(name => name.toLowerCase() === (m.map_name || '').toLowerCase()) || m.map_name || 'Bermuda';
+        if (!mapMap[standardMap]) {
+          mapMap[standardMap] = {
+            map_name: standardMap,
+            display_name: standardMap,
+            description: 'Competitive Free Fire MAX Arena',
+            banner_url: 'https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=600&auto=format&fit=crop',
+            color: 'from-orange-500/20 to-red-600/10 border-orange-500/30',
+            matches_played: 0,
+            official_matches: 0,
+            unofficial_matches: 0,
+            total_kills: 0,
+            tag_matches: 0,
+            tag_kills: 0,
+            tag_booyahs: 0,
+            tag_kd: '0.00',
+            tag_avg_kills: '0.0',
+            tag_win_rate: '0.0',
+            tag_total_points: 0,
+            top_team: null,
+            top_player: null
+          };
+        }
+
+        const mapObj = mapMap[standardMap];
+        mapObj.matches_played++;
+        if (m.is_official) mapObj.official_matches++;
+        else mapObj.unofficial_matches++;
+
+        if (!mapTeamStats[standardMap]) mapTeamStats[standardMap] = {};
+
+        const matchResults = resultsByMatch[m.id] || [];
+        matchResults.forEach(r => {
+          const kills = Number(r.kills) || 0;
+          const pts = Number(r.total_points) || (kills + (r.placement === 1 ? 12 : Math.max(0, 10 - r.placement)));
+          mapObj.total_kills += kills;
+
+          if (!mapTeamStats[standardMap][r.team_id]) {
+            mapTeamStats[standardMap][r.team_id] = {
+              name: r.team_name || 'Team',
+              tag: r.team_tag || 'TEAM',
+              kills: 0,
+              booyahs: 0,
+              points: 0
+            };
+          }
+          const tEntry = mapTeamStats[standardMap][r.team_id];
+          tEntry.kills += kills;
+          tEntry.points += pts;
+          if (r.placement === 1) tEntry.booyahs++;
+
+          if (r.team_id === tagTeamId || r.team_tag === 'TAG') {
+            mapObj.tag_matches++;
+            mapObj.tag_kills += kills;
+            mapObj.tag_total_points += pts;
+            if (r.placement === 1) mapObj.tag_booyahs++;
+          }
+        });
+      });
+
+      // Calculate ratios and top performers for each map
+      const mapList = Object.values(mapMap);
+      mapList.forEach(m => {
+        const tagDeaths = Math.max(1, m.tag_matches - m.tag_booyahs);
+        if (m.tag_matches > 0) {
+          m.tag_kd = (m.tag_kills / tagDeaths).toFixed(2);
+          m.tag_avg_kills = (m.tag_kills / m.tag_matches).toFixed(1);
+          m.tag_win_rate = ((m.tag_booyahs / m.tag_matches) * 100).toFixed(1);
+        }
+
+        // Determine top team on this map
+        const tStats = mapTeamStats[m.map_name];
+        if (tStats) {
+          const rankedMapTeams = Object.values(tStats).sort((a, b) => b.points - a.points);
+          m.top_team = rankedMapTeams[0] || null;
+        }
+      });
+
+      // Sort maps: most played first, then standard order
+      mapList.sort((a, b) => {
+        if (b.matches_played !== a.matches_played) return b.matches_played - a.matches_played;
+        return ALL_FREE_FIRE_MAPS.indexOf(a.map_name) - ALL_FREE_FIRE_MAPS.indexOf(b.map_name);
+      });
+
+      const overall = {
+        total_maps: mapList.filter(m => m.matches_played > 0).length,
+        total_matches: mapList.reduce((acc, m) => acc + m.matches_played, 0),
+        total_kills: mapList.reduce((acc, m) => acc + m.tag_kills, 0),
+        most_played_map: mapList[0]?.map_name || 'Bermuda',
+        highest_kd_map: [...mapList].sort((a, b) => parseFloat(b.tag_kd) - parseFloat(a.tag_kd))[0]?.map_name || 'Bermuda',
+        highest_win_rate_map: [...mapList].sort((a, b) => parseFloat(b.tag_win_rate) - parseFloat(a.tag_win_rate))[0]?.map_name || 'Bermuda'
+      };
+
+      return { maps: mapList, overall };
+    }, 10000);
+  }
+
+  // Get Comprehensive History Matches (Matches 1–6 across all or filtered tournaments)
+  static async getFullMatchHistory(filters: {
+    tournamentId?: number;
+    mapName?: string;
+    matchNumber?: number;
+    officialOnly?: boolean;
+    limit?: number;
+  } = {}) {
+    const cacheKey = `history_matches_${JSON.stringify(filters)}`;
+    return getOrSetCache(cacheKey, async () => {
+      const [tournaments, teams] = await Promise.all([
+        this.getAllTournaments(),
+        this.getAllTeams()
+      ]);
+
+      const tagTeam = teams.find(t => t.tag === 'TAG' || t.name.includes('TAG')) || teams[0];
+      const tagTeamId = tagTeam?.id || 1;
+
+      let matchesList: any[] = [];
+      if (isPostgresActive) {
+        let query = `
+          SELECT m.*, t.name as tournament_name, t.banner_url as tournament_banner, t.is_current as tournament_is_current
+          FROM matches m
+          JOIN tournaments t ON t.id = m.tournament_id
+          WHERE 1=1
+        `;
+        const params: any[] = [];
+        if (filters.tournamentId) {
+          params.push(filters.tournamentId);
+          query += ` AND m.tournament_id = $${params.length}`;
+        }
+        if (filters.mapName && filters.mapName !== 'all') {
+          params.push(filters.mapName);
+          query += ` AND LOWER(m.map_name) = LOWER($${params.length})`;
+        }
+        if (filters.matchNumber) {
+          params.push(filters.matchNumber);
+          query += ` AND m.match_number = $${params.length}`;
+        }
+        if (filters.officialOnly) {
+          query += ' AND m.is_official = TRUE';
+        }
+        query += ' ORDER BY m.played_at DESC, m.id DESC';
+        if (filters.limit) {
+          params.push(filters.limit);
+          query += ` LIMIT $${params.length}`;
+        }
+        const res = await db.query(query, params);
+        matchesList = res.rows;
+      } else {
+        matchesList = memoryDb.matches.filter(m => {
+          if (filters.tournamentId && m.tournament_id !== filters.tournamentId) return false;
+          if (filters.mapName && filters.mapName !== 'all' && m.map_name.toLowerCase() !== filters.mapName.toLowerCase()) return false;
+          if (filters.matchNumber && m.match_number !== filters.matchNumber) return false;
+          if (filters.officialOnly && !m.is_official) return false;
+          return true;
+        }).map(m => {
+          const t = memoryDb.tournaments.find(tourney => tourney.id === m.tournament_id);
+          return {
+            ...m,
+            tournament_name: t?.name || 'Tournament',
+            tournament_banner: t?.banner_url,
+            tournament_is_current: t?.is_current
+          };
+        }).sort((a, b) => new Date(b.played_at).getTime() - new Date(a.played_at).getTime());
+
+        if (filters.limit) {
+          matchesList = matchesList.slice(0, filters.limit);
+        }
+      }
+
+      if (matchesList.length === 0) return [];
+
+      const matchIds = matchesList.map(m => m.id);
+      let allResults: any[] = [];
+      if (isPostgresActive) {
+        const res = await db.query(`
+          SELECT r.*, t.name as team_name, t.tag as team_tag, t.logo_url as team_logo
+          FROM match_team_results r
+          JOIN teams t ON t.id = r.team_id
+          WHERE r.match_id = ANY($1::int[])
+          ORDER BY r.placement ASC
+        `, [matchIds]);
+        allResults = res.rows;
+      } else {
+        allResults = memoryDb.match_team_results.filter(r => matchIds.includes(r.match_id)).map(r => {
+          const t = memoryDb.teams.find(tm => tm.id === r.team_id);
+          return { ...r, team_name: t?.name, team_tag: t?.tag, team_logo: t?.logo_url };
+        }).sort((a, b) => a.placement - b.placement);
+      }
+
+      const resultsByMatch: { [matchId: number]: any[] } = {};
+      allResults.forEach(r => {
+        if (!resultsByMatch[r.match_id]) resultsByMatch[r.match_id] = [];
+        resultsByMatch[r.match_id].push(r);
+      });
+
+      return matchesList.map(m => {
+        const results = resultsByMatch[m.id] || [];
+        const booyahTeam = results.find(r => r.placement === 1) || null;
+        const tagResult = results.find(r => r.team_id === tagTeamId || r.team_tag === 'TAG') || null;
+        const topFraggerTeam = [...results].sort((a, b) => b.kills - a.kills)[0] || null;
+
+        return {
+          ...m,
+          results,
+          booyahTeam,
+          tagResult,
+          topFraggerTeam
+        };
+      });
+    }, 10000);
+  }
+
+  // Create Batch Matches (1-6 Matches) and Auto-Save to Tournament History with complete scoreboard
+  static async createBatchMatches(tournamentId: number, matchConfigs: {
+    match_number: number;
+    map_name: string;
+    is_official: boolean;
+    notes?: string;
+    custom_tag_kills?: number;
+    custom_tag_placement?: number;
+  }[]) {
+    this.invalidateCache();
+    const teams = await this.getAllTeams();
+
+    const createdMatchIds: number[] = [];
+    let nextMatchId = (memoryDb.matches.length > 0 ? Math.max(...memoryDb.matches.map(m => m.id)) : 0) + 1;
+    let nextResultId = (memoryDb.match_team_results.length > 0 ? Math.max(...memoryDb.match_team_results.map(r => r.id)) : 0) + 1;
+
+    for (const cfg of matchConfigs) {
+      const matchNumber = cfg.match_number;
+      const mapName = cfg.map_name || 'Bermuda';
+      const isOfficial = cfg.is_official !== false;
+      const notes = cfg.notes || `Match ${matchNumber} • ${mapName}`;
+
+      let matchId: number;
+      if (isPostgresActive) {
+        const res = await db.query(`
+          INSERT INTO matches (tournament_id, match_number, map_name, played_at, status, is_official, notes)
+          VALUES ($1, $2, $3, $4, $5, $6, $7)
+          RETURNING id
+        `, [tournamentId, matchNumber, mapName, new Date(), 'completed', isOfficial, notes]);
+        matchId = res.rows[0].id;
+      } else {
+        matchId = nextMatchId++;
+        memoryDb.matches.push({
+          id: matchId,
+          tournament_id: tournamentId,
+          match_number: matchNumber,
+          map_name: mapName,
+          played_at: new Date().toISOString(),
+          status: 'completed',
+          is_official: isOfficial,
+          notes
+        });
+      }
+
+      createdMatchIds.push(matchId);
+
+      // Populate placements 1 to 12 for standard 12-squad Free Fire match
+      const squadCount = Math.min(12, teams.length);
+      const tagPlacement = cfg.custom_tag_placement || (matchNumber % 2 === 1 ? 1 : 2);
+      const tagKills = cfg.custom_tag_kills !== undefined ? cfg.custom_tag_kills : (tagPlacement === 1 ? 8 + matchNumber : 5);
+
+      let currentPlacement = 1;
+      for (let i = 0; i < squadCount; i++) {
+        const team = teams[i];
+        let placement = currentPlacement;
+        let kills = Math.floor(Math.random() * 4);
+
+        if (team.tag === 'TAG' || team.name.includes('TAG')) {
+          placement = tagPlacement;
+          kills = tagKills;
+        } else if (currentPlacement === tagPlacement) {
+          currentPlacement++;
+          placement = currentPlacement;
+        }
+
+        const placementPoints = placement === 1 ? 12 : (placement === 2 ? 9 : (placement === 3 ? 8 : (placement === 4 ? 7 : (placement === 5 ? 6 : (placement === 6 ? 5 : (placement === 7 ? 4 : (placement === 8 ? 3 : (placement === 9 ? 2 : (placement === 10 ? 1 : 0)))))))));
+        const totalPoints = placementPoints + kills;
+
+        if (isPostgresActive) {
+          await db.query(`
+            INSERT INTO match_team_results (match_id, team_id, placement, kills, placement_points, kill_points, total_points, is_official)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+          `, [matchId, team.id, placement, kills, placementPoints, kills, totalPoints, isOfficial]);
+        } else {
+          memoryDb.match_team_results.push({
+            id: nextResultId++,
+            match_id: matchId,
+            team_id: team.id,
+            placement,
+            kills,
+            placement_points: placementPoints,
+            kill_points: kills,
+            total_points: totalPoints,
+            is_official: isOfficial
+          });
+        }
+
+        if (placement !== tagPlacement) {
+          currentPlacement++;
+        }
+      }
+    }
+
+    this.invalidateCache();
+    return createdMatchIds;
   }
 }

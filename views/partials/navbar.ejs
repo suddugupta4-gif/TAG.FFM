@@ -27,6 +27,12 @@
         <a href="/tournaments" class="px-3.5 py-2 rounded-lg text-xs font-semibold uppercase tracking-wider transition-all duration-150 <%= currentPath.startsWith('/tournaments') ? 'bg-[#ff4e00]/10 text-[#ff4e00] border border-[#ff4e00]/30 shadow-sm shadow-[#ff4e00]/10' : 'text-gray-400 hover:text-white hover:bg-white/5' %>">
           Tournaments
         </a>
+        <a href="/history" class="px-3.5 py-2 rounded-lg text-xs font-semibold uppercase tracking-wider transition-all duration-150 <%= currentPath.startsWith('/history') ? 'bg-[#ff4e00]/10 text-[#ff4e00] border border-[#ff4e00]/30 shadow-sm shadow-[#ff4e00]/10' : 'text-gray-400 hover:text-white hover:bg-white/5' %> flex items-center gap-1.5">
+          <svg class="w-3.5 h-3.5 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+          History (1–6)
+        </a>
         <a href="/teams" class="px-3.5 py-2 rounded-lg text-xs font-semibold uppercase tracking-wider transition-all duration-150 <%= currentPath.startsWith('/teams') || currentPath.startsWith('/player') || currentPath.startsWith('/team') ? 'bg-[#ff4e00]/10 text-[#ff4e00] border border-[#ff4e00]/30 shadow-sm shadow-[#ff4e00]/10' : 'text-gray-400 hover:text-white hover:bg-white/5' %>">
           Roster & Players
         </a>
@@ -81,6 +87,9 @@
     </a>
     <a href="/tournaments" class="block px-3 py-2 rounded-md text-sm font-medium <%= currentPath.startsWith('/tournaments') ? 'bg-[#ff4e00]/15 text-[#ff4e00]' : 'text-gray-400' %>">
       Tournaments
+    </a>
+    <a href="/history" class="block px-3 py-2 rounded-md text-sm font-medium <%= currentPath.startsWith('/history') ? 'bg-[#ff4e00]/15 text-[#ff4e00]' : 'text-gray-400' %>">
+      History (Matches 1–6)
     </a>
     <a href="/teams" class="block px-3 py-2 rounded-md text-sm font-medium <%= currentPath.startsWith('/teams') || currentPath.startsWith('/player') || currentPath.startsWith('/team') ? 'bg-[#ff4e00]/15 text-[#ff4e00]' : 'text-gray-400' %>">
       Roster & Players

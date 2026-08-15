@@ -1,0 +1,349 @@
+<%- include('partials/header') %>
+<%- include('partials/navbar') %>
+
+<main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+
+  <%- include('partials/flash') %>
+
+  <!-- History Page Header -->
+  <div class="glass-panel p-6 sm:p-8 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+    <div>
+      <div class="flex items-center gap-2 mb-2">
+        <span class="badge-official flex items-center gap-1">
+          <svg class="w-3.5 h-3.5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          MATCH HISTORY & MAP LEDGER
+        </span>
+        <% if (officialOnly) { %>
+          <span class="badge-official text-[10px]">OFFICIAL ONLY</span>
+        <% } else { %>
+          <span class="badge-unofficial text-[10px]">ALL MATCHES</span>
+        <% } %>
+      </div>
+      <h1 class="font-display text-4xl sm:text-5xl font-bold text-white tracking-wide">
+        Tournament History (Matches 1–6)
+      </h1>
+      <p class="text-slate-400 text-sm mt-1 max-w-2xl">
+        Complete historical match archive across all competitive Free Fire MAX tournaments, maps, placements, and player statistics.
+      </p>
+    </div>
+
+    <!-- Quick Action / Admin Batch Link -->
+    <div class="flex items-center gap-3">
+      <% if (isAdmin) { %>
+        <a href="/admin/tournaments/new" class="btn-fire text-xs py-2.5 px-4 flex items-center gap-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+          Manage & Add Matches 1–6
+        </a>
+      <% } %>
+      <a href="/analysis" class="btn-glass text-xs py-2.5 px-4 flex items-center gap-2">
+        <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+        Full Meta Analysis
+      </a>
+    </div>
+  </div>
+
+  <!-- Historical Performance Summary KPIs -->
+  <% const career = officialOnly ? careerSummary.official : careerSummary.combined; %>
+  <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div class="glass-card p-5 border-white/10 hover:border-orange-500/40 transition-colors">
+      <div class="flex items-center justify-between text-slate-400 text-xs font-mono mb-2">
+        <span>MATCHES RECORDED</span>
+        <svg class="w-4 h-4 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+      </div>
+      <div class="font-display text-4xl font-bold text-white"><%= historyMatches.length %></div>
+      <p class="text-xs text-slate-400 font-mono mt-1">Filtered from <%= career.total_matches %> Total</p>
+    </div>
+
+    <div class="glass-card p-5 border-white/10 hover:border-red-500/40 transition-colors">
+      <div class="flex items-center justify-between text-slate-400 text-xs font-mono mb-2">
+        <span>TOTAL KILLS</span>
+        <svg class="w-4 h-4 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+      </div>
+      <div class="font-display text-4xl font-bold text-orange-400"><%= career.total_kills %></div>
+      <p class="text-xs text-orange-400/80 font-mono mt-1"><%= career.avg_kills %> Avg Kills / Match</p>
+    </div>
+
+    <div class="glass-card p-5 border-white/10 hover:border-amber-500/40 transition-colors">
+      <div class="flex items-center justify-between text-slate-400 text-xs font-mono mb-2">
+        <span>TOTAL BOOYAHS</span>
+        <svg class="w-4 h-4 text-amber-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+      </div>
+      <div class="font-display text-4xl font-bold text-amber-400 flex items-center gap-2">
+        <span><%= career.total_booyahs %></span>
+        <span class="text-xs font-mono px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 font-normal">WINS</span>
+      </div>
+      <p class="text-xs text-amber-400/80 font-mono mt-1"><%= career.win_rate %>% Win Rate</p>
+    </div>
+
+    <div class="glass-card p-5 border-white/10 hover:border-emerald-500/40 transition-colors">
+      <div class="flex items-center justify-between text-slate-400 text-xs font-mono mb-2">
+        <span>SQUAD K/D RATIO</span>
+        <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      </div>
+      <div class="font-display text-4xl font-bold text-emerald-400"><%= career.total_kd %></div>
+      <p class="text-xs text-emerald-400/80 font-mono mt-1">Across <%= allTournaments.length %> Tournaments</p>
+    </div>
+  </div>
+
+  <!-- History Filters Bar (Tournament, Map, Match 1-6, Official) -->
+  <div class="glass-panel p-5">
+    <form method="GET" action="/history" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 items-end">
+      
+      <!-- Tournament Filter -->
+      <div>
+        <label class="block text-xs font-mono text-slate-400 mb-1">Tournament</label>
+        <select name="tournament_id" class="form-input text-xs py-2">
+          <option value="">All Tournaments (<%= allTournaments.length %>)</option>
+          <% allTournaments.forEach(t => { %>
+            <option value="<%= t.id %>" <%= selectedTournamentId === t.id ? 'selected' : '' %>>
+              <%= t.name %> <%= t.is_current ? '⭐ (Current)' : '' %>
+            </option>
+          <% }); %>
+        </select>
+      </div>
+
+      <!-- Map Filter (All Free Fire Maps) -->
+      <div>
+        <label class="block text-xs font-mono text-slate-400 mb-1">Map Selection</label>
+        <select name="map" class="form-input text-xs py-2">
+          <option value="all" <%= selectedMap === 'all' ? 'selected' : '' %>>All Maps</option>
+          <option value="Bermuda" <%= selectedMap === 'Bermuda' ? 'selected' : '' %>>Bermuda</option>
+          <option value="Purgatory" <%= selectedMap === 'Purgatory' ? 'selected' : '' %>>Purgatory</option>
+          <option value="Kalahari" <%= selectedMap === 'Kalahari' ? 'selected' : '' %>>Kalahari</option>
+          <option value="Alpine" <%= selectedMap === 'Alpine' ? 'selected' : '' %>>Alpine</option>
+          <option value="Nexterra" <%= selectedMap === 'Nexterra' ? 'selected' : '' %>>Nexterra</option>
+          <option value="Bermuda Remastered" <%= selectedMap === 'Bermuda Remastered' ? 'selected' : '' %>>Bermuda Remastered</option>
+          <option value="Solaria" <%= selectedMap === 'Solaria' ? 'selected' : '' %>>Solaria</option>
+        </select>
+      </div>
+
+      <!-- Match Number Filter (1–6) -->
+      <div>
+        <label class="block text-xs font-mono text-slate-400 mb-1">Match # (1–6)</label>
+        <select name="match_number" class="form-input text-xs py-2">
+          <option value="">All Matches (1–6)</option>
+          <option value="1" <%= selectedMatchNumber === 1 ? 'selected' : '' %>>Match #1</option>
+          <option value="2" <%= selectedMatchNumber === 2 ? 'selected' : '' %>>Match #2</option>
+          <option value="3" <%= selectedMatchNumber === 3 ? 'selected' : '' %>>Match #3</option>
+          <option value="4" <%= selectedMatchNumber === 4 ? 'selected' : '' %>>Match #4</option>
+          <option value="5" <%= selectedMatchNumber === 5 ? 'selected' : '' %>>Match #5</option>
+          <option value="6" <%= selectedMatchNumber === 6 ? 'selected' : '' %>>Match #6</option>
+        </select>
+      </div>
+
+      <!-- Mode Filter -->
+      <div>
+        <label class="block text-xs font-mono text-slate-400 mb-1">Verification Status</label>
+        <select name="filter" class="form-input text-xs py-2">
+          <option value="all" <%= !officialOnly ? 'selected' : '' %>>All Matches (Official + Live)</option>
+          <option value="official" <%= officialOnly ? 'selected' : '' %>>Official Matches Only</option>
+        </select>
+      </div>
+
+      <!-- Submit & Reset Buttons -->
+      <div class="flex items-center gap-2">
+        <button type="submit" class="btn-fire text-xs py-2 px-4 flex-1 justify-center">
+          Filter Ledger
+        </button>
+        <a href="/history" class="btn-glass text-xs py-2 px-3 text-slate-400 hover:text-white" title="Reset Filters">
+          Reset
+        </a>
+      </div>
+
+    </form>
+  </div>
+
+  <!-- Quick Match 1-6 Jump Pills -->
+  <div class="flex flex-wrap items-center gap-2">
+    <span class="text-xs font-mono text-slate-400 mr-1">Quick Match Filter:</span>
+    <a href="/history" class="px-3 py-1 rounded-lg text-xs font-mono <%= !selectedMatchNumber ? 'bg-orange-500 text-white font-bold' : 'bg-white/5 text-slate-300 hover:bg-white/10' %>">
+      All Matches
+    </a>
+    <% [1, 2, 3, 4, 5, 6].forEach(num => { %>
+      <a href="/history?match_number=<%= num %><%= selectedTournamentId ? '&tournament_id=' + selectedTournamentId : '' %><%= selectedMap !== 'all' ? '&map=' + selectedMap : '' %><%= officialOnly ? '&filter=official' : '' %>" 
+         class="px-3 py-1 rounded-lg text-xs font-mono transition-all <%= selectedMatchNumber === num ? 'bg-orange-500 text-white font-bold shadow-md shadow-orange-500/30' : 'bg-white/5 text-slate-300 hover:bg-white/10' %>">
+        Match #<%= num %>
+      </a>
+    <% }); %>
+  </div>
+
+  <!-- Match-by-Match Detailed Ledger (Matches 1 to 6) -->
+  <section class="space-y-4">
+    <div class="flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <h2 class="font-display text-2xl font-bold text-white tracking-wide">Historical Match Records</h2>
+        <span class="px-2.5 py-0.5 rounded-full text-xs font-mono bg-white/10 text-slate-300">
+          <%= historyMatches.length %> Matches Found
+        </span>
+      </div>
+    </div>
+
+    <% if (historyMatches.length === 0) { %>
+      <div class="glass-panel p-12 text-center space-y-3">
+        <div class="w-12 h-12 rounded-xl bg-orange-500/20 text-orange-400 mx-auto flex items-center justify-center">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        </div>
+        <h3 class="font-display text-xl font-bold text-white">No matches match your filter criteria</h3>
+        <p class="text-xs text-slate-400 max-w-sm mx-auto">Try clearing your filters or selecting a different map or tournament.</p>
+        <a href="/history" class="btn-fire text-xs py-2 px-4 inline-block mt-2">View All History</a>
+      </div>
+    <% } else { %>
+      <div class="space-y-4">
+        <% historyMatches.forEach((m, idx) => { %>
+          <div class="glass-card p-5 sm:p-6 border-l-4 <%= m.is_official ? 'border-l-emerald-500' : 'border-l-amber-500' %> transition-all">
+            
+            <!-- Match Header -->
+            <div class="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 pb-4 mb-4">
+              <div class="flex flex-wrap items-center gap-3">
+                <span class="font-display text-2xl font-bold text-white">MATCH #<%= m.match_number %></span>
+                
+                <!-- Map Badge -->
+                <span class="px-3 py-1 rounded-md bg-white/5 border border-white/10 text-xs font-mono text-slate-200 flex items-center gap-1.5">
+                  <span class="w-2 h-2 rounded-full bg-orange-500"></span>
+                  Map: <strong class="text-orange-400"><%= m.map_name %></strong>
+                </span>
+
+                <!-- Tournament Pill -->
+                <a href="/tournament/<%= m.tournament_id %>" class="px-2.5 py-1 rounded-md bg-white/5 hover:bg-white/10 text-xs font-mono text-slate-300 hover:text-white transition-colors">
+                  🏆 <%= m.tournament_name %>
+                </a>
+              </div>
+
+              <div class="flex items-center gap-3">
+                <% if (m.is_official) { %>
+                  <span class="badge-official">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                    OFFICIAL MATCH
+                  </span>
+                <% } else { %>
+                  <span class="badge-unofficial">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    LOCAL / UNOFFICIAL
+                  </span>
+                <% } %>
+                <span class="text-xs font-mono text-slate-500">
+                  <%= new Date(m.played_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) %>
+                </span>
+              </div>
+            </div>
+
+            <!-- Key Match Highlights (Booyah Champion & TAG Squad Performance) -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
+              
+              <!-- Booyah Champion -->
+              <% if (m.booyahTeam) { %>
+                <div class="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-between">
+                  <div class="flex items-center gap-2.5">
+                    <div class="w-9 h-9 rounded-lg bg-amber-500/20 flex items-center justify-center text-amber-400 font-bold font-mono text-sm">
+                      👑
+                    </div>
+                    <div>
+                      <span class="text-[10px] font-mono uppercase text-amber-400/80 font-bold block">Match Champion</span>
+                      <span class="font-bold text-sm text-white"><%= m.booyahTeam.team_name %></span>
+                    </div>
+                  </div>
+                  <div class="text-right font-mono">
+                    <span class="text-xs text-amber-400 font-bold block"><%= m.booyahTeam.kills %> Kills</span>
+                    <span class="text-[10px] text-slate-400"><%= m.booyahTeam.total_points %> Points</span>
+                  </div>
+                </div>
+              <% } %>
+
+              <!-- TAG Squad Performance -->
+              <% if (m.tagResult) { %>
+                <div class="p-3.5 rounded-xl bg-orange-500/10 border border-orange-500/20 flex items-center justify-between">
+                  <div class="flex items-center gap-2.5">
+                    <div class="w-9 h-9 rounded-lg bg-orange-500/20 flex items-center justify-center text-orange-400 font-bold font-mono text-xs">
+                      TAG
+                    </div>
+                    <div>
+                      <span class="text-[10px] font-mono uppercase text-orange-400/80 font-bold block">TAG Roster</span>
+                      <span class="font-bold text-sm text-white">Placement #<%= m.tagResult.placement %></span>
+                    </div>
+                  </div>
+                  <div class="text-right font-mono">
+                    <span class="text-xs text-orange-400 font-bold block"><%= m.tagResult.kills %> Kills</span>
+                    <span class="text-[10px] text-slate-400"><%= m.tagResult.total_points %> Points</span>
+                  </div>
+                </div>
+              <% } %>
+
+              <!-- Top Fragger / Most Eliminating Squad -->
+              <% if (m.topFraggerTeam) { %>
+                <div class="p-3.5 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center justify-between">
+                  <div class="flex items-center gap-2.5">
+                    <div class="w-9 h-9 rounded-lg bg-red-500/20 flex items-center justify-center text-red-400 font-bold font-mono text-xs">
+                      ⚔️
+                    </div>
+                    <div>
+                      <span class="text-[10px] font-mono uppercase text-red-400/80 font-bold block">Most Frags Squad</span>
+                      <span class="font-bold text-sm text-white"><%= m.topFraggerTeam.team_name %></span>
+                    </div>
+                  </div>
+                  <div class="text-right font-mono">
+                    <span class="text-xs text-red-400 font-bold block"><%= m.topFraggerTeam.kills %> Kills</span>
+                    <span class="text-[10px] text-slate-400">Placement #<%= m.topFraggerTeam.placement %></span>
+                  </div>
+                </div>
+              <% } %>
+
+            </div>
+
+            <!-- Expandable Detailed 12-Squad Match Scoreboard -->
+            <% if (m.results && m.results.length > 0) { %>
+              <details class="group">
+                <summary class="cursor-pointer select-none text-xs font-mono text-slate-400 hover:text-orange-400 flex items-center gap-1.5 py-1">
+                  <svg class="w-4 h-4 group-open:rotate-90 transition-transform text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                  <span>View Full 12-Squad Match Scoreboard & Points Breakdown</span>
+                </summary>
+                
+                <div class="mt-3 overflow-x-auto rounded-xl border border-white/5 bg-black/40">
+                  <table class="w-full text-left text-xs font-mono">
+                    <thead>
+                      <tr class="border-b border-white/10 bg-white/5 text-slate-400">
+                        <th class="py-2.5 px-3">Rank</th>
+                        <th class="py-2.5 px-3">Squad / Team</th>
+                        <th class="py-2.5 px-3 text-center">Kills</th>
+                        <th class="py-2.5 px-3 text-center">Place PTS</th>
+                        <th class="py-2.5 px-3 text-right">Total PTS</th>
+                      </tr>
+                    </thead>
+                    <tbody class="divide-y divide-white/5">
+                      <% m.results.forEach(res => { %>
+                        <tr class="<%= res.placement === 1 ? 'bg-amber-500/10 text-amber-300 font-bold' : (res.team_tag === 'TAG' ? 'bg-orange-500/10 text-orange-300 font-bold' : 'hover:bg-white/5 text-slate-300') %>">
+                          <td class="py-2 px-3">
+                            <% if (res.placement === 1) { %>
+                              <span class="px-2 py-0.5 rounded bg-amber-500/30 text-amber-300 font-bold">#1 BOOYAH</span>
+                            <% } else { %>
+                              <span class="text-slate-500">#<%= res.placement %></span>
+                            <% } %>
+                          </td>
+                          <td class="py-2 px-3">
+                            <div class="flex items-center gap-2">
+                              <% if (res.team_logo) { %>
+                                <img src="<%= res.team_logo %>" alt="" class="w-5 h-5 rounded-full object-cover">
+                              <% } %>
+                              <span class="font-bold <%= res.placement === 1 ? 'text-white' : '' %>"><%= res.team_name %></span>
+                              <span class="text-[10px] text-slate-500">[<%= res.team_tag %>]</span>
+                            </div>
+                          </td>
+                          <td class="py-2 px-3 text-center font-bold text-orange-400"><%= res.kills %></td>
+                          <td class="py-2 px-3 text-center text-slate-400"><%= res.placement_points %></td>
+                          <td class="py-2 px-3 text-right font-bold text-white"><%= res.total_points %></td>
+                        </tr>
+                      <% }); %>
+                    </tbody>
+                  </table>
+                </div>
+              </details>
+            <% } %>
+
+          </div>
+        <% }); %>
+      </div>
+    <% } %>
+  </section>
+
+</main>
+
+<%- include('partials/footer') %>

@@ -165,53 +165,226 @@
       </div>
 
       <% if (!tournament) { %>
-        <!-- Maps Rotation & Match Setup (For New Tournament) -->
-        <div class="p-5 rounded-2xl bg-black/40 border border-white/10 space-y-4">
-          <label class="block text-xs font-mono text-orange-400 uppercase font-bold">
-            Maps Rotation & Initial Match Setup
-          </label>
-          
-          <div class="text-xs text-slate-300">Select Free Fire MAX maps to be featured in this tournament rotation:</div>
-          <div class="grid grid-cols-2 sm:grid-cols-5 gap-3">
-            <label class="p-3 rounded-xl bg-slate-900 border border-white/10 flex items-center gap-2 cursor-pointer hover:border-orange-400">
-              <input type="checkbox" name="selected_maps" value="Bermuda" checked class="rounded bg-slate-800 text-orange-500">
-              <span class="text-xs font-bold text-white">Bermuda</span>
-            </label>
-            <label class="p-3 rounded-xl bg-slate-900 border border-white/10 flex items-center gap-2 cursor-pointer hover:border-orange-400">
-              <input type="checkbox" name="selected_maps" value="Purgatory" checked class="rounded bg-slate-800 text-orange-500">
-              <span class="text-xs font-bold text-white">Purgatory</span>
-            </label>
-            <label class="p-3 rounded-xl bg-slate-900 border border-white/10 flex items-center gap-2 cursor-pointer hover:border-orange-400">
-              <input type="checkbox" name="selected_maps" value="Kalahari" checked class="rounded bg-slate-800 text-orange-500">
-              <span class="text-xs font-bold text-white">Kalahari</span>
-            </label>
-            <label class="p-3 rounded-xl bg-slate-900 border border-white/10 flex items-center gap-2 cursor-pointer hover:border-orange-400">
-              <input type="checkbox" name="selected_maps" value="Alpine" checked class="rounded bg-slate-800 text-orange-500">
-              <span class="text-xs font-bold text-white">Alpine</span>
-            </label>
-            <label class="p-3 rounded-xl bg-slate-900 border border-white/10 flex items-center gap-2 cursor-pointer hover:border-orange-400">
-              <input type="checkbox" name="selected_maps" value="Nexterra" checked class="rounded bg-slate-800 text-orange-500">
-              <span class="text-xs font-bold text-white">Nexterra</span>
-            </label>
+        <!-- Match Selection 1-6 & All Free Fire Maps Selection (Auto-Save to History) -->
+        <div class="p-6 rounded-2xl bg-black/40 border border-white/10 space-y-6">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-white/10 pb-3">
+            <div>
+              <span class="badge-official text-[10px] uppercase tracking-wider">Esports Match Setup</span>
+              <h3 class="font-display text-lg font-bold text-white tracking-wide mt-0.5">
+                Match Selection (1–6) & Map Rotation Setup
+              </h3>
+            </div>
+            <span class="text-xs font-mono text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-md border border-emerald-500/30 flex items-center gap-1.5">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+              Auto-Saves to History with All Details
+            </span>
           </div>
 
-          <div class="pt-2">
-            <label for="initial_matches_count" class="block text-xs font-mono text-slate-300 uppercase mb-1">
-              Auto-Seed Initial Match Slots (Optional)
+          <!-- Match Count Selection (1 to 6) -->
+          <div class="space-y-3">
+            <label class="block text-xs font-mono text-slate-300 uppercase font-bold">
+              Select Number of Matches (1–6):
             </label>
-            <select 
-              id="initial_matches_count" 
-              name="initial_matches_count" 
-              class="w-full sm:w-64 px-4 py-2 rounded-xl bg-slate-900 border border-white/15 text-white focus:outline-none focus:border-orange-500 text-xs font-mono"
-            >
-              <option value="0">Do not auto-generate (Log manually later)</option>
-              <option value="3">Create 3 initial match slots with map rotation</option>
-              <option value="6" selected>Create 6 initial match slots with map rotation (Standard Day)</option>
-              <option value="12">Create 12 initial match slots (Grand Finals 2-Day)</option>
-            </select>
-            <p class="text-[11px] text-slate-400 mt-1">Pre-populates match slots and map details so the banner and match results show immediately.</p>
+            <div class="grid grid-cols-3 sm:grid-cols-7 gap-2">
+              <label class="p-3 rounded-xl bg-slate-900 border border-white/15 text-center cursor-pointer hover:border-orange-500 transition-all has-[:checked]:border-orange-500 has-[:checked]:bg-orange-500/10">
+                <input type="radio" name="initial_matches_count" value="0" class="sr-only" onchange="updateMatchRowsVisibility(0)">
+                <span class="block font-display text-sm font-bold text-white">0</span>
+                <span class="text-[10px] text-slate-400 font-mono">Manual</span>
+              </label>
+              <label class="p-3 rounded-xl bg-slate-900 border border-white/15 text-center cursor-pointer hover:border-orange-500 transition-all has-[:checked]:border-orange-500 has-[:checked]:bg-orange-500/10">
+                <input type="radio" name="initial_matches_count" value="1" class="sr-only" onchange="updateMatchRowsVisibility(1)">
+                <span class="block font-display text-sm font-bold text-white">1 Match</span>
+                <span class="text-[10px] text-slate-400 font-mono">Bo1</span>
+              </label>
+              <label class="p-3 rounded-xl bg-slate-900 border border-white/15 text-center cursor-pointer hover:border-orange-500 transition-all has-[:checked]:border-orange-500 has-[:checked]:bg-orange-500/10">
+                <input type="radio" name="initial_matches_count" value="2" class="sr-only" onchange="updateMatchRowsVisibility(2)">
+                <span class="block font-display text-sm font-bold text-white">2 Matches</span>
+                <span class="text-[10px] text-slate-400 font-mono">Bo2</span>
+              </label>
+              <label class="p-3 rounded-xl bg-slate-900 border border-white/15 text-center cursor-pointer hover:border-orange-500 transition-all has-[:checked]:border-orange-500 has-[:checked]:bg-orange-500/10">
+                <input type="radio" name="initial_matches_count" value="3" class="sr-only" onchange="updateMatchRowsVisibility(3)">
+                <span class="block font-display text-sm font-bold text-white">3 Matches</span>
+                <span class="text-[10px] text-slate-400 font-mono">Bo3</span>
+              </label>
+              <label class="p-3 rounded-xl bg-slate-900 border border-white/15 text-center cursor-pointer hover:border-orange-500 transition-all has-[:checked]:border-orange-500 has-[:checked]:bg-orange-500/10">
+                <input type="radio" name="initial_matches_count" value="4" class="sr-only" onchange="updateMatchRowsVisibility(4)">
+                <span class="block font-display text-sm font-bold text-white">4 Matches</span>
+                <span class="text-[10px] text-slate-400 font-mono">Bo4</span>
+              </label>
+              <label class="p-3 rounded-xl bg-slate-900 border border-white/15 text-center cursor-pointer hover:border-orange-500 transition-all has-[:checked]:border-orange-500 has-[:checked]:bg-orange-500/10">
+                <input type="radio" name="initial_matches_count" value="5" class="sr-only" onchange="updateMatchRowsVisibility(5)">
+                <span class="block font-display text-sm font-bold text-white">5 Matches</span>
+                <span class="text-[10px] text-slate-400 font-mono">Bo5</span>
+              </label>
+              <label class="p-3 rounded-xl bg-slate-900 border border-white/15 text-center cursor-pointer hover:border-orange-500 transition-all has-[:checked]:border-orange-500 has-[:checked]:bg-orange-500/10">
+                <input type="radio" name="initial_matches_count" value="6" checked class="sr-only" onchange="updateMatchRowsVisibility(6)">
+                <span class="block font-display text-sm font-bold text-orange-400">6 Matches</span>
+                <span class="text-[10px] text-orange-400/80 font-mono">Standard Day</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- All Free Fire Maps Selector for Matches 1 to 6 -->
+          <div class="space-y-4" id="match-rotation-configs">
+            <div class="text-xs text-slate-300 font-mono flex items-center justify-between">
+              <span>ASSIGN MAP TO EACH MATCH (1–6):</span>
+              <span class="text-[11px] text-slate-400">All 7 Free Fire Maps available</span>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              
+              <!-- Match 1 Map -->
+              <div class="p-3.5 rounded-xl bg-slate-900/90 border border-white/10 space-y-1.5 match-slot-item" id="match-slot-1">
+                <div class="flex items-center justify-between">
+                  <span class="font-display text-sm font-bold text-white flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-orange-400"></span>
+                    MATCH #1
+                  </span>
+                  <span class="text-[10px] font-mono text-slate-400">Game 1</span>
+                </div>
+                <select name="match_1_map" class="w-full px-3 py-1.5 rounded-lg bg-black/60 border border-white/15 text-white text-xs font-mono focus:border-orange-500 focus:outline-none">
+                  <option value="Bermuda" selected>Bermuda (Standard)</option>
+                  <option value="Purgatory">Purgatory</option>
+                  <option value="Kalahari">Kalahari</option>
+                  <option value="Alpine">Alpine</option>
+                  <option value="Nexterra">Nexterra</option>
+                  <option value="Bermuda Remastered">Bermuda Remastered</option>
+                  <option value="Solaria">Solaria</option>
+                </select>
+              </div>
+
+              <!-- Match 2 Map -->
+              <div class="p-3.5 rounded-xl bg-slate-900/90 border border-white/10 space-y-1.5 match-slot-item" id="match-slot-2">
+                <div class="flex items-center justify-between">
+                  <span class="font-display text-sm font-bold text-white flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-orange-400"></span>
+                    MATCH #2
+                  </span>
+                  <span class="text-[10px] font-mono text-slate-400">Game 2</span>
+                </div>
+                <select name="match_2_map" class="w-full px-3 py-1.5 rounded-lg bg-black/60 border border-white/15 text-white text-xs font-mono focus:border-orange-500 focus:outline-none">
+                  <option value="Bermuda">Bermuda</option>
+                  <option value="Purgatory" selected>Purgatory (Standard)</option>
+                  <option value="Kalahari">Kalahari</option>
+                  <option value="Alpine">Alpine</option>
+                  <option value="Nexterra">Nexterra</option>
+                  <option value="Bermuda Remastered">Bermuda Remastered</option>
+                  <option value="Solaria">Solaria</option>
+                </select>
+              </div>
+
+              <!-- Match 3 Map -->
+              <div class="p-3.5 rounded-xl bg-slate-900/90 border border-white/10 space-y-1.5 match-slot-item" id="match-slot-3">
+                <div class="flex items-center justify-between">
+                  <span class="font-display text-sm font-bold text-white flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-orange-400"></span>
+                    MATCH #3
+                  </span>
+                  <span class="text-[10px] font-mono text-slate-400">Game 3</span>
+                </div>
+                <select name="match_3_map" class="w-full px-3 py-1.5 rounded-lg bg-black/60 border border-white/15 text-white text-xs font-mono focus:border-orange-500 focus:outline-none">
+                  <option value="Bermuda">Bermuda</option>
+                  <option value="Purgatory">Purgatory</option>
+                  <option value="Kalahari" selected>Kalahari (Standard)</option>
+                  <option value="Alpine">Alpine</option>
+                  <option value="Nexterra">Nexterra</option>
+                  <option value="Bermuda Remastered">Bermuda Remastered</option>
+                  <option value="Solaria">Solaria</option>
+                </select>
+              </div>
+
+              <!-- Match 4 Map -->
+              <div class="p-3.5 rounded-xl bg-slate-900/90 border border-white/10 space-y-1.5 match-slot-item" id="match-slot-4">
+                <div class="flex items-center justify-between">
+                  <span class="font-display text-sm font-bold text-white flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-orange-400"></span>
+                    MATCH #4
+                  </span>
+                  <span class="text-[10px] font-mono text-slate-400">Game 4</span>
+                </div>
+                <select name="match_4_map" class="w-full px-3 py-1.5 rounded-lg bg-black/60 border border-white/15 text-white text-xs font-mono focus:border-orange-500 focus:outline-none">
+                  <option value="Bermuda">Bermuda</option>
+                  <option value="Purgatory">Purgatory</option>
+                  <option value="Kalahari">Kalahari</option>
+                  <option value="Alpine" selected>Alpine (Standard)</option>
+                  <option value="Nexterra">Nexterra</option>
+                  <option value="Bermuda Remastered">Bermuda Remastered</option>
+                  <option value="Solaria">Solaria</option>
+                </select>
+              </div>
+
+              <!-- Match 5 Map -->
+              <div class="p-3.5 rounded-xl bg-slate-900/90 border border-white/10 space-y-1.5 match-slot-item" id="match-slot-5">
+                <div class="flex items-center justify-between">
+                  <span class="font-display text-sm font-bold text-white flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-orange-400"></span>
+                    MATCH #5
+                  </span>
+                  <span class="text-[10px] font-mono text-slate-400">Game 5</span>
+                </div>
+                <select name="match_5_map" class="w-full px-3 py-1.5 rounded-lg bg-black/60 border border-white/15 text-white text-xs font-mono focus:border-orange-500 focus:outline-none">
+                  <option value="Bermuda">Bermuda</option>
+                  <option value="Purgatory">Purgatory</option>
+                  <option value="Kalahari">Kalahari</option>
+                  <option value="Alpine">Alpine</option>
+                  <option value="Nexterra" selected>Nexterra (Standard)</option>
+                  <option value="Bermuda Remastered">Bermuda Remastered</option>
+                  <option value="Solaria">Solaria</option>
+                </select>
+              </div>
+
+              <!-- Match 6 Map -->
+              <div class="p-3.5 rounded-xl bg-slate-900/90 border border-white/10 space-y-1.5 match-slot-item" id="match-slot-6">
+                <div class="flex items-center justify-between">
+                  <span class="font-display text-sm font-bold text-white flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-orange-400"></span>
+                    MATCH #6
+                  </span>
+                  <span class="text-[10px] font-mono text-slate-400">Game 6 (Grand Final)</span>
+                </div>
+                <select name="match_6_map" class="w-full px-3 py-1.5 rounded-lg bg-black/60 border border-white/15 text-white text-xs font-mono focus:border-orange-500 focus:outline-none">
+                  <option value="Bermuda">Bermuda</option>
+                  <option value="Purgatory">Purgatory</option>
+                  <option value="Kalahari">Kalahari</option>
+                  <option value="Alpine">Alpine</option>
+                  <option value="Nexterra">Nexterra</option>
+                  <option value="Bermuda Remastered" selected>Bermuda Remastered (Standard)</option>
+                  <option value="Solaria">Solaria</option>
+                </select>
+              </div>
+
+            </div>
+          </div>
+
+          <div class="p-3 rounded-lg bg-orange-500/10 border border-orange-500/20 text-xs text-slate-300 flex items-start gap-2">
+            <svg class="w-4 h-4 text-orange-400 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            <p>
+              When you create this tournament with 1–6 matches, full match ledgers, kills, points, and map analytics are automatically populated and saved to the <strong>Match History</strong> ledger and <strong>Map Analysis</strong> panel on the Home Page!
+            </p>
           </div>
         </div>
+
+        <script>
+          function updateMatchRowsVisibility(count) {
+            const container = document.getElementById('match-rotation-configs');
+            if (!container) return;
+            if (count === 0) {
+              container.classList.add('opacity-40', 'pointer-events-none');
+            } else {
+              container.classList.remove('opacity-40', 'pointer-events-none');
+              for (let i = 1; i <= 6; i++) {
+                const el = document.getElementById('match-slot-' + i);
+                if (el) {
+                  if (i <= count) {
+                    el.classList.remove('hidden');
+                  } else {
+                    el.classList.add('hidden');
+                  }
+                }
+              }
+            }
+          }
+        </script>
       <% } %>
 
       <!-- Set as Current Featured Tournament Toggle -->

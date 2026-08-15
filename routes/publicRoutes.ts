@@ -16,14 +16,16 @@ router.use(async (req: Request, res: Response, next) => {
   }
 });
 
-// 1. Homepage: Current Featured Tournament + Standings + Live Feed
+// 1. Homepage: Current Featured Tournament + Standings + Map Analysis + Live Feed
 router.get('/', async (req: Request, res: Response) => {
   try {
-    const [currentTournament, allTournaments, careerSummary, allPlayerStats] = await Promise.all([
+    const [currentTournament, allTournaments, careerSummary, allPlayerStats, mapAnalysisOfficial, mapAnalysisCombined] = await Promise.all([
       TournamentService.getCurrentTournament(),
       TournamentService.getAllTournaments(),
       TournamentService.getCareerSummary(),
-      TournamentService.getAllPlayerStatsSummaries()
+      TournamentService.getAllPlayerStatsSummaries(),
+      TournamentService.getMapAnalysis(true),
+      TournamentService.getMapAnalysis(false)
     ]);
 
     let standingsOfficial: any[] = [];
@@ -48,28 +50,8 @@ router.get('/', async (req: Request, res: Response) => {
     const unofficialMatches = matches.filter(m => !m.is_official);
     const hasAnyUnofficialMatch = unofficialMatches.length > 0;
 
-    // Calculate map distribution & match details for the current tournament
-    const mapStats: { [name: string]: { name: string; count: number; officialCount: number; unofficialCount: number; booyahs: number; kills: number } } = {};
-    matches.forEach(m => {
-      const mapName = m.map_name || 'Bermuda';
-      if (!mapStats[mapName]) {
-        mapStats[mapName] = { name: mapName, count: 0, officialCount: 0, unofficialCount: 0, booyahs: 0, kills: 0 };
-      }
-      mapStats[mapName].count++;
-      if (m.is_official) mapStats[mapName].officialCount++;
-      else mapStats[mapName].unofficialCount++;
-
-      const tagRes = m.results?.find((r: any) => r.team_tag === 'TAG' || (r.team_name && r.team_name.includes('TAG')));
-      if (tagRes) {
-        if (tagRes.placement === 1) mapStats[mapName].booyahs++;
-        mapStats[mapName].kills += Number(tagRes.kills) || 0;
-      }
-    });
-
-    const mapList = Object.values(mapStats);
-
     res.render('home', {
-      title: 'TAGFREEFIREMAX — Official Esports Tracker',
+      title: 'TAGFREEFIREMAX — Official Esports Tracker & Map Analysis',
       currentTournament,
       allTournaments,
       currentTourneySummary,
@@ -85,7 +67,8 @@ router.get('/', async (req: Request, res: Response) => {
       topPlayersCombined,
       allPlayerStats,
       hasAnyUnofficialMatch,
-      mapList
+      mapAnalysisOfficial,
+      mapAnalysisCombined
     });
   } catch (err: any) {
     console.error('Home route error:', err);
@@ -93,7 +76,46 @@ router.get('/', async (req: Request, res: Response) => {
   }
 });
 
-// 2. Tournament History & Archives
+// 2. Tournament History & Match Ledger (Matches 1-6 with all details)
+router.get('/history', async (req: Request, res: Response) => {
+  try {
+    const tournamentId = req.query.tournament_id ? parseInt(req.query.tournament_id as string, 10) : undefined;
+    const mapName = req.query.map as string || 'all';
+    const matchNumber = req.query.match_number ? parseInt(req.query.match_number as string, 10) : undefined;
+    const officialOnly = req.query.filter === 'official';
+
+    const [allTournaments, historyMatches, careerSummary, mapAnalysis] = await Promise.all([
+      TournamentService.getAllTournaments(),
+      TournamentService.getFullMatchHistory({
+        tournamentId,
+        mapName,
+        matchNumber,
+        officialOnly
+      }),
+      TournamentService.getCareerSummary(),
+      TournamentService.getMapAnalysis(officialOnly, tournamentId)
+    ]);
+
+    const activeTournament = tournamentId ? allTournaments.find(t => t.id === tournamentId) || null : null;
+
+    res.render('history', {
+      title: 'Tournament Match History (1–6) & Map Ledger — TAGFREEFIREMAX',
+      allTournaments,
+      historyMatches,
+      careerSummary,
+      mapAnalysis,
+      selectedTournamentId: tournamentId,
+      selectedMap: mapName,
+      selectedMatchNumber: matchNumber,
+      officialOnly,
+      activeTournament
+    });
+  } catch (err: any) {
+    res.status(500).render('error', { message: 'Failed to load history: ' + err.message });
+  }
+});
+
+// 3. Tournament Archives List
 router.get('/tournaments', async (req: Request, res: Response) => {
   try {
     const tournaments = await TournamentService.getAllTournaments();
@@ -233,6 +255,18 @@ router.get('/api/analysis', async (req: Request, res: Response) => {
     const officialOnly = req.query.filter === 'official';
     const analysis = await TournamentService.getOverallAnalysis(officialOnly);
     res.json({ success: true, analysis });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// AJAX API Endpoint for instant map analysis switching
+router.get('/api/map-analysis', async (req: Request, res: Response) => {
+  try {
+    const officialOnly = req.query.filter === 'official';
+    const tournamentId = req.query.tournament_id ? parseInt(req.query.tournament_id as string, 10) : undefined;
+    const mapAnalysis = await TournamentService.getMapAnalysis(officialOnly, tournamentId);
+    res.json({ success: true, mapAnalysis });
   } catch (err: any) {
     res.status(500).json({ success: false, error: err.message });
   }

@@ -44,6 +44,17 @@ app.set('views', path.join(process.cwd(), 'views'));
 // Static Assets
 app.use(express.static(path.join(process.cwd(), 'public')));
 
+// Favicon & Robots Handlers to prevent 404 logs on Vercel
+app.get(['/favicon.ico', '/favicon.png', '/favicon.svg'], (req: Request, res: Response) => {
+  res.sendFile(path.join(process.cwd(), 'public', 'favicon.svg'), {
+    headers: { 'Content-Type': 'image/svg+xml', 'Cache-Control': 'public, max-age=86400' }
+  });
+});
+
+app.get('/robots.txt', (req: Request, res: Response) => {
+  res.type('text/plain').send('User-agent: *\nAllow: /\nDisallow: /admin\n');
+});
+
 // Global Request Logger, Site Context & Session Helper injection (Runs for ALL routes including /admin)
 app.use(async (req: Request, res: Response, next: NextFunction) => {
   try {

@@ -265,6 +265,55 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
+    // 7. Update Map Analysis Cards in Real Time
+    const mapAnalysisBadge = document.getElementById('map-analysis-filter-badge');
+    if (mapAnalysisBadge) {
+      if (mode === 'official') {
+        mapAnalysisBadge.className = 'badge-official text-[10px]';
+        mapAnalysisBadge.textContent = 'OFFICIAL STATS';
+      } else if (mode === 'unofficial') {
+        mapAnalysisBadge.className = 'badge-unofficial text-[10px]';
+        mapAnalysisBadge.textContent = 'LOCAL ORGANIZER';
+      } else {
+        mapAnalysisBadge.className = 'px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-[#ff4e00]/20 text-[#ff4e00] border border-[#ff4e00]/30';
+        mapAnalysisBadge.textContent = 'ALL COMBINED';
+      }
+    }
+
+    const mapCards = document.querySelectorAll('.map-analysis-card');
+    mapCards.forEach(card => {
+      const isOfficial = mode === 'official';
+      const matchesKey = isOfficial ? 'data-official-matches' : 'data-combined-matches';
+      const killsKey = isOfficial ? 'data-official-kills' : 'data-combined-kills';
+      const kdKey = isOfficial ? 'data-official-kd' : 'data-combined-kd';
+      const booyahsKey = isOfficial ? 'data-official-booyahs' : 'data-combined-booyahs';
+      const winrateKey = isOfficial ? 'data-official-winrate' : 'data-combined-winrate';
+      const avgkillsKey = isOfficial ? 'data-official-avgkills' : 'data-combined-avgkills';
+
+      const matches = card.getAttribute(matchesKey) || '0';
+      const kills = card.getAttribute(killsKey) || '0';
+      const kd = card.getAttribute(kdKey) || '0.00';
+      const booyahs = card.getAttribute(booyahsKey) || '0';
+      const winrate = card.getAttribute(winrateKey) || '0.0';
+      const avgkills = card.getAttribute(avgkillsKey) || '0.0';
+
+      const matchesLabel = card.querySelector('.map-matches-label');
+      const matchesVal = card.querySelector('.map-matches-val');
+      const killsVal = card.querySelector('.map-kills-val');
+      const kdVal = card.querySelector('.map-kd-val');
+      const booyahsVal = card.querySelector('.map-booyahs-val');
+      const winrateVal = card.querySelector('.map-winrate-val');
+      const avgkillsVal = card.querySelector('.map-avgkills-val');
+
+      if (matchesLabel) matchesLabel.textContent = matches;
+      if (matchesVal) matchesVal.textContent = matches;
+      if (killsVal) killsVal.textContent = kills;
+      if (kdVal) kdVal.textContent = kd;
+      if (booyahsVal) booyahsVal.textContent = booyahs;
+      if (winrateVal) winrateVal.textContent = winrate;
+      if (avgkillsVal) avgkillsVal.textContent = avgkills;
+    });
+
     // Save selection to localStorage
     try {
       localStorage.setItem('tag_tournament_mode', mode);
