@@ -727,3 +727,13 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 });
 
+window.toggleHomeTotalPoints = function() {
+  const card = document.getElementById('home-total-points-card');
+  if (card) {
+    card.classList.toggle('hidden');
+    if (!card.classList.contains('hidden')) {
+      card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+  }
+};
+

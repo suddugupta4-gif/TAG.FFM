@@ -1,402 +1,546 @@
 <%- include('../partials/header') %>
 <%- include('../partials/navbar') %>
 
-<main class="flex-1 max-w-4xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+<main class="flex-1 max-w-5xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+
+  <% 
+    const existingMatchesList = (typeof matches !== 'undefined' && Array.isArray(matches)) ? matches : [];
+    const safeNextMatch = (typeof nextMatchNumber !== 'undefined') ? nextMatchNumber : 1;
+  %>
 
   <%- include('../partials/flash') %>
 
-  <div>
-    <a href="/admin/tournaments" class="text-xs font-mono text-slate-400 hover:text-orange-400">&larr; Back to Tournaments</a>
-    <h1 class="font-display text-4xl font-bold text-white tracking-wide mt-1">
-      <%= tournament ? `Edit ${tournament.name}` : 'Start / Create New Tournament' %>
-    </h1>
-    <p class="text-slate-400 text-sm">Configure tournament banner poster, prize pool, tournament category, battle royale maps rotation, and match format details.</p>
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div>
+      <a href="/admin/tournaments" class="text-xs font-mono text-slate-400 hover:text-orange-400">&larr; Back to Tournaments</a>
+      <h1 class="font-display text-4xl font-bold text-white tracking-wide mt-1">
+        <%= tournament ? `Manage: ${tournament.name}` : 'Create New Tournament' %>
+      </h1>
+      <p class="text-slate-400 text-sm">Save tournament details and log match results (Match 1–6) with Position (1–12), Kills, and Total Points.</p>
+    </div>
+    
+    <% if (tournament) { %>
+      <div class="flex items-center gap-2">
+        <a href="/tournament/<%= tournament.id %>" class="btn-glass text-xs py-2 px-3 flex items-center gap-1.5 text-slate-300 hover:text-orange-400">
+          <svg class="w-4 h-4 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+          <span>View on Site</span>
+        </a>
+      </div>
+    <% } %>
   </div>
 
-  <div class="glass-panel p-6 sm:p-8">
-    <form action="<%= tournament ? `/admin/tournaments/${tournament.id}/edit` : '/admin/tournaments/new' %>" method="POST" enctype="multipart/form-data" class="space-y-6">
+  <!-- ========================================================================= -->
+  <!-- BOX 1: TOURNAMENT DETAILS & SETTINGS (SEPARATE SAVE BUTTON)               -->
+  <!-- ========================================================================= -->
+  <div class="glass-panel p-6 sm:p-8 space-y-6 border-white/15 shadow-2xl">
+    <div class="flex items-center justify-between border-b border-white/10 pb-4">
+      <div>
+        <h2 class="font-display text-xl font-bold text-white tracking-wide">
+          1. Tournament Details & Settings
+        </h2>
+        <p class="text-xs text-slate-400">Configure name, official circuit type, hero banner, and homepage active status.</p>
+      </div>
+      <span class="badge-official text-[10px]">BOX 1</span>
+    </div>
+
+    <form action="<%= tournament ? `/admin/tournaments/${tournament.id}/edit` : '/admin/tournaments/new' %>" method="POST" enctype="multipart/form-data" class="space-y-6" id="tournament-settings-form">
       
-      <!-- Tournament Title & Type -->
+      <!-- Tournament Name & Circuit Type -->
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div class="sm:col-span-2">
-          <label for="name" class="block text-xs font-mono text-slate-300 uppercase mb-1">Tournament Title *</label>
+          <label for="name" class="block text-xs font-mono text-slate-300 uppercase font-bold mb-1">
+            Tournament Name *
+          </label>
           <input 
             type="text" 
             id="name" 
             name="name" 
             required 
             value="<%= tournament ? tournament.name : '' %>"
-            placeholder="e.g. FFWS Spring Invitational 2026"
-            class="w-full px-4 py-2.5 rounded-xl bg-slate-900/80 border border-white/15 text-white placeholder-slate-500 focus:outline-none focus:border-orange-500 text-sm"
+            placeholder="e.g. Free Fire World Series (FFWS) 2026"
+            class="w-full px-4 py-2.5 rounded-xl bg-slate-900/90 border border-white/15 text-white placeholder-slate-500 focus:outline-none focus:border-orange-500 text-sm font-semibold"
           >
         </div>
 
         <div>
-          <label for="tournament_category" class="block text-xs font-mono text-slate-300 uppercase mb-1">Circuit Category *</label>
+          <label for="tournament_category" class="block text-xs font-mono text-slate-300 uppercase font-bold mb-1">
+            Circuit Type *
+          </label>
           <select 
             id="tournament_category" 
             name="is_official_tournament" 
-            class="w-full px-4 py-2.5 rounded-xl bg-slate-900/80 border border-white/15 text-white focus:outline-none focus:border-orange-500 text-sm"
+            class="w-full px-4 py-2.5 rounded-xl bg-slate-900/90 border border-white/15 text-white focus:outline-none focus:border-orange-500 text-sm font-mono"
           >
-            <option value="true">Official Esports Circuit (Garena / FFWS)</option>
-            <option value="false">Unofficial / Local Organizer Cup</option>
+            <option value="true" <%= (!tournament || tournament.circuit_type === 'official' || tournament.is_official !== false) ? 'selected' : '' %>>
+              Verified Official Circuit
+            </option>
+            <option value="false" <%= (tournament && (tournament.circuit_type === 'unofficial' || tournament.is_official === false)) ? 'selected' : '' %>>
+              Unofficial / Local Organizer
+            </option>
           </select>
         </div>
       </div>
 
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <!-- Game Mode -->
-        <div>
-          <label for="game_mode" class="block text-xs font-mono text-slate-300 uppercase mb-1">Game Mode</label>
-          <input 
-            type="text" 
-            id="game_mode" 
-            name="game_mode" 
-            value="<%= tournament ? tournament.game_mode : 'Battle Royale Squad' %>"
-            placeholder="Battle Royale Squad, Duo, Solo, Clash Squad"
-            class="w-full px-4 py-2.5 rounded-xl bg-slate-900/80 border border-white/15 text-white placeholder-slate-500 focus:outline-none focus:border-orange-500 text-sm"
-          >
-        </div>
-
-        <!-- Prize Pool -->
-        <div>
-          <label for="prize_pool" class="block text-xs font-mono text-slate-300 uppercase mb-1">Prize Pool (PP)</label>
-          <input 
-            type="text" 
-            id="prize_pool" 
-            name="prize_pool" 
-            value="<%= tournament ? tournament.prize_pool : '$150,000' %>"
-            placeholder="$150,000 or ₹1,00,000"
-            class="w-full px-4 py-2.5 rounded-xl bg-slate-900/80 border border-white/15 text-white placeholder-slate-500 focus:outline-none focus:border-orange-500 text-sm font-mono"
-          >
-        </div>
-      </div>
-
-      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <!-- Start Date -->
-        <div>
-          <label for="start_date" class="block text-xs font-mono text-slate-300 uppercase mb-1">Start Date</label>
-          <input 
-            type="date" 
-            id="start_date" 
-            name="start_date" 
-            value="<%= tournament && tournament.start_date ? new Date(tournament.start_date).toISOString().split('T')[0] : '' %>"
-            class="w-full px-4 py-2.5 rounded-xl bg-slate-900/80 border border-white/15 text-white focus:outline-none focus:border-orange-500 text-sm"
-          >
-        </div>
-
-        <!-- End Date -->
-        <div>
-          <label for="end_date" class="block text-xs font-mono text-slate-300 uppercase mb-1">End Date</label>
-          <input 
-            type="date" 
-            id="end_date" 
-            name="end_date" 
-            value="<%= tournament && tournament.end_date ? new Date(tournament.end_date).toISOString().split('T')[0] : '' %>"
-            class="w-full px-4 py-2.5 rounded-xl bg-slate-900/80 border border-white/15 text-white focus:outline-none focus:border-orange-500 text-sm"
-          >
-        </div>
-
-        <!-- Status -->
-        <div>
-          <label for="status" class="block text-xs font-mono text-slate-300 uppercase mb-1">Status</label>
-          <select 
-            id="status" 
-            name="status" 
-            class="w-full px-4 py-2.5 rounded-xl bg-slate-900/80 border border-white/15 text-white focus:outline-none focus:border-orange-500 text-sm"
-          >
-            <option value="ongoing" <%= tournament && tournament.status === 'ongoing' ? 'selected' : '' %>>Ongoing / Live Active</option>
-            <option value="completed" <%= tournament && tournament.status === 'completed' ? 'selected' : '' %>>Completed (Archived)</option>
-            <option value="upcoming" <%= tournament && tournament.status === 'upcoming' ? 'selected' : '' %>>Upcoming</option>
-          </select>
-        </div>
-      </div>
-
-      <!-- Description & Format -->
+      <!-- Description -->
       <div>
-        <label for="description" class="block text-xs font-mono text-slate-300 uppercase mb-1">Tournament Description & Format Details</label>
+        <label for="description" class="block text-xs font-mono text-slate-300 uppercase font-bold mb-1">
+          Tournament Description
+        </label>
         <textarea 
           id="description" 
           name="description" 
           rows="3"
-          placeholder="The supreme Free Fire MAX championship tournament featuring TAGFREEFIREMAX contending for the global title. Point System: 12-9-8-7-6-5-4-3-2-1 + 1pt/Kill."
-          class="w-full px-4 py-2.5 rounded-xl bg-slate-900/80 border border-white/15 text-white placeholder-slate-500 focus:outline-none focus:border-orange-500 text-sm"
+          placeholder="Premier Free Fire MAX championship featuring top professional squads contending for the title. Point System: 12-9-8-7-6-5-4-3-2-1 with +1 point per kill."
+          class="w-full px-4 py-2.5 rounded-xl bg-slate-900/90 border border-white/15 text-white placeholder-slate-500 focus:outline-none focus:border-orange-500 text-sm"
         ><%= tournament ? tournament.description : '' %></textarea>
       </div>
 
-      <!-- Banner Upload & Custom Banner URL -->
-      <div class="p-5 rounded-2xl bg-black/40 border border-white/10 space-y-4">
-        <label class="block text-xs font-mono text-orange-400 uppercase font-bold">
-          Tournament Hero Banner Poster
-        </label>
-        
-        <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-          <img 
-            id="banner-preview" 
-            src="<%= tournament && tournament.banner_url ? tournament.banner_url : 'https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=1200&auto=format&fit=crop' %>" 
-            alt="Banner Preview" 
-            class="w-48 h-28 rounded-xl object-cover border border-white/20 shadow-lg"
-          >
-          
-          <div class="space-y-3 flex-1">
-            <div class="flex items-center gap-3">
-              <label class="btn-glass cursor-pointer text-xs py-2.5 px-4">
-                <svg class="w-4 h-4 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-                Upload Poster Image
+      <!-- Hero Banner Image & Active Featured Toggle -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- Banner Upload / URL -->
+        <div class="p-4 rounded-2xl bg-black/40 border border-white/10 space-y-3">
+          <label class="block text-xs font-mono text-orange-400 uppercase font-bold">
+            Tournament Hero Banner
+          </label>
+          <div class="flex items-center gap-3">
+            <img 
+              id="banner-preview" 
+              src="<%= tournament && tournament.banner_url ? tournament.banner_url : 'https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=1200&auto=format&fit=crop' %>" 
+              alt="Banner Preview" 
+              class="w-24 h-16 rounded-lg object-cover border border-white/20 shrink-0"
+            >
+            <div class="space-y-1.5 flex-1">
+              <label class="btn-glass cursor-pointer text-xs py-1.5 px-3 inline-flex items-center gap-1.5">
+                <svg class="w-3.5 h-3.5 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                Upload Photo
                 <input type="file" name="banner" accept="image/*" class="hidden" data-preview-target="banner-preview">
               </label>
-              <span class="text-xs text-slate-400">Auto-optimized with Sharp</span>
-            </div>
-
-            <div>
-              <label for="banner_url_input" class="block text-[11px] font-mono text-slate-400 mb-1">Or direct Image URL:</label>
               <input 
                 type="url" 
-                id="banner_url_input" 
                 name="banner_url_input" 
                 value="<%= tournament ? tournament.banner_url : '' %>"
-                placeholder="https://images.unsplash.com/photo-..."
-                class="w-full px-3 py-1.5 rounded-lg bg-slate-900 border border-white/10 text-white text-xs placeholder-slate-600 focus:outline-none focus:border-orange-500 font-mono"
+                placeholder="Or paste image URL"
+                class="w-full px-2.5 py-1 rounded bg-slate-900 border border-white/10 text-white text-xs placeholder-slate-600 font-mono"
                 oninput="if(this.value){ document.getElementById('banner-preview').src = this.value; }"
               >
             </div>
           </div>
         </div>
+
+        <!-- Current Featured Active Toggle -->
+        <div class="p-4 rounded-2xl bg-orange-500/10 border border-orange-500/30 flex items-center justify-between">
+          <div class="space-y-1 pr-3">
+            <span class="font-bold text-sm text-white">Active Featured Tournament</span>
+            <p class="text-xs text-slate-400">Immediately features this tournament on the homepage title box and live scoreboard.</p>
+          </div>
+          <label class="relative inline-flex items-center cursor-pointer shrink-0">
+            <input type="checkbox" name="is_current" value="true" class="sr-only peer" <%= (!tournament || tournament.is_current) ? 'checked' : '' %>>
+            <div class="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-orange-500"></div>
+          </label>
+        </div>
       </div>
 
-      <% if (!tournament) { %>
-        <!-- Match Selection 1-6 & All Free Fire Maps Selection (Auto-Save to History) -->
-        <div class="p-6 rounded-2xl bg-black/40 border border-white/10 space-y-6">
-          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-white/10 pb-3">
-            <div>
-              <span class="badge-official text-[10px] uppercase tracking-wider">Esports Match Setup</span>
-              <h3 class="font-display text-lg font-bold text-white tracking-wide mt-0.5">
-                Match Selection (1–6) & Map Rotation Setup
-              </h3>
-            </div>
-            <span class="text-xs font-mono text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-md border border-emerald-500/30 flex items-center gap-1.5">
-              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-              Auto-Saves to History with All Details
-            </span>
-          </div>
-
-          <!-- Match Count Selection (1 to 6) -->
-          <div class="space-y-3">
-            <label class="block text-xs font-mono text-slate-300 uppercase font-bold">
-              Select Number of Matches (1–6):
-            </label>
-            <div class="grid grid-cols-3 sm:grid-cols-7 gap-2">
-              <label class="p-3 rounded-xl bg-slate-900 border border-white/15 text-center cursor-pointer hover:border-orange-500 transition-all has-[:checked]:border-orange-500 has-[:checked]:bg-orange-500/10">
-                <input type="radio" name="initial_matches_count" value="0" class="sr-only" onchange="updateMatchRowsVisibility(0)">
-                <span class="block font-display text-sm font-bold text-white">0</span>
-                <span class="text-[10px] text-slate-400 font-mono">Manual</span>
-              </label>
-              <label class="p-3 rounded-xl bg-slate-900 border border-white/15 text-center cursor-pointer hover:border-orange-500 transition-all has-[:checked]:border-orange-500 has-[:checked]:bg-orange-500/10">
-                <input type="radio" name="initial_matches_count" value="1" class="sr-only" onchange="updateMatchRowsVisibility(1)">
-                <span class="block font-display text-sm font-bold text-white">1 Match</span>
-                <span class="text-[10px] text-slate-400 font-mono">Bo1</span>
-              </label>
-              <label class="p-3 rounded-xl bg-slate-900 border border-white/15 text-center cursor-pointer hover:border-orange-500 transition-all has-[:checked]:border-orange-500 has-[:checked]:bg-orange-500/10">
-                <input type="radio" name="initial_matches_count" value="2" class="sr-only" onchange="updateMatchRowsVisibility(2)">
-                <span class="block font-display text-sm font-bold text-white">2 Matches</span>
-                <span class="text-[10px] text-slate-400 font-mono">Bo2</span>
-              </label>
-              <label class="p-3 rounded-xl bg-slate-900 border border-white/15 text-center cursor-pointer hover:border-orange-500 transition-all has-[:checked]:border-orange-500 has-[:checked]:bg-orange-500/10">
-                <input type="radio" name="initial_matches_count" value="3" class="sr-only" onchange="updateMatchRowsVisibility(3)">
-                <span class="block font-display text-sm font-bold text-white">3 Matches</span>
-                <span class="text-[10px] text-slate-400 font-mono">Bo3</span>
-              </label>
-              <label class="p-3 rounded-xl bg-slate-900 border border-white/15 text-center cursor-pointer hover:border-orange-500 transition-all has-[:checked]:border-orange-500 has-[:checked]:bg-orange-500/10">
-                <input type="radio" name="initial_matches_count" value="4" class="sr-only" onchange="updateMatchRowsVisibility(4)">
-                <span class="block font-display text-sm font-bold text-white">4 Matches</span>
-                <span class="text-[10px] text-slate-400 font-mono">Bo4</span>
-              </label>
-              <label class="p-3 rounded-xl bg-slate-900 border border-white/15 text-center cursor-pointer hover:border-orange-500 transition-all has-[:checked]:border-orange-500 has-[:checked]:bg-orange-500/10">
-                <input type="radio" name="initial_matches_count" value="5" class="sr-only" onchange="updateMatchRowsVisibility(5)">
-                <span class="block font-display text-sm font-bold text-white">5 Matches</span>
-                <span class="text-[10px] text-slate-400 font-mono">Bo5</span>
-              </label>
-              <label class="p-3 rounded-xl bg-slate-900 border border-white/15 text-center cursor-pointer hover:border-orange-500 transition-all has-[:checked]:border-orange-500 has-[:checked]:bg-orange-500/10">
-                <input type="radio" name="initial_matches_count" value="6" checked class="sr-only" onchange="updateMatchRowsVisibility(6)">
-                <span class="block font-display text-sm font-bold text-orange-400">6 Matches</span>
-                <span class="text-[10px] text-orange-400/80 font-mono">Standard Day</span>
-              </label>
-            </div>
-          </div>
-
-          <!-- All Free Fire Maps Selector for Matches 1 to 6 -->
-          <div class="space-y-4" id="match-rotation-configs">
-            <div class="text-xs text-slate-300 font-mono flex items-center justify-between">
-              <span>ASSIGN MAP TO EACH MATCH (1–6):</span>
-              <span class="text-[11px] text-slate-400">All 7 Free Fire Maps available</span>
-            </div>
-
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-              
-              <!-- Match 1 Map -->
-              <div class="p-3.5 rounded-xl bg-slate-900/90 border border-white/10 space-y-1.5 match-slot-item" id="match-slot-1">
-                <div class="flex items-center justify-between">
-                  <span class="font-display text-sm font-bold text-white flex items-center gap-1.5">
-                    <span class="w-2 h-2 rounded-full bg-orange-400"></span>
-                    MATCH #1
-                  </span>
-                  <span class="text-[10px] font-mono text-slate-400">Game 1</span>
-                </div>
-                <select name="match_1_map" class="w-full px-3 py-1.5 rounded-lg bg-black/60 border border-white/15 text-white text-xs font-mono focus:border-orange-500 focus:outline-none">
-                  <option value="Bermuda" selected>Bermuda (Official)</option>
-                  <option value="Purgatory">Purgatory</option>
-                  <option value="Kalahari">Kalahari</option>
-                  <option value="Alpine">Alpine</option>
-                  <option value="Nexterra">Nexterra</option>
-                </select>
-              </div>
-
-              <!-- Match 2 Map -->
-              <div class="p-3.5 rounded-xl bg-slate-900/90 border border-white/10 space-y-1.5 match-slot-item" id="match-slot-2">
-                <div class="flex items-center justify-between">
-                  <span class="font-display text-sm font-bold text-white flex items-center gap-1.5">
-                    <span class="w-2 h-2 rounded-full bg-orange-400"></span>
-                    MATCH #2
-                  </span>
-                  <span class="text-[10px] font-mono text-slate-400">Game 2</span>
-                </div>
-                <select name="match_2_map" class="w-full px-3 py-1.5 rounded-lg bg-black/60 border border-white/15 text-white text-xs font-mono focus:border-orange-500 focus:outline-none">
-                  <option value="Bermuda">Bermuda</option>
-                  <option value="Purgatory" selected>Purgatory (Official)</option>
-                  <option value="Kalahari">Kalahari</option>
-                  <option value="Alpine">Alpine</option>
-                  <option value="Nexterra">Nexterra</option>
-                </select>
-              </div>
-
-              <!-- Match 3 Map -->
-              <div class="p-3.5 rounded-xl bg-slate-900/90 border border-white/10 space-y-1.5 match-slot-item" id="match-slot-3">
-                <div class="flex items-center justify-between">
-                  <span class="font-display text-sm font-bold text-white flex items-center gap-1.5">
-                    <span class="w-2 h-2 rounded-full bg-orange-400"></span>
-                    MATCH #3
-                  </span>
-                  <span class="text-[10px] font-mono text-slate-400">Game 3</span>
-                </div>
-                <select name="match_3_map" class="w-full px-3 py-1.5 rounded-lg bg-black/60 border border-white/15 text-white text-xs font-mono focus:border-orange-500 focus:outline-none">
-                  <option value="Bermuda">Bermuda</option>
-                  <option value="Purgatory">Purgatory</option>
-                  <option value="Kalahari" selected>Kalahari (Official)</option>
-                  <option value="Alpine">Alpine</option>
-                  <option value="Nexterra">Nexterra</option>
-                </select>
-              </div>
-
-              <!-- Match 4 Map -->
-              <div class="p-3.5 rounded-xl bg-slate-900/90 border border-white/10 space-y-1.5 match-slot-item" id="match-slot-4">
-                <div class="flex items-center justify-between">
-                  <span class="font-display text-sm font-bold text-white flex items-center gap-1.5">
-                    <span class="w-2 h-2 rounded-full bg-orange-400"></span>
-                    MATCH #4
-                  </span>
-                  <span class="text-[10px] font-mono text-slate-400">Game 4</span>
-                </div>
-                <select name="match_4_map" class="w-full px-3 py-1.5 rounded-lg bg-black/60 border border-white/15 text-white text-xs font-mono focus:border-orange-500 focus:outline-none">
-                  <option value="Bermuda">Bermuda</option>
-                  <option value="Purgatory">Purgatory</option>
-                  <option value="Kalahari">Kalahari</option>
-                  <option value="Alpine" selected>Alpine (Official)</option>
-                  <option value="Nexterra">Nexterra</option>
-                </select>
-              </div>
-
-              <!-- Match 5 Map -->
-              <div class="p-3.5 rounded-xl bg-slate-900/90 border border-white/10 space-y-1.5 match-slot-item" id="match-slot-5">
-                <div class="flex items-center justify-between">
-                  <span class="font-display text-sm font-bold text-white flex items-center gap-1.5">
-                    <span class="w-2 h-2 rounded-full bg-orange-400"></span>
-                    MATCH #5
-                  </span>
-                  <span class="text-[10px] font-mono text-slate-400">Game 5</span>
-                </div>
-                <select name="match_5_map" class="w-full px-3 py-1.5 rounded-lg bg-black/60 border border-white/15 text-white text-xs font-mono focus:border-orange-500 focus:outline-none">
-                  <option value="Bermuda">Bermuda</option>
-                  <option value="Purgatory">Purgatory</option>
-                  <option value="Kalahari">Kalahari</option>
-                  <option value="Alpine">Alpine</option>
-                  <option value="Nexterra" selected>Nexterra (Official)</option>
-                </select>
-              </div>
-
-              <!-- Match 6 Map -->
-              <div class="p-3.5 rounded-xl bg-slate-900/90 border border-white/10 space-y-1.5 match-slot-item" id="match-slot-6">
-                <div class="flex items-center justify-between">
-                  <span class="font-display text-sm font-bold text-white flex items-center gap-1.5">
-                    <span class="w-2 h-2 rounded-full bg-orange-400"></span>
-                    MATCH #6
-                  </span>
-                  <span class="text-[10px] font-mono text-orange-400 font-bold">Game 6 (Random / Decider)</span>
-                </div>
-                <select name="match_6_map" class="w-full px-3 py-1.5 rounded-lg bg-black/60 border border-orange-500/50 text-white text-xs font-mono focus:border-orange-500 focus:outline-none">
-                  <option value="Random" selected>🎲 Random Selection (Official 5 Maps)</option>
-                  <option value="Bermuda">Bermuda</option>
-                  <option value="Purgatory">Purgatory</option>
-                  <option value="Kalahari">Kalahari</option>
-                  <option value="Alpine">Alpine</option>
-                  <option value="Nexterra">Nexterra</option>
-                </select>
-              </div>
-
-            </div>
-          </div>
-
-          <div class="p-3 rounded-lg bg-orange-500/10 border border-orange-500/20 text-xs text-slate-300 flex items-start gap-2">
-            <svg class="w-4 h-4 text-orange-400 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-            <p>
-              When you create this tournament with 1–6 matches, full match ledgers, kills, points, and map analytics are automatically populated and saved to the <strong>Match History</strong> ledger and <strong>Map Analysis</strong> panel on the Home Page!
-            </p>
-          </div>
-        </div>
-
-        <script>
-          function updateMatchRowsVisibility(count) {
-            const container = document.getElementById('match-rotation-configs');
-            if (!container) return;
-            if (count === 0) {
-              container.classList.add('opacity-40', 'pointer-events-none');
-            } else {
-              container.classList.remove('opacity-40', 'pointer-events-none');
-              for (let i = 1; i <= 6; i++) {
-                const el = document.getElementById('match-slot-' + i);
-                if (el) {
-                  if (i <= count) {
-                    el.classList.remove('hidden');
-                  } else {
-                    el.classList.add('hidden');
-                  }
-                }
-              }
-            }
-          }
-        </script>
-      <% } %>
-
-      <!-- Set as Current Featured Tournament Toggle -->
-      <div class="p-4 rounded-xl bg-orange-500/10 border border-orange-500/30 flex items-center justify-between">
-        <div>
-          <span class="font-bold text-sm text-white">Set as Current / Active Tournament</span>
-          <p class="text-xs text-slate-400">Immediately features this tournament on the homepage banner, title box, and live scoreboard.</p>
-        </div>
-        <label class="relative inline-flex items-center cursor-pointer">
-          <input type="checkbox" name="is_current" value="true" class="sr-only peer" <%= (!tournament || tournament.is_current) ? 'checked' : '' %>>
-          <div class="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-orange-500"></div>
-        </label>
-      </div>
-
-      <div class="flex items-center justify-end gap-3 pt-4 border-t border-white/10">
-        <a href="/admin/tournaments" class="btn-glass text-xs py-2.5 px-4">Cancel</a>
-        <button type="submit" class="btn-fire text-xs py-2.5 px-6">
-          <%= tournament ? 'Update Tournament' : 'Start Tournament & Show on Hub' %>
+      <!-- Separate Save Button 1 -->
+      <div class="flex items-center justify-between pt-4 border-t border-white/10">
+        <span class="text-xs font-mono text-slate-400">Saves title, banner, circuit status & description.</span>
+        <button type="submit" class="btn-fire text-xs py-2.5 px-6 font-bold shadow-lg shadow-orange-950/50 flex items-center gap-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+          <%= tournament ? 'Save Tournament Details' : 'Create & Save Tournament' %>
         </button>
       </div>
 
     </form>
   </div>
+
+  <!-- ========================================================================= -->
+  <!-- BOX 2: MATCH RESULTS, POSITION & KILLS LOGGER (SEPARATE SAVE BUTTON)     -->
+  <!-- ========================================================================= -->
+  <% if (tournament) { 
+    const currentTourneyId = tournament.id;
+    const existingMatchesList = (typeof matches !== 'undefined' && Array.isArray(matches)) ? matches : [];
+  %>
+
+  <div class="glass-panel p-6 sm:p-8 space-y-6 border-white/15 shadow-2xl bg-gradient-to-b from-[#0c0e18] to-[#07080e]" id="match-logger-box">
+    
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/10 pb-4">
+      <div>
+        <h2 class="font-display text-xl font-bold text-white tracking-wide">
+          2. Match Results, Position & Kills Logger
+        </h2>
+        <p class="text-xs text-slate-400">Log Match 1–6 for "<%= tournament.name %>" with Map, Circuit, Position (1–12), and Team Kills. Displays directly on Home.</p>
+      </div>
+      <div class="flex items-center gap-2">
+        <button type="button" onclick="toggleTotalPointsModal()" class="btn-glass text-xs py-1.5 px-3 flex items-center gap-1.5 text-amber-400 border-amber-500/30 hover:bg-amber-500/10">
+          <svg class="w-3.5 h-3.5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+          <span>Calculate All Match Total Points</span>
+        </button>
+        <span class="badge-official text-[10px]">BOX 2</span>
+      </div>
+    </div>
+
+    <!-- Match 1, 2, 3, 4, 5, 6 Quick Selector Buttons -->
+    <div>
+      <label class="block text-xs font-mono text-slate-300 uppercase font-bold mb-2">
+        Select Match (1–6):
+      </label>
+      <div class="grid grid-cols-3 sm:grid-cols-6 gap-2">
+        <% for (let m = 1; m <= 6; m++) { 
+          const isLogged = existingMatchesList.some(em => em.match_number === m);
+        %>
+          <button 
+            type="button"
+            id="match-tab-btn-<%= m %>"
+            onclick="setMatchNumber(<%= m %>)"
+            class="match-select-tab py-2.5 px-3 rounded-xl border text-xs font-mono font-bold flex flex-col items-center justify-center gap-1 transition-all <%= (m === safeNextMatch) ? 'bg-[#ff4e00] text-white border-[#ff4e00] shadow-lg shadow-orange-950/50 scale-102' : (isLogged ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30 hover:bg-emerald-500/25' : 'bg-slate-900/80 text-slate-400 border-white/10 hover:border-white/20 hover:text-white') %>"
+          >
+            <span class="text-sm">Match #<%= m %></span>
+            <span class="text-[9px] uppercase tracking-wider <%= isLogged ? 'text-emerald-400' : 'text-slate-400' %>">
+              <%= isLogged ? '✓ Logged' : '+ Ready' %>
+            </span>
+          </button>
+        <% } %>
+      </div>
+    </div>
+
+    <!-- Match Logging Form with Separate Save Button -->
+    <form action="/admin/matches/new" method="POST" class="space-y-6" id="match-entry-form">
+      
+      <!-- Tournament ID Hidden / Select -->
+      <input type="hidden" name="tournament_id" id="match_tourney_id_input" value="<%= currentTourneyId %>">
+      <input type="hidden" name="redirect_to" value="<%= tournament ? `/admin/tournaments/${tournament.id}/edit#match-logger-box` : '/admin/tournaments#match-logger-box' %>">
+      <input type="hidden" name="team_id" value="1"> <!-- Defaults to TAG / Squad -->
+
+      <!-- Match Metadata Grid: Match Number, Map, Match Circuit, Position (1-12), Kills -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 p-5 rounded-2xl bg-black/50 border border-white/10">
+        
+        <!-- 1. Match Number -->
+        <div>
+          <label for="match_number_input" class="block text-xs font-mono text-slate-300 uppercase font-bold mb-1">
+            Match Number *
+          </label>
+          <select 
+            id="match_number_input" 
+            name="match_number" 
+            required 
+            onchange="syncMapForMatch(this.value)"
+            class="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-white/15 text-white font-mono text-sm focus:border-orange-500 focus:outline-none"
+          >
+            <% for (let m = 1; m <= 6; m++) { %>
+              <option value="<%= m %>" <%= (m === safeNextMatch) ? 'selected' : '' %>>Match #<%= m %></option>
+            <% } %>
+          </select>
+        </div>
+
+        <!-- 2. Map Selection (5 Official) -->
+        <div>
+          <label for="map_name_select" class="block text-xs font-mono text-slate-300 uppercase font-bold mb-1">
+            Map Selection (5 Official) *
+          </label>
+          <select 
+            id="map_name_select" 
+            name="map_name" 
+            required 
+            class="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-white/15 text-white font-mono text-sm focus:border-orange-500 focus:outline-none"
+          >
+            <option value="Bermuda">Bermuda (Match 1 Rotation)</option>
+            <option value="Purgatory">Purgatory (Match 2 Rotation)</option>
+            <option value="Kalahari">Kalahari (Match 3 Rotation)</option>
+            <option value="Alpine">Alpine (Match 4 Rotation)</option>
+            <option value="Nexterra">Nexterra (Match 5 Rotation)</option>
+          </select>
+        </div>
+
+        <!-- 3. Match Circuit Type -->
+        <div>
+          <label for="match_official_select" class="block text-xs font-mono text-slate-300 uppercase font-bold mb-1">
+            Match Circuit Type *
+          </label>
+          <select 
+            id="match_official_select" 
+            name="is_official" 
+            class="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-white/15 text-white font-mono text-sm focus:border-orange-500 focus:outline-none"
+          >
+            <option value="true" <%= (!tournament || tournament.circuit_type === 'official' || tournament.is_official !== false) ? 'selected' : '' %>>
+              Official Verified Esports Match
+            </option>
+            <option value="false" <%= (tournament && (tournament.circuit_type === 'unofficial' || tournament.is_official === false)) ? 'selected' : '' %>>
+              Unofficial / Local Organizer
+            </option>
+          </select>
+        </div>
+
+        <!-- 4. Position (1-12 Selection) -->
+        <div>
+          <label for="placement_input" class="block text-xs font-mono text-orange-400 uppercase font-bold mb-1">
+            Position / Placement (1–12) *
+          </label>
+          <select 
+            id="placement_input" 
+            name="placement" 
+            required 
+            onchange="updateCalculatedPoints()"
+            class="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-orange-500/40 text-white font-mono text-sm focus:border-orange-500 focus:outline-none font-bold"
+          >
+            <option value="1">#1 (12 PTS) Booyah 🏆</option>
+            <option value="2">#2 (9 PTS)</option>
+            <option value="3">#3 (8 PTS)</option>
+            <option value="4">#4 (7 PTS)</option>
+            <option value="5">#5 (6 PTS)</option>
+            <option value="6">#6 (5 PTS)</option>
+            <option value="7">#7 (4 PTS)</option>
+            <option value="8">#8 (3 PTS)</option>
+            <option value="9">#9 (2 PTS)</option>
+            <option value="10">#10 (1 PT)</option>
+            <option value="11">#11 (0 PTS)</option>
+            <option value="12">#12 (0 PTS)</option>
+          </select>
+        </div>
+
+        <!-- 5. Kills Box (Placed after Circuit & Position) -->
+        <div>
+          <label for="kills_input" class="block text-xs font-mono text-red-400 uppercase font-bold mb-1">
+            Team Kills *
+          </label>
+          <input 
+            type="number" 
+            id="kills_input" 
+            name="kills" 
+            min="0" 
+            max="100" 
+            value="0" 
+            required
+            oninput="updateCalculatedPoints()"
+            placeholder="e.g. 8"
+            class="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-red-500/40 text-white font-mono text-sm focus:border-red-500 focus:outline-none font-bold placeholder-slate-600"
+          >
+        </div>
+
+        <!-- 6. Squad Target Selection (Default: TAGFREEFIREMAX) -->
+        <div>
+          <label for="team_select_box" class="block text-xs font-mono text-slate-300 uppercase font-bold mb-1">
+            Squad / Team
+          </label>
+          <select 
+            id="team_select_box" 
+            name="team_id" 
+            class="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-white/15 text-white font-mono text-sm focus:border-orange-500 focus:outline-none"
+          >
+            <% 
+              const allTeamsList = (typeof teams !== 'undefined' && teams.length > 0) ? teams : [
+                { id: 1, name: 'TAGFREEFIREMAX', tag: 'TAG' }
+              ];
+              allTeamsList.forEach(tm => { 
+                const isTag = (tm.tag === 'TAG' || tm.name.includes('TAG'));
+            %>
+              <option value="<%= tm.id %>" <%= isTag ? 'selected' : '' %>>
+                <%= tm.name %> (<%= tm.tag %>)
+              </option>
+            <% }); %>
+          </select>
+        </div>
+
+      </div>
+
+      <!-- LIVE CALCULATED SCORE SUMMARY CARD -->
+      <div class="p-4 rounded-2xl bg-gradient-to-r from-orange-500/15 via-amber-500/10 to-transparent border border-orange-500/30 flex flex-wrap items-center justify-between gap-4">
+        <div class="flex items-center gap-6 font-mono">
+          <div>
+            <div class="text-[10px] text-slate-400 uppercase">Position Points</div>
+            <div id="calc-place-pts" class="text-xl font-bold text-white">12 PTS</div>
+          </div>
+          <div class="text-slate-600 text-lg font-bold">+</div>
+          <div>
+            <div class="text-[10px] text-slate-400 uppercase">Kill Points</div>
+            <div id="calc-kill-pts" class="text-xl font-bold text-red-400">0 PTS</div>
+          </div>
+          <div class="text-slate-600 text-lg font-bold">=</div>
+          <div>
+            <div class="text-[10px] text-orange-400 uppercase font-bold">Total Match Points</div>
+            <div id="calc-total-pts" class="text-2xl font-bold text-orange-400">12 PTS</div>
+          </div>
+        </div>
+
+        <button type="button" onclick="toggleTotalPointsModal()" class="btn-glass text-xs py-2 px-3 font-mono font-bold flex items-center gap-2 text-amber-300 hover:text-white">
+          <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+          <span>Calculate All Match Total Points</span>
+        </button>
+      </div>
+
+      <!-- Separate Save Button 2 -->
+      <div class="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 border-t border-white/10">
+        <span class="text-xs font-mono text-emerald-400 flex items-center gap-1.5">
+          <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          <span>Saves Match #<span id="save-match-num-disp">1</span> with Position, Kills & Total Points to Home.</span>
+        </span>
+        <button type="submit" class="btn-fire text-xs py-3 px-8 font-bold shadow-xl shadow-orange-950/60 flex items-center gap-2 w-full sm:w-auto justify-center">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/></svg>
+          <span>Save & Publish Match Result (Show on Home)</span>
+        </button>
+      </div>
+
+    </form>
+
+  </div>
+  <% } else { %>
+    <!-- Notice when creating a new tournament before logging matches -->
+    <div class="glass-panel p-6 border-orange-500/20 bg-orange-500/5 text-center space-y-3">
+      <div class="w-10 h-10 rounded-full bg-orange-500/20 text-orange-400 flex items-center justify-center mx-auto">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      </div>
+      <h3 class="font-display text-lg font-bold text-white">Create Tournament First</h3>
+      <p class="text-xs text-slate-400 max-w-md mx-auto">
+        Fill in the details above and click <strong>"Create & Save Tournament"</strong>. You will be redirected right here to log Match 1–6 results and calculate total points immediately.
+      </p>
+    </div>
+  <% } %>
+
+  <!-- ========================================================================= -->
+  <!-- MODAL / POPUP: CALCULATE ALL MATCH TOTAL POINTS                           -->
+  <!-- ========================================================================= -->
+  <div id="total-points-modal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="glass-panel max-w-lg w-full p-6 space-y-6 border-white/20 shadow-2xl relative">
+      <div class="flex items-center justify-between border-b border-white/10 pb-3">
+        <div class="flex items-center gap-2.5">
+          <div class="w-3 h-3 rounded-full bg-amber-400 animate-pulse"></div>
+          <h3 class="font-display text-xl font-bold text-white">All Matches Total Points Calculator</h3>
+        </div>
+        <button type="button" onclick="toggleTotalPointsModal()" class="text-slate-400 hover:text-white p-1">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <div class="space-y-4 font-mono text-xs">
+        <p class="text-slate-300">Cumulative performance across all logged tournament matches:</p>
+
+        <% 
+          let calcMatchesCount = existingMatchesList.length;
+          let calcTotalKills = 0;
+          let calcTotalPlacePts = 0;
+          let calcTotalBooyahs = 0;
+
+          existingMatchesList.forEach(m => {
+            if (m.results && m.results.length > 0) {
+              const tagRes = m.results.find(r => (r.team_tag === 'TAG' || (r.team_name || '').includes('TAG'))) || m.results[0];
+              if (tagRes) {
+                calcTotalKills += (tagRes.kills || 0);
+                calcTotalPlacePts += (tagRes.placement_points || 0);
+                if (tagRes.placement === 1) calcTotalBooyahs++;
+              }
+            }
+          });
+          const calcGrandTotal = calcTotalKills + calcTotalPlacePts;
+        %>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div class="p-3 rounded-xl bg-black/40 border border-white/10">
+            <div class="text-slate-400 text-[11px]">Matches Logged</div>
+            <div class="text-xl font-bold text-white"><%= calcMatchesCount %> / 6</div>
+          </div>
+          <div class="p-3 rounded-xl bg-black/40 border border-white/10">
+            <div class="text-slate-400 text-[11px]">Total Booyahs</div>
+            <div class="text-xl font-bold text-amber-400"><%= calcTotalBooyahs %> 🏆</div>
+          </div>
+          <div class="p-3 rounded-xl bg-black/40 border border-white/10">
+            <div class="text-slate-400 text-[11px]">Total Position Points</div>
+            <div class="text-xl font-bold text-emerald-400"><%= calcTotalPlacePts %> PTS</div>
+          </div>
+          <div class="p-3 rounded-xl bg-black/40 border border-white/10">
+            <div class="text-slate-400 text-[11px]">Total Kill Points</div>
+            <div class="text-xl font-bold text-red-400"><%= calcTotalKills %> PTS</div>
+          </div>
+        </div>
+
+        <div class="p-4 rounded-xl bg-gradient-to-r from-[#ff4e00]/20 to-amber-500/20 border border-[#ff4e00]/40 flex items-center justify-between">
+          <span class="text-sm font-bold text-white">GRAND TOTAL POINTS</span>
+          <span class="text-3xl font-display font-bold text-[#ff4e00]"><%= calcGrandTotal %> PTS</span>
+        </div>
+      </div>
+
+      <div class="flex justify-end pt-2">
+        <button type="button" onclick="toggleTotalPointsModal()" class="btn-glass text-xs py-2 px-4">
+          Close Calculator
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const mapRotation = {
+      '1': 'Bermuda',
+      '2': 'Purgatory',
+      '3': 'Kalahari',
+      '4': 'Alpine',
+      '5': 'Nexterra',
+      '6': 'Bermuda'
+    };
+
+    function setMatchNumber(num) {
+      const matchSelect = document.getElementById('match_number_input');
+      if (matchSelect) {
+        matchSelect.value = String(num);
+        syncMapForMatch(num);
+      }
+
+      const saveDisp = document.getElementById('save-match-num-disp');
+      if (saveDisp) saveDisp.textContent = String(num);
+
+      // Update active state on tabs
+      document.querySelectorAll('.match-select-tab').forEach((tab, i) => {
+        const tabNum = i + 1;
+        if (tabNum === Number(num)) {
+          tab.className = 'match-select-tab py-2.5 px-3 rounded-xl border text-xs font-mono font-bold flex flex-col items-center justify-center gap-1 transition-all bg-[#ff4e00] text-white border-[#ff4e00] shadow-lg shadow-orange-950/50 scale-102';
+        } else {
+          tab.className = 'match-select-tab py-2.5 px-3 rounded-xl border text-xs font-mono font-bold flex flex-col items-center justify-center gap-1 transition-all bg-slate-900/80 text-slate-400 border-white/10 hover:border-white/20 hover:text-white';
+        }
+      });
+    }
+
+    function syncMapForMatch(num) {
+      const mapSelect = document.getElementById('map_name_select');
+      if (mapSelect && mapRotation[String(num)]) {
+        mapSelect.value = mapRotation[String(num)];
+      }
+      const saveDisp = document.getElementById('save-match-num-disp');
+      if (saveDisp) saveDisp.textContent = String(num);
+    }
+
+    function getPlacementPoints(pos) {
+      if (pos === 1) return 12;
+      if (pos >= 2 && pos <= 10) return Math.max(0, 10 - pos);
+      return 0;
+    }
+
+    function updateCalculatedPoints() {
+      const posEl = document.getElementById('placement_input');
+      const killsEl = document.getElementById('kills_input');
+      const placePtsDisp = document.getElementById('calc-place-pts');
+      const killPtsDisp = document.getElementById('calc-kill-pts');
+      const totalPtsDisp = document.getElementById('calc-total-pts');
+
+      if (posEl && killsEl && placePtsDisp && killPtsDisp && totalPtsDisp) {
+        const pos = parseInt(posEl.value, 10) || 1;
+        const kills = parseInt(killsEl.value, 10) || 0;
+        const placePts = getPlacementPoints(pos);
+        const total = placePts + kills;
+
+        placePtsDisp.textContent = placePts + ' PTS';
+        killPtsDisp.textContent = kills + ' PTS';
+        totalPtsDisp.textContent = total + ' PTS';
+      }
+    }
+
+    function toggleTotalPointsModal() {
+      const modal = document.getElementById('total-points-modal');
+      if (modal) {
+        modal.classList.toggle('hidden');
+      }
+    }
+
+    // Initial calculation on load
+    document.addEventListener('DOMContentLoaded', () => {
+      updateCalculatedPoints();
+    });
+  </script>
 
 </main>
 

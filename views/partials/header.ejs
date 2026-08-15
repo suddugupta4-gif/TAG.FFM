@@ -382,3 +382,51 @@
   <div id="site-global-bg-layer" class="site-bg-layer" style="background-image: url('<%- (typeof settings !== 'undefined' && settings.site_background_url) ? settings.site_background_url : 'https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=2070&auto=format&fit=crop' %>');"></div>
   <div class="site-bg-overlay"></div>
 
+  <% if (isAdmin && typeof activeAdminToken !== 'undefined' && activeAdminToken) { %>
+  <script>
+    (function() {
+      const tk = "<%= activeAdminToken %>";
+      if (!tk) return;
+      try {
+        sessionStorage.setItem('tag_admin_token', tk);
+      } catch (e) {}
+
+      function syncAdminElements() {
+        // Automatically attach token to internal admin forms
+        document.querySelectorAll('form[action^="/admin"]').forEach(form => {
+          if (!form.querySelector('input[name="admin_token"]') && !form.action.includes('tk=')) {
+            const hidden = document.createElement('input');
+            hidden.type = 'hidden';
+            hidden.name = 'admin_token';
+            hidden.value = tk;
+            form.appendChild(hidden);
+          }
+        });
+
+        // Automatically attach token to internal admin links
+        document.querySelectorAll('a[href^="/admin"]').forEach(link => {
+          const href = link.getAttribute('href');
+          if (href && !href.includes('tk=') && !href.startsWith('/admin/login')) {
+            const sep = href.includes('?') ? '&' : '?';
+            link.setAttribute('href', href + sep + 'tk=' + encodeURIComponent(tk));
+          }
+        });
+      }
+
+      document.addEventListener('DOMContentLoaded', syncAdminElements);
+
+      // Global click interceptor for admin navigation resilience
+      document.addEventListener('click', (e) => {
+        const link = e.target.closest('a[href^="/admin"]');
+        if (link) {
+          const href = link.getAttribute('href');
+          if (href && !href.includes('tk=') && !href.startsWith('/admin/login')) {
+            const sep = href.includes('?') ? '&' : '?';
+            link.setAttribute('href', href + sep + 'tk=' + encodeURIComponent(tk));
+          }
+        }
+      }, true);
+    })();
+  </script>
+  <% } %>
+

@@ -32,7 +32,6 @@
         </p>
 
         <div class="flex flex-wrap gap-4 text-xs font-mono text-slate-400 pt-2">
-          <div><span class="text-slate-500">Prize Pool:</span> <span class="text-amber-400 font-bold"><%= tournament.prize_pool %></span></div>
           <div><span class="text-slate-500">Matches Tracked:</span> <span id="header-matches-count" class="text-white font-bold"><%= matches.length %></span></div>
           <div><span class="text-slate-500">Verified Official:</span> <span class="text-emerald-400 font-bold"><%= matches.filter(m => m.is_official).length %></span></div>
         </div>

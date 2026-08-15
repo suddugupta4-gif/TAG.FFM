@@ -36,6 +36,12 @@
         <a href="/teams" class="px-3.5 py-2 rounded-lg text-xs font-semibold uppercase tracking-wider transition-all duration-150 <%= currentPath.startsWith('/teams') || currentPath.startsWith('/player') || currentPath.startsWith('/team') ? 'bg-[#ff4e00]/10 text-[#ff4e00] border border-[#ff4e00]/30 shadow-sm shadow-[#ff4e00]/10' : 'text-gray-400 hover:text-white hover:bg-white/5' %>">
           Roster & Players
         </a>
+        <a href="/analysis#map-analysis" class="px-3.5 py-2 rounded-lg text-xs font-semibold uppercase tracking-wider transition-all duration-150 text-gray-400 hover:text-emerald-400 hover:bg-white/5 flex items-center gap-1.5" title="Map-by-Map Performance on 5 Official Free Fire Maps">
+          <svg class="w-3.5 h-3.5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/>
+          </svg>
+          Map Analysis
+        </a>
         <a href="/analysis" class="px-3.5 py-2 rounded-lg text-xs font-semibold uppercase tracking-wider transition-all duration-150 <%= currentPath === '/analysis' ? 'bg-[#ff4e00]/10 text-[#ff4e00] border border-[#ff4e00]/30 shadow-sm shadow-[#ff4e00]/10' : 'text-gray-400 hover:text-white hover:bg-white/5' %> flex items-center gap-1.5">
           <svg class="w-3.5 h-3.5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
@@ -47,25 +53,26 @@
       <!-- Right Action / Admin button -->
       <div class="flex items-center gap-2 sm:gap-3">
         <% if (isAdmin) { %>
-          <a href="/admin/settings" class="btn-glass text-xs py-1.5 px-2.5 sm:px-3 text-slate-300 hover:text-orange-400 flex items-center gap-1.5" title="Change Site Theme & Wallpaper">
+          <a href="/admin/settings<%= (typeof activeAdminToken !== 'undefined' && activeAdminToken) ? '?tk=' + activeAdminToken : '' %>" class="btn-glass text-xs py-1.5 px-2.5 sm:px-3 text-slate-300 hover:text-orange-400 flex items-center gap-1.5" title="Change Site Theme & Wallpaper">
             <svg class="w-3.5 h-3.5 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
             </svg>
-            <span class="hidden sm:inline font-mono">Theme & Wallpaper</span>
+            <span class="hidden sm:inline font-mono">Theme</span>
           </a>
-          <a href="/admin" class="btn-fire text-xs py-1.5 px-3 flex items-center gap-1.5">
+          <a href="/admin<%= (typeof activeAdminToken !== 'undefined' && activeAdminToken) ? '?tk=' + activeAdminToken : '' %>" class="btn-fire text-xs py-1.5 px-3 flex items-center gap-1.5 font-bold">
             <span class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
             Admin
           </a>
-          <a href="/admin/logout" class="btn-glass text-xs py-1.5 px-2.5 text-gray-400 hover:text-red-400" title="Logout">
-            Logout
+          <a href="/admin/logout<%= (typeof activeAdminToken !== 'undefined' && activeAdminToken) ? '?tk=' + activeAdminToken : '' %>" class="btn-glass text-xs py-1.5 px-2.5 text-slate-400 hover:text-red-400 border-white/10 hover:border-red-500/30 flex items-center gap-1" title="Logout from Admin">
+            <svg class="w-3.5 h-3.5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+            <span class="hidden sm:inline">Logout</span>
           </a>
         <% } else { %>
-          <a href="/admin/login" class="btn-glass text-xs py-1.5 px-3 flex items-center gap-1.5 text-gray-400 hover:text-white">
+          <a href="/admin/login" class="btn-glass text-xs py-1.5 px-3 flex items-center gap-1.5 text-gray-400 hover:text-white border-white/10 hover:border-orange-500/40">
             <svg class="w-3.5 h-3.5 text-[#ff4e00]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
             </svg>
-            <span class="hidden sm:inline">Admin</span>
+            <span>Admin</span>
           </a>
         <% } %>
 
@@ -94,18 +101,23 @@
     <a href="/teams" class="block px-3 py-2 rounded-md text-sm font-medium <%= currentPath.startsWith('/teams') || currentPath.startsWith('/player') || currentPath.startsWith('/team') ? 'bg-[#ff4e00]/15 text-[#ff4e00]' : 'text-gray-400' %>">
       Roster & Players
     </a>
+    <a href="/analysis#map-analysis" class="block px-3 py-2 rounded-md text-sm font-medium text-gray-400 hover:text-emerald-400 flex items-center gap-2">
+      <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/></svg>
+      Map Analysis (5 Maps)
+    </a>
     <a href="/analysis" class="block px-3 py-2 rounded-md text-sm font-medium <%= currentPath === '/analysis' ? 'bg-[#ff4e00]/15 text-[#ff4e00]' : 'text-gray-400' %>">
       Overall Analysis
     </a>
     <% if (isAdmin) { %>
       <div class="pt-2 border-t border-white/5 flex gap-2">
-        <a href="/admin" class="flex-1 btn-fire text-center text-xs py-2">Admin Dashboard</a>
-        <a href="/admin/logout" class="btn-glass text-center text-xs py-2 text-red-400">Logout</a>
+        <a href="/admin<%= (typeof activeAdminToken !== 'undefined' && activeAdminToken) ? '?tk=' + activeAdminToken : '' %>" class="flex-1 btn-fire text-center text-xs py-2 font-bold">Admin Dashboard</a>
+        <a href="/admin/settings<%= (typeof activeAdminToken !== 'undefined' && activeAdminToken) ? '?tk=' + activeAdminToken : '' %>" class="btn-glass text-center text-xs py-2 text-slate-300">Theme</a>
+        <a href="/admin/logout<%= (typeof activeAdminToken !== 'undefined' && activeAdminToken) ? '?tk=' + activeAdminToken : '' %>" class="btn-glass text-center text-xs py-2 text-red-400">Logout</a>
       </div>
     <% } else { %>
       <div class="pt-2 border-t border-white/5">
-        <a href="/admin/login" class="block w-full py-2 px-3 text-center rounded-lg bg-white/5 border border-white/10 text-xs font-semibold text-gray-300 hover:text-white hover:bg-white/10">
-          Admin Access Login
+        <a href="/admin/login" class="block w-full py-2.5 px-3 text-center rounded-xl bg-orange-500/10 border border-orange-500/30 text-xs font-semibold text-orange-300 hover:bg-orange-500/20">
+          Admin Access Login (Password)
         </a>
       </div>
     <% } %>

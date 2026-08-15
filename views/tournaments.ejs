@@ -10,6 +10,17 @@
       <h1 class="font-display text-4xl sm:text-5xl font-bold text-white tracking-wide">Tournament Archives</h1>
       <p class="text-gray-400 text-sm">Explore past and active Free Fire MAX esports championships, seasons, and invitationals.</p>
     </div>
+    <% if (isAdmin) { %>
+      <div class="flex items-center gap-2">
+        <a href="<%= adminHref('/admin/tournaments/new') %>" class="btn-fire text-xs py-2.5 px-4 flex items-center gap-2 font-bold shadow-lg shadow-orange-950/40">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+          <span>+ Create Tournament</span>
+        </a>
+        <a href="<%= adminHref('/admin/tournaments') %>" class="btn-glass text-xs py-2.5 px-4 flex items-center gap-1.5 text-slate-300 hover:text-white font-bold">
+          <span>Manage Tournaments &rarr;</span>
+        </a>
+      </div>
+    <% } %>
   </div>
 
   <!-- Tournaments Grid -->
@@ -35,8 +46,8 @@
           </div>
 
           <div class="absolute bottom-3 left-3 right-3 flex items-center justify-between">
-            <span class="text-xs font-mono px-2.5 py-1 rounded-md bg-black/60 backdrop-blur-md text-amber-400 border border-amber-500/25 font-bold">
-              Prize: <%= t.prize_pool %>
+            <span class="text-xs font-mono px-2.5 py-1 rounded-md bg-black/60 backdrop-blur-md text-slate-300 border border-white/10 font-bold">
+              <%= t.circuit_type === 'official' ? 'Official Esports' : 'Community Cup' %>
             </span>
             <span class="text-xs font-mono text-gray-400">
               <%= t.game_mode %>
@@ -55,13 +66,20 @@
             </p>
           </div>
 
-          <div class="pt-3 border-t border-white/5 flex items-center justify-between">
+          <div class="pt-3 border-t border-white/5 flex items-center justify-between gap-2">
             <span class="text-xs font-mono text-gray-500">
               <%= t.start_date ? new Date(t.start_date).toLocaleDateString() : 'Active' %>
             </span>
-            <a href="/tournament/<%= t.id %>" class="btn-glass text-xs py-1.5 px-3">
-              View Standings & Matches &rarr;
-            </a>
+            <div class="flex items-center gap-1.5">
+              <% if (isAdmin) { %>
+                <a href="<%= adminHref('/admin/tournaments/' + t.id + '/edit') %>" class="btn-fire text-[11px] py-1 px-2.5" title="Manage Tournament & Matches">
+                  Manage
+                </a>
+              <% } %>
+              <a href="/tournament/<%= t.id %>" class="btn-glass text-xs py-1.5 px-3">
+                View Standings &rarr;
+              </a>
+            </div>
           </div>
         </div>
       </div>

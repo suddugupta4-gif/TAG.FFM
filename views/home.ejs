@@ -109,6 +109,12 @@
           <span class="w-1.5 h-1.5 rounded-full bg-[#ff4e00] mr-1.5"></span>
           LIVE ADD-UP
         </span>
+        <a href="/analysis#map-analysis" class="btn-glass text-xs py-1.5 px-3 flex items-center gap-1.5 text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/10">
+          <svg class="w-3.5 h-3.5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/>
+          </svg>
+          <span>Map Analysis</span>
+        </a>
         <a href="/analysis" class="btn-glass text-xs py-1.5 px-3 flex items-center gap-1.5">
           <span>In-Depth Analysis</span>
           <svg class="w-3.5 h-3.5 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -241,7 +247,7 @@
 
       <div class="relative z-10 space-y-6">
         
-        <!-- Header Tags & Prize Pool -->
+        <!-- Header Tags & Prize Pool & Admin Controls -->
         <div class="flex flex-wrap items-center justify-between gap-3">
           <div class="flex flex-wrap items-center gap-2.5">
             <span id="hero-status-badge" class="badge-live">
@@ -257,10 +263,17 @@
             </span>
           </div>
 
-          <div id="hero-prize-badge" class="px-3.5 py-1.5 rounded-xl font-mono text-sm bg-gradient-to-r from-[#ff4e00]/20 to-amber-500/20 text-orange-400 border border-[#ff4e00]/40 font-bold flex items-center gap-2 shadow-lg shadow-orange-950/40">
-            <svg class="w-4 h-4 text-amber-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-            <span>Prize Pool: <strong><%= currentTournament.prize_pool %></strong></span>
-          </div>
+          <% if (isAdmin) { %>
+            <div class="flex items-center gap-2">
+              <a href="<%= adminHref('/admin/tournaments/' + currentTournament.id + '/edit') %>" class="btn-fire text-xs py-1.5 px-3.5 flex items-center gap-1.5 font-bold shadow-lg shadow-orange-950/40">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                <span>Manage Tournament & Matches</span>
+              </a>
+              <a href="<%= adminHref('/admin/tournaments/new') %>" class="btn-glass text-xs py-1.5 px-3 text-orange-400 font-bold">
+                <span>+ New</span>
+              </a>
+            </div>
+          <% } %>
         </div>
 
         <!-- Tournament Main Title & Description -->
@@ -274,95 +287,84 @@
           </p>
         </div>
 
-        <!-- MAPS PLAYED & MATCH DETAILS CARD -->
-        <div class="p-4 sm:p-5 rounded-2xl bg-black/60 border border-white/10 space-y-4">
-          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-white/10 pb-3">
-            <div class="flex items-center gap-2">
-              <span class="w-2 h-2 rounded-full bg-orange-500"></span>
-              <h3 class="font-mono text-xs uppercase font-bold text-white tracking-wider">Tournament Maps & Match Format</h3>
+        <!-- ========================================================================= -->
+        <!-- MATCH STANDINGS BOX (MOVED HERE IN PLACE OF FORMAT BOX)                   -->
+        <!-- ========================================================================= -->
+        <div class="p-4 sm:p-6 rounded-2xl bg-black/70 border border-white/15 backdrop-blur-xl shadow-2xl space-y-4" id="home-standings-box">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/10 pb-3">
+            <div class="flex items-center gap-2.5">
+              <div class="w-3 h-3 rounded-full bg-gradient-to-r from-[#ff4e00] to-amber-500 animate-pulse"></div>
+              <h3 class="font-display text-lg sm:text-xl font-bold text-white tracking-wide">
+                Tournament Match Standings
+              </h3>
+              <span id="standings-mode-tag" class="badge-official text-[10px] py-0.5">OFFICIAL</span>
             </div>
-            <div class="text-xs text-slate-400 font-mono">
-              Total Matches: <strong class="text-white"><%= matches.length %> Matches Scheduled/Logged</strong>
-            </div>
-          </div>
-
-          <!-- Interactive Map Pills Distribution -->
-          <div class="space-y-2">
-            <div class="text-xs text-gray-400 font-mono">Battle Royale Maps Rotation:</div>
-            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2.5" id="maps-pills-container">
-              
-              <!-- 1. Bermuda -->
-              <div class="p-2.5 rounded-xl bg-slate-900/90 border border-white/10 flex items-center justify-between hover:border-orange-500/40 transition-all">
-                <div class="flex items-center gap-2">
-                  <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
-                  <span class="font-bold text-xs text-white">Bermuda</span>
-                </div>
-                <span class="text-[11px] font-mono text-orange-400 bg-white/5 px-2 py-0.5 rounded">
-                  <%= (typeof matches !== 'undefined' ? matches : []).filter(m => (m.map_name || '').toLowerCase() === 'bermuda').length %>M
-                </span>
-              </div>
-
-              <!-- 2. Purgatory -->
-              <div class="p-2.5 rounded-xl bg-slate-900/90 border border-white/10 flex items-center justify-between hover:border-orange-500/40 transition-all">
-                <div class="flex items-center gap-2">
-                  <span class="w-2 h-2 rounded-full bg-amber-400"></span>
-                  <span class="font-bold text-xs text-white">Purgatory</span>
-                </div>
-                <span class="text-[11px] font-mono text-orange-400 bg-white/5 px-2 py-0.5 rounded">
-                  <%= (typeof matches !== 'undefined' ? matches : []).filter(m => (m.map_name || '').toLowerCase() === 'purgatory').length %>M
-                </span>
-              </div>
-
-              <!-- 3. Kalahari -->
-              <div class="p-2.5 rounded-xl bg-slate-900/90 border border-white/10 flex items-center justify-between hover:border-orange-500/40 transition-all">
-                <div class="flex items-center gap-2">
-                  <span class="w-2 h-2 rounded-full bg-orange-400"></span>
-                  <span class="font-bold text-xs text-white">Kalahari</span>
-                </div>
-                <span class="text-[11px] font-mono text-orange-400 bg-white/5 px-2 py-0.5 rounded">
-                  <%= (typeof matches !== 'undefined' ? matches : []).filter(m => (m.map_name || '').toLowerCase() === 'kalahari').length %>M
-                </span>
-              </div>
-
-              <!-- 4. Alpine -->
-              <div class="p-2.5 rounded-xl bg-slate-900/90 border border-white/10 flex items-center justify-between hover:border-orange-500/40 transition-all">
-                <div class="flex items-center gap-2">
-                  <span class="w-2 h-2 rounded-full bg-cyan-400"></span>
-                  <span class="font-bold text-xs text-white">Alpine</span>
-                </div>
-                <span class="text-[11px] font-mono text-orange-400 bg-white/5 px-2 py-0.5 rounded">
-                  <%= (typeof matches !== 'undefined' ? matches : []).filter(m => (m.map_name || '').toLowerCase() === 'alpine').length %>M
-                </span>
-              </div>
-
-              <!-- 5. Nexterra -->
-              <div class="p-2.5 rounded-xl bg-slate-900/90 border border-white/10 flex items-center justify-between hover:border-orange-500/40 transition-all">
-                <div class="flex items-center gap-2">
-                  <span class="w-2 h-2 rounded-full bg-purple-400"></span>
-                  <span class="font-bold text-xs text-white">Nexterra</span>
-                </div>
-                <span class="text-[11px] font-mono text-orange-400 bg-white/5 px-2 py-0.5 rounded">
-                  <%= (typeof matches !== 'undefined' ? matches : []).filter(m => (m.map_name || '').toLowerCase() === 'nexterra').length %>M
-                </span>
-              </div>
-
+            
+            <div class="flex items-center gap-3 text-xs font-mono">
+              <span class="text-slate-400">
+                Matches Logged: <strong id="standings-matches-count" class="text-white"><%= matches.length %></strong>
+              </span>
+              <a href="/tournament/<%= currentTournament.id %>" class="text-orange-400 hover:text-orange-300 flex items-center gap-1 font-bold">
+                <span>Detailed Hub</span>
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+              </a>
             </div>
           </div>
 
-          <!-- Format Specifications -->
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs font-mono text-slate-400 pt-1">
-            <div class="flex items-center gap-2">
-              <svg class="w-4 h-4 text-orange-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
-              <span>12 Squads per Battle</span>
-            </div>
-            <div class="flex items-center gap-2">
-              <svg class="w-4 h-4 text-emerald-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/></svg>
-              <span>Point System: 12-9-8-7-6-5-4-3-2-1</span>
-            </div>
-            <div class="flex items-center gap-2">
-              <svg class="w-4 h-4 text-amber-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-              <span>Kill Bonus: +1 PT per Elimination</span>
-            </div>
+          <!-- Standings Table / List -->
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs font-mono">
+              <thead>
+                <tr class="text-slate-400 uppercase border-b border-white/10 text-[11px]">
+                  <th class="py-2.5 px-3">#</th>
+                  <th class="py-2.5 px-3">Team</th>
+                  <th class="py-2.5 px-2 text-center">Matches</th>
+                  <th class="py-2.5 px-2 text-center">Booyah</th>
+                  <th class="py-2.5 px-2 text-center">Kills</th>
+                  <th class="py-2.5 px-2 text-center hidden sm:table-cell">Place Pts</th>
+                  <th class="py-2.5 px-3 text-right">Total PTS</th>
+                </tr>
+              </thead>
+              <tbody id="home-standings-tbody" class="divide-y divide-white/5">
+                <% 
+                  const activeStandings = (standingsOfficial && standingsOfficial.length > 0) ? standingsOfficial : (standingsUnofficial || []);
+                  if (activeStandings.length === 0) { 
+                %>
+                  <tr>
+                    <td colspan="7" class="py-6 text-center text-slate-500 font-mono text-xs">
+                      No team standings recorded yet. When Match #1 is logged, team scores will show here immediately.
+                    </td>
+                  </tr>
+                <% } else { %>
+                  <% activeStandings.forEach((st, idx) => { 
+                    const isTag = (st.team_tag === 'TAG' || (st.team_name || '').includes('TAG'));
+                  %>
+                    <tr class="standings-row hover:bg-white/5 transition-colors <%= isTag ? 'bg-gradient-to-r from-[#ff4e00]/20 via-[#ff4e00]/10 to-transparent font-bold border-l-2 border-[#ff4e00]' : '' %>"
+                        data-team-id="<%= st.team_id %>">
+                      <td class="py-2.5 px-3 font-display text-sm <%= idx === 0 ? 'text-amber-400' : (idx === 1 ? 'text-slate-300' : (idx === 2 ? 'text-amber-600' : 'text-slate-400')) %>">
+                        #<%= idx + 1 %>
+                      </td>
+                      <td class="py-2.5 px-3">
+                        <div class="flex items-center gap-2">
+                          <img src="<%= st.team_logo %>" alt="<%= st.team_name %>" class="w-6 h-6 rounded object-cover border border-white/10 shrink-0" onerror="this.src='https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=100&auto=format&fit=crop'">
+                          <div class="truncate max-w-[140px] sm:max-w-[200px]">
+                            <span class="text-white font-bold <%= isTag ? 'text-orange-400' : '' %>"><%= st.team_name %></span>
+                            <span class="text-[10px] text-slate-400 ml-1">(<%= st.team_tag %>)</span>
+                          </div>
+                        </div>
+                      </td>
+                      <td class="py-2.5 px-2 text-center text-slate-300"><%= st.matches_played %></td>
+                      <td class="py-2.5 px-2 text-center text-amber-400 font-bold"><%= st.booyahs %></td>
+                      <td class="py-2.5 px-2 text-center text-red-400"><%= st.total_kills || st.kill_points %></td>
+                      <td class="py-2.5 px-2 text-center text-slate-400 hidden sm:table-cell"><%= st.placement_points %></td>
+                      <td class="py-2.5 px-3 text-right font-display text-sm font-bold <%= isTag ? 'text-orange-400' : 'text-white' %>">
+                        <%= st.total_points %> <span class="text-[10px] font-normal text-slate-500">PTS</span>
+                      </td>
+                    </tr>
+                  <% }); %>
+                <% } %>
+              </tbody>
+            </table>
           </div>
         </div>
 
@@ -372,13 +374,19 @@
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
             </svg>
-            View Full Tournament Hub & Standings
+            View Full Tournament Hub
+          </a>
+          <a href="/analysis#map-analysis" class="btn-glass text-slate-300 hover:text-emerald-400">
+            <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/>
+            </svg>
+            Map Analysis
           </a>
           <a href="#matches-feed-container" class="btn-glass">
             <svg class="w-4 h-4 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"/>
             </svg>
-            Jump to Match Results & Maps
+            Jump to Match Results
           </a>
         </div>
 
@@ -392,189 +400,90 @@
         </svg>
       </div>
       <div class="space-y-1">
-        <h2 class="font-display text-3xl font-bold text-white">Fresh Season — No Ongoing Tournament</h2>
-        <p class="text-xs text-slate-400 max-w-md mx-auto">All ongoing tournaments and match statistics have been reset to 0. Ready to start fresh! Log match scores or create tournaments in the admin command center.</p>
+        <h2 class="font-display text-3xl font-bold text-white">Upcoming Season — Tournament Schedule</h2>
+        <p class="text-xs text-slate-400 max-w-md mx-auto">No live ongoing tournament currently broadcasted. Browse all tournament archives and team rosters below.</p>
       </div>
       <div class="flex items-center justify-center gap-3 pt-2">
-        <a href="/admin/tournaments/new" class="btn-fire text-xs py-2.5 px-5">
-          + Create First Tournament
+        <a href="/tournaments" class="btn-fire text-xs py-2.5 px-5">
+          Browse Tournaments
         </a>
-        <a href="/admin/matches/new" class="btn-glass text-xs py-2.5 px-5">
-          + Log First Match
+        <a href="/history" class="btn-glass text-xs py-2.5 px-5">
+          Match History (1–6)
         </a>
       </div>
     </section>
   <% } %>
 
   <!-- ========================================================================= -->
-  <!-- 3.5. MAP ANALYSIS & TERRAIN PERFORMANCE (ALL FREE FIRE MAPS)               -->
-  <!-- ========================================================================= -->
-  <section class="space-y-4" id="map-analysis-section">
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-      <div>
-        <div class="flex items-center gap-2">
-          <span class="badge-official flex items-center gap-1">
-            <svg class="w-3.5 h-3.5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/></svg>
-            MAP ANALYSIS
-          </span>
-          <span id="map-analysis-filter-badge" class="badge-official text-[10px]">OFFICIAL STATS</span>
-        </div>
-        <h2 class="font-display text-3xl font-bold text-white tracking-wide mt-1">
-          Free Fire Map Analysis & Performance
-        </h2>
-        <p class="text-slate-400 text-xs sm:text-sm">
-          Comprehensive performance breakdown on every map: Kills, Matches Played, K/D ratio, Booyahs, and Win Rate.
-        </p>
-      </div>
-
-      <div class="flex items-center gap-2">
-        <a href="/history" class="btn-glass text-xs py-2 px-3.5 flex items-center gap-1.5 text-orange-400 hover:text-white">
-          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-          <span>Match History (1–6)</span>
-        </a>
-      </div>
-    </div>
-
-    <!-- Map Analysis Grid (7 Free Fire Maps) -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4" id="map-cards-container">
-      <% 
-        const officialMaps = (mapAnalysisOfficial && mapAnalysisOfficial.maps) ? mapAnalysisOfficial.maps : [];
-        const combinedMaps = (mapAnalysisCombined && mapAnalysisCombined.maps) ? mapAnalysisCombined.maps : [];
-        
-        // Match each map between official and combined
-        combinedMaps.forEach(mapComb => {
-          const mapOff = officialMaps.find(m => m.map_name === mapComb.map_name) || {
-            map_name: mapComb.map_name,
-            matches_played: 0,
-            tag_kills: 0,
-            tag_kd: '0.00',
-            tag_booyahs: 0,
-            tag_win_rate: '0.0',
-            tag_avg_kills: '0.0'
-          };
-      %>
-        <div 
-          class="map-analysis-card glass-card overflow-hidden border border-white/10 hover:border-orange-500/50 transition-all duration-300 group flex flex-col justify-between"
-          data-map-name="<%= mapComb.map_name %>"
-          data-official-matches="<%= mapOff.matches_played %>"
-          data-official-kills="<%= mapOff.tag_kills %>"
-          data-official-kd="<%= mapOff.tag_kd %>"
-          data-official-booyahs="<%= mapOff.tag_booyahs %>"
-          data-official-winrate="<%= mapOff.tag_win_rate %>"
-          data-official-avgkills="<%= mapOff.tag_avg_kills %>"
-          data-combined-matches="<%= mapComb.matches_played %>"
-          data-combined-kills="<%= mapComb.tag_kills %>"
-          data-combined-kd="<%= mapComb.tag_kd %>"
-          data-combined-booyahs="<%= mapComb.tag_booyahs %>"
-          data-combined-winrate="<%= mapComb.tag_win_rate %>"
-          data-combined-avgkills="<%= mapComb.tag_avg_kills %>">
-
-          <!-- Map Header Banner with Visual Imagery -->
-          <div class="relative h-28 w-full bg-cover bg-center overflow-hidden" style="background-image: url('<%= mapComb.banner_url %>');">
-            <div class="absolute inset-0 bg-gradient-to-t from-[#050508] via-[#050508]/60 to-transparent"></div>
-            
-            <div class="absolute top-2.5 right-2.5 z-10">
-              <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-black/60 backdrop-blur-md text-slate-300 border border-white/10 flex items-center gap-1">
-                <span class="w-1.5 h-1.5 rounded-full bg-orange-400"></span>
-                <span class="map-matches-label font-bold text-white"><%= mapOff.matches_played %></span> Matches
-              </span>
-            </div>
-
-            <div class="absolute bottom-2.5 left-3 z-10">
-              <span class="text-[10px] font-mono uppercase tracking-widest text-orange-400 font-bold block">Free Fire Map</span>
-              <h3 class="font-display text-xl font-bold text-white tracking-wide leading-tight group-hover:text-orange-400 transition-colors">
-                <%= mapComb.map_name %>
-              </h3>
-            </div>
-          </div>
-
-          <!-- Map Metrics Panel -->
-          <div class="p-4 space-y-3 flex-1 flex flex-col justify-between">
-            
-            <!-- 4 Required Core Performance Indicators -->
-            <div class="grid grid-cols-2 gap-2 text-xs font-mono">
-              
-              <!-- KILLS ON MAP -->
-              <div class="p-2.5 rounded-lg bg-black/40 border border-white/5 flex flex-col justify-between">
-                <span class="text-[10px] text-slate-400 flex items-center gap-1">
-                  <svg class="w-3 h-3 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
-                  KILLS
-                </span>
-                <div class="mt-1">
-                  <span class="map-kills-val font-display text-2xl font-bold text-red-400"><%= mapOff.tag_kills %></span>
-                  <span class="text-[10px] text-slate-500 block"><span class="map-avgkills-val"><%= mapOff.tag_avg_kills %></span> avg</span>
-                </div>
-              </div>
-
-              <!-- MATCH PLAYED -->
-              <div class="p-2.5 rounded-lg bg-black/40 border border-white/5 flex flex-col justify-between">
-                <span class="text-[10px] text-slate-400 flex items-center gap-1">
-                  <svg class="w-3 h-3 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-                  MATCH PLAYED
-                </span>
-                <div class="mt-1">
-                  <span class="map-matches-val font-display text-2xl font-bold text-white"><%= mapOff.matches_played %></span>
-                  <span class="text-[10px] text-slate-500 block">Games</span>
-                </div>
-              </div>
-
-              <!-- KD ON THAT MAP -->
-              <div class="p-2.5 rounded-lg bg-black/40 border border-white/5 flex flex-col justify-between">
-                <span class="text-[10px] text-slate-400 flex items-center gap-1">
-                  <svg class="w-3 h-3 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                  KD ON THAT
-                </span>
-                <div class="mt-1">
-                  <span class="map-kd-val font-display text-2xl font-bold text-emerald-400"><%= mapOff.tag_kd %></span>
-                  <span class="text-[10px] text-emerald-500/80 block">K/D Ratio</span>
-                </div>
-              </div>
-
-              <!-- BOOYAH & WIN RATE -->
-              <div class="p-2.5 rounded-lg bg-black/40 border border-white/5 flex flex-col justify-between">
-                <span class="text-[10px] text-slate-400 flex items-center gap-1">
-                  <svg class="w-3 h-3 text-amber-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-                  BOOYAHS
-                </span>
-                <div class="mt-1">
-                  <span class="map-booyahs-val font-display text-2xl font-bold text-amber-400"><%= mapOff.tag_booyahs %></span>
-                  <span class="text-[10px] text-amber-400/80 block"><span class="map-winrate-val"><%= mapOff.tag_win_rate %></span>% Win</span>
-                </div>
-              </div>
-
-            </div>
-
-            <!-- Card Bottom Action & History Link -->
-            <div class="pt-2 border-t border-white/5 flex items-center justify-between">
-              <span class="text-[10px] text-slate-500 font-mono"><%= mapComb.description %></span>
-              <a href="/history?map=<%= encodeURIComponent(mapComb.map_name) %>" class="text-xs font-mono text-orange-400 hover:text-orange-300 flex items-center gap-1 shrink-0">
-                <span>Ledger</span>
-                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-              </a>
-            </div>
-
-          </div>
-
-        </div>
-      <% }); %>
-    </div>
-  </section>
-
-  <!-- ========================================================================= -->
-  <!-- 4. MATCH RESULTS & MAPS + TOP PLAYERS (LAST AS ITS)                       -->
+  <!-- 4. MATCH RESULTS & MAPS + TOP PLAYERS                                      -->
   <!-- ========================================================================= -->
   <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
     
     <!-- MATCH RESULTS LIST -->
     <div class="lg:col-span-2 space-y-4">
-      <div class="flex items-center justify-between">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div class="flex items-center gap-2">
           <h3 class="font-display text-2xl font-bold text-white tracking-wide">Match Results & Maps</h3>
           <span id="match-count-badge" class="px-2 py-0.5 rounded-md text-xs font-mono bg-white/5 text-gray-300 border border-white/10">
             <%= officialMatches.length %> Matches
           </span>
         </div>
-        <span id="match-filter-indicator" class="badge-official text-[10px]">OFFICIAL MATCHES</span>
+        <div class="flex items-center gap-2">
+          <button type="button" onclick="toggleHomeTotalPoints()" class="btn-glass text-xs py-1.5 px-3 flex items-center gap-1.5 text-amber-400 border-amber-500/30 hover:bg-amber-500/10">
+            <svg class="w-3.5 h-3.5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+            <span>Calculate Total Points</span>
+          </button>
+          <span id="match-filter-indicator" class="badge-official text-[10px]">OFFICIAL MATCHES</span>
+        </div>
+      </div>
+
+      <!-- Live All-Matches Total Points Calculated Card (Collapsible) -->
+      <div id="home-total-points-card" class="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-orange-500/20 via-amber-500/15 to-orange-500/20 border border-orange-500/40 shadow-xl space-y-3 hidden">
+        <div class="flex items-center justify-between border-b border-white/10 pb-2">
+          <div class="flex items-center gap-2">
+            <span class="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse"></span>
+            <span class="font-display text-sm font-bold text-white uppercase tracking-wider">All Matches Total Points Summary</span>
+          </div>
+          <button type="button" onclick="toggleHomeTotalPoints()" class="text-xs font-mono text-slate-400 hover:text-white">✕ Close</button>
+        </div>
+
+        <% 
+          let homeAllMatches = matches || [];
+          let homeSumKills = 0;
+          let homeSumPlacePts = 0;
+          let homeSumBooyahs = 0;
+
+          homeAllMatches.forEach(m => {
+            if (m.results && m.results.length > 0) {
+              const tagRes = m.results.find(r => (r.team_tag === 'TAG' || (r.team_name || '').includes('TAG'))) || m.results[0];
+              if (tagRes) {
+                homeSumKills += (tagRes.kills || 0);
+                homeSumPlacePts += (tagRes.placement_points || 0);
+                if (tagRes.placement === 1) homeSumBooyahs++;
+              }
+            }
+          });
+          const homeGrandTotalPts = homeSumKills + homeSumPlacePts;
+        %>
+
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 font-mono text-xs text-center">
+          <div class="p-2.5 rounded-xl bg-black/40 border border-white/10">
+            <div class="text-[10px] text-slate-400 uppercase">Matches Logged</div>
+            <div class="text-lg font-bold text-white"><%= homeAllMatches.length %></div>
+          </div>
+          <div class="p-2.5 rounded-xl bg-black/40 border border-white/10">
+            <div class="text-[10px] text-slate-400 uppercase">Position Points</div>
+            <div class="text-lg font-bold text-emerald-400"><%= homeSumPlacePts %> PTS</div>
+          </div>
+          <div class="p-2.5 rounded-xl bg-black/40 border border-white/10">
+            <div class="text-[10px] text-slate-400 uppercase">Kill Points</div>
+            <div class="text-lg font-bold text-red-400"><%= homeSumKills %> PTS</div>
+          </div>
+          <div class="p-2.5 rounded-xl bg-gradient-to-r from-orange-500/30 to-amber-500/30 border border-orange-500/50">
+            <div class="text-[10px] text-orange-300 uppercase font-bold">Total Points</div>
+            <div class="text-xl font-bold text-orange-400"><%= homeGrandTotalPts %> PTS</div>
+          </div>
+        </div>
       </div>
 
       <!-- No matches state -->
@@ -617,19 +526,33 @@
               <p class="text-xs text-gray-400 mb-3 italic"><%= match.notes %></p>
             <% } %>
 
-            <!-- Match Team Placement Grid -->
+            <!-- Match Team Placement Grid: Position, Position Points, Kill Points & Total Points -->
             <% if (match.results && match.results.length > 0) { %>
-              <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 text-xs">
-                <% match.results.slice(0, 6).forEach(res => { %>
-                  <div class="flex items-center justify-between p-2.5 rounded-lg <%= res.placement === 1 ? 'bg-amber-500/15 border border-amber-500/30' : 'bg-black/30 border border-white/5' %>">
-                    <div class="flex items-center gap-2 truncate">
-                      <span class="font-bold font-mono <%= res.placement === 1 ? 'text-amber-400' : 'text-gray-500' %>">#<%= res.placement %></span>
-                      <span class="font-semibold text-gray-200 truncate"><%= res.team_name %></span>
+              <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5 text-xs font-mono">
+                <% match.results.forEach(res => { 
+                  const isTagTeam = (res.team_tag === 'TAG' || (res.team_name || '').includes('TAG'));
+                %>
+                  <div class="p-3 rounded-xl <%= res.placement === 1 ? 'bg-amber-500/15 border border-amber-500/40' : (isTagTeam ? 'bg-orange-500/15 border border-orange-500/30' : 'bg-black/35 border border-white/5') %> space-y-1.5">
+                    
+                    <div class="flex items-center justify-between gap-1">
+                      <div class="flex items-center gap-1.5 truncate">
+                        <span class="font-bold <%= res.placement === 1 ? 'text-amber-400' : 'text-slate-400' %>">
+                          #<%= res.placement %> <%= res.placement === 1 ? '🏆 Booyah' : '' %>
+                        </span>
+                        <span class="font-semibold text-white truncate"><%= res.team_name %></span>
+                      </div>
+                      <span class="font-display text-sm font-bold text-orange-400 shrink-0">
+                        <%= res.total_points %> PTS
+                      </span>
                     </div>
-                    <div class="font-mono text-gray-300 flex items-center gap-2">
-                      <span class="text-[#ff4e00] font-bold"><%= res.kills %>K</span>
-                      <span class="font-bold text-white"><%= res.total_points %>PTS</span>
+
+                    <!-- Kill Points & Position Points Breakdown -->
+                    <div class="flex items-center justify-between text-[11px] pt-1 border-t border-white/5 text-slate-400">
+                      <span>Kills: <strong class="text-red-400"><%= res.kills %></strong></span>
+                      <span>Place PTS: <strong class="text-emerald-400"><%= res.placement_points %></strong></span>
+                      <span>Total: <strong class="text-white"><%= res.total_points %></strong></span>
                     </div>
+
                   </div>
                 <% }); %>
               </div>

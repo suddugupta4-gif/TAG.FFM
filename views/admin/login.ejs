@@ -85,6 +85,11 @@
       errorBox.classList.remove('hidden');
     <% } %>
 
+    // Focus input automatically
+    if (pwdInput) {
+      pwdInput.focus();
+    }
+
     // Toggle Password Visibility
     if (toggleBtn) {
       toggleBtn.addEventListener('click', () => {
@@ -95,7 +100,7 @@
       });
     }
 
-    // Form Submission with AJAX & Iframe Cookie Sync
+    // Form Submission with AJAX & Iframe Persistence
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       
@@ -125,21 +130,15 @@
         const data = await response.json();
 
         if (response.ok && data.success) {
-          btnText.textContent = 'Access Granted! Opening Dashboard...';
+          btnText.textContent = 'Access Granted! Opening Admin...';
           submitBtn.classList.remove('btn-fire');
           submitBtn.classList.add('bg-emerald-600', 'text-white');
 
-          // Store token in localStorage for cross-tab and iframe security
-          if (data.token) {
-            localStorage.setItem('tag_admin_token', data.token);
-            document.cookie = `tag_admin_token=${data.token}; path=/; max-age=2592000; SameSite=Lax`;
-          }
-
-          setTimeout(() => {
-            window.location.href = data.redirect || '/admin';
-          }, 350);
+          // Immediate Navigation to Admin Dashboard
+          const destination = data.redirect || '/admin';
+          window.location.replace(destination);
         } else {
-          throw new Error(data.error || 'Invalid password. Please try again.');
+          throw new Error(data.error || 'Invalid password. Please check your credentials.');
         }
       } catch (err) {
         submitBtn.disabled = false;
@@ -148,6 +147,7 @@
 
         errorText.textContent = err.message || 'Invalid password. Please try again.';
         errorBox.classList.remove('hidden');
+        pwdInput.select();
       }
     });
   });

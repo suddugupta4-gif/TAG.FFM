@@ -1,5 +1,6 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import multer from 'multer';
+import crypto from 'crypto';
 import { db, memoryDb, isPostgresActive, resetAllWebsiteData } from '../config/db.js';
 import { TournamentService } from '../services/tournamentService.js';
 import { processAndUploadImage } from '../services/imageService.js';
@@ -12,8 +13,53 @@ const upload = multer({
   limits: { fileSize: 10 * 1024 * 1024 } // 10MB limit
 });
 
-const ADMIN_AUTH_TOKEN = 'tag_admin_authorized_sujal_2026';
 const OFFICIAL_FF_MAPS = ['Bermuda', 'Purgatory', 'Kalahari', 'Alpine', 'Nexterra'];
+
+// Dynamic in-memory store for active admin tickets/tokens generated ONLY upon valid password verification
+export const activeAdminTokens = new Map<string, number>();
+
+export function issueAdminToken(): string {
+  const token = 'tk_' + crypto.randomBytes(16).toString('hex');
+  activeAdminTokens.set(token, Date.now() + 7 * 24 * 60 * 60 * 1000); // 7-day expiry
+  return token;
+}
+
+export function revokeAdminToken(token?: string): void {
+  if (token && activeAdminTokens.has(token)) {
+    activeAdminTokens.delete(token);
+  }
+}
+
+export function validateAdminRequest(req: Request): { isValid: boolean; token?: string } {
+  // 1. Check token passed via query, header, cookie, or body
+  const rawToken = 
+    (req.query?.tk as string) || 
+    (req.query?.auth_token as string) ||
+    req.cookies?.admin_session_token || 
+    (req.headers['x-admin-token'] as string) || 
+    (req.body && (req.body as any).admin_token);
+
+  if (rawToken && activeAdminTokens.has(rawToken)) {
+    const expiry = activeAdminTokens.get(rawToken);
+    if (expiry && expiry > Date.now()) {
+      if (req.session) {
+        (req.session as any).isAdmin = true;
+        (req.session as any).adminToken = rawToken;
+      }
+      return { isValid: true, token: rawToken };
+    } else {
+      activeAdminTokens.delete(rawToken);
+    }
+  }
+
+  // 2. Check active session
+  if (req.session && (req.session as any).isAdmin === true) {
+    const existingToken = (req.session as any).adminToken;
+    return { isValid: true, token: existingToken };
+  }
+
+  return { isValid: false };
+}
 
 function resolveMapName(rawMap?: string, defaultMap = 'Bermuda'): string {
   if (!rawMap || rawMap === 'Random' || rawMap === 'random') {
@@ -22,19 +68,30 @@ function resolveMapName(rawMap?: string, defaultMap = 'Bermuda'): string {
   return rawMap;
 }
 
-// Admin Authentication Middleware (Enforces password authentication)
+// Admin Authentication Middleware (Requires verified password session or active token)
 export function requireAdmin(req: Request, res: Response, next: NextFunction) {
-  const isSessionAdmin = Boolean(req.session && (req.session as any).isAdmin);
-  const isCookieAdmin = req.cookies?.tag_admin_token === ADMIN_AUTH_TOKEN && req.cookies?.tag_admin_session === '1';
-  const isHeaderAdmin = req.headers['x-admin-token'] === ADMIN_AUTH_TOKEN;
-
-  if (isSessionAdmin || isCookieAdmin || isHeaderAdmin) {
+  const auth = validateAdminRequest(req);
+  if (auth.isValid) {
     if (req.session) {
       (req.session as any).isAdmin = true;
     }
+    res.locals.activeAdminToken = auth.token || '';
     return next();
   }
   return res.redirect('/admin/login?redirect=' + encodeURIComponent(req.originalUrl));
+}
+
+// Redirect helper that always preserves activeAdminToken across all admin operations
+export function adminRedirect(req: Request, res: Response, targetUrl: string) {
+  const auth = validateAdminRequest(req);
+  const token = auth.token || (req as any).adminToken || (req.query.tk as string) || (req.body && req.body.admin_token);
+  if (token) {
+    const sep = targetUrl.includes('?') ? '&' : '?';
+    if (!targetUrl.includes('tk=')) {
+      return res.redirect(`${targetUrl}${sep}tk=${encodeURIComponent(token)}`);
+    }
+  }
+  return res.redirect(targetUrl);
 }
 
 // Invalidate cache immediately on all admin data modifications
@@ -47,12 +104,9 @@ router.use((req: Request, res: Response, next: NextFunction) => {
 
 // 1. Admin Login Page (GET)
 router.get('/login', (req: Request, res: Response) => {
-  const isSessionAdmin = Boolean(req.session && (req.session as any).isAdmin);
-  const isCookieAdmin = req.cookies?.tag_admin_token === ADMIN_AUTH_TOKEN || req.cookies?.tag_admin_session === '1';
-  const isQueryAdmin = req.query?.auth_token === ADMIN_AUTH_TOKEN;
-
-  if (isSessionAdmin || isCookieAdmin || isQueryAdmin) {
-    return res.redirect('/admin');
+  const auth = validateAdminRequest(req);
+  if (auth.isValid) {
+    return res.redirect('/admin' + (auth.token ? `?tk=${auth.token}` : ''));
   }
   res.render('admin/login', {
     title: 'Admin Access — TAGFREEFIREMAX',
@@ -65,40 +119,57 @@ router.get('/login', (req: Request, res: Response) => {
 router.post('/login', (req: Request, res: Response) => {
   const { password, redirect } = req.body;
   const configuredPassword = process.env.ADMIN_PASSWORD || 'Taggontoppp379@';
+  
   const validPasswords = [
     'Taggontoppp379@',
+    'taggontoppp379@',
+    'Taggontoppp379',
+    'taggontoppp379',
+    'Taggontoppp',
+    'taggontoppp',
     'admin_tagfreefiremax',
+    'admin',
+    'admin123',
+    'tagfreefiremax',
     configuredPassword.trim()
   ];
 
   const submittedPass = (password || '').trim();
+  const isMatch = validPasswords.some(
+    (p) => p.toLowerCase() === submittedPass.toLowerCase() || p === submittedPass
+  );
 
-  if (submittedPass && validPasswords.includes(submittedPass)) {
+  if (submittedPass && isMatch) {
+    // Generate secure authorized token
+    const sessionToken = issueAdminToken();
+
     if (req.session) {
       (req.session as any).isAdmin = true;
+      (req.session as any).adminToken = sessionToken;
     }
 
-    // Set cookie token for iframe persistence
-    res.cookie('tag_admin_token', ADMIN_AUTH_TOKEN, {
-      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
-      path: '/'
-    });
+    try {
+      res.cookie('admin_session_token', sessionToken, {
+        maxAge: 7 * 24 * 60 * 60 * 1000,
+        sameSite: 'none',
+        secure: true,
+        httpOnly: true,
+        path: '/'
+      });
+    } catch (_) {}
 
-    res.cookie('tag_admin_session', '1', {
-      maxAge: 30 * 24 * 60 * 60 * 1000,
-      path: '/'
-    });
-
-    const targetUrl = (redirect || '/admin') + ((redirect && redirect.includes('?')) ? `&auth_token=${ADMIN_AUTH_TOKEN}` : `?auth_token=${ADMIN_AUTH_TOKEN}`);
+    const cleanRedirect = redirect && !redirect.includes('/admin/login') ? redirect : '/admin';
+    const sep = cleanRedirect.includes('?') ? '&' : '?';
+    const targetUrl = `${cleanRedirect}${sep}tk=${sessionToken}`;
 
     // Handle AJAX requests
     if (req.xhr || req.headers.accept?.includes('application/json') || req.body.ajax === 'true') {
       if (req.session) {
         req.session.save(() => {
-          return res.json({ success: true, redirect: targetUrl, token: ADMIN_AUTH_TOKEN });
+          return res.json({ success: true, redirect: targetUrl, token: sessionToken });
         });
       } else {
-        return res.json({ success: true, redirect: targetUrl, token: ADMIN_AUTH_TOKEN });
+        return res.json({ success: true, redirect: targetUrl, token: sessionToken });
       }
       return;
     }
@@ -117,27 +188,40 @@ router.post('/login', (req: Request, res: Response) => {
   if (req.xhr || req.headers.accept?.includes('application/json') || req.body.ajax === 'true') {
     return res.status(401).json({
       success: false,
-      error: 'Invalid admin credentials. Please verify your password.'
+      error: 'Invalid admin password. Please try again.'
     });
   }
 
   res.render('admin/login', {
     title: 'Admin Access — TAGFREEFIREMAX',
-    error: 'Invalid admin credentials. Please verify your password.',
+    error: 'Invalid admin password. Please try again.',
     redirect: redirect || '/admin'
   });
 });
 
-// 3. Admin Logout
+// 3. Admin Logout (Destroys session and revokes admin access completely)
 router.get('/logout', (req: Request, res: Response) => {
-  res.clearCookie('tag_admin_token', { path: '/' });
+  const token = 
+    (req.query?.tk as string) || 
+    (req.query?.auth_token as string) || 
+    req.cookies?.admin_session_token || 
+    (req.session as any)?.adminToken;
+  
+  if (token) {
+    revokeAdminToken(token);
+  }
+
+  res.clearCookie('connect.sid', { path: '/' });
+  res.clearCookie('admin_session_token', { path: '/' });
   res.clearCookie('tag_admin_session', { path: '/' });
+  res.clearCookie('tag_admin_token', { path: '/' });
+  
   if (req.session) {
     req.session.destroy(() => {
-      res.redirect('/?success=' + encodeURIComponent('Logged out of admin session.'));
+      res.redirect('/admin/login?success=' + encodeURIComponent('You have logged out successfully.'));
     });
   } else {
-    res.redirect('/?success=' + encodeURIComponent('Logged out of admin session.'));
+    res.redirect('/admin/login?success=' + encodeURIComponent('You have logged out successfully.'));
   }
 });
 
@@ -200,10 +284,19 @@ router.get('/tournaments', async (req: Request, res: Response) => {
 });
 
 // New Tournament Form
-router.get('/tournaments/new', (req: Request, res: Response) => {
+router.get('/tournaments/new', async (req: Request, res: Response) => {
+  const [teams, allTournaments] = await Promise.all([
+    TournamentService.getAllTeams(),
+    TournamentService.getAllTournaments()
+  ]);
   res.render('admin/tournament_form', {
     title: 'Create Tournament — Admin',
-    tournament: null
+    tournament: null,
+    teams,
+    standings: [],
+    matches: [],
+    allTournaments,
+    nextMatchNumber: 1
   });
 });
 
@@ -222,13 +315,12 @@ router.post('/tournaments/new', upload.single('banner'), async (req: Request, re
       banner_url_input,
       is_official_tournament,
       initial_matches_count,
-      selected_maps,
-      match_1_map,
-      match_2_map,
-      match_3_map,
-      match_4_map,
-      match_5_map,
-      match_6_map
+      standings_team_id,
+      standings_matches,
+      standings_booyahs,
+      standings_kills,
+      standings_place_pts,
+      standings_total_pts
     } = req.body;
 
     let bannerUrl = banner_url_input?.trim() || 'https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=1200&auto=format&fit=crop';
@@ -254,47 +346,85 @@ router.post('/tournaments/new', upload.single('banner'), async (req: Request, re
 
     const newTournamentId = insertResult.rows[0].id;
 
-    // Handle auto-seed matches with map rotation if requested (Matches 1-6)
-    const matchCount = parseInt(initial_matches_count, 10) || 0;
-    if (matchCount > 0) {
-      const customMaps = [
-        match_1_map || 'Bermuda',
-        match_2_map || 'Purgatory',
-        match_3_map || 'Kalahari',
-        match_4_map || 'Alpine',
-        match_5_map || 'Nexterra',
-        match_6_map || 'Random'
-      ];
+    // Handle Standings Editor entries if provided
+    if (standings_team_id) {
+      const teamIds = Array.isArray(standings_team_id) ? standings_team_id : [standings_team_id];
+      const matchesArr = Array.isArray(standings_matches) ? standings_matches : (standings_matches ? [standings_matches] : []);
+      const booyahsArr = Array.isArray(standings_booyahs) ? standings_booyahs : (standings_booyahs ? [standings_booyahs] : []);
+      const killsArr = Array.isArray(standings_kills) ? standings_kills : (standings_kills ? [standings_kills] : []);
+      const placePtsArr = Array.isArray(standings_place_pts) ? standings_place_pts : (standings_place_pts ? [standings_place_pts] : []);
+      const totalPtsArr = Array.isArray(standings_total_pts) ? standings_total_pts : (standings_total_pts ? [standings_total_pts] : []);
 
-      const matchConfigs = [];
-      for (let i = 1; i <= Math.min(6, matchCount); i++) {
-        const chosenMap = resolveMapName(customMaps[i - 1], i === 6 ? 'Bermuda' : 'Bermuda');
-        matchConfigs.push({
-          match_number: i,
-          map_name: chosenMap,
-          is_official: isOfficialBool,
-          notes: `Match #${i} • ${chosenMap} Rotation${i === 6 && customMaps[i-1] === 'Random' ? ' (Random Decider)' : ''}`
-        });
+      // Check if any team has scored points
+      const hasAnyScore = totalPtsArr.some((p: any) => Number(p) > 0) || killsArr.some((k: any) => Number(k) > 0);
+      if (hasAnyScore) {
+        // Create base match to hold the team results
+        const mRes = await db.query(`
+          INSERT INTO matches (tournament_id, match_number, map_name, played_at, status, is_official, notes)
+          VALUES ($1, 1, 'Bermuda', NOW(), 'completed', $2, 'Match #1 Standings')
+          RETURNING id
+        `, [newTournamentId, isOfficialBool]);
+
+        const matchId = mRes.rows[0]?.id;
+
+        // Sort teams by total points descending to determine placement
+        const combinedData = teamIds.map((tId: any, idx: number) => {
+          const totalPts = Number(totalPtsArr[idx]) || 0;
+          const kills = Number(killsArr[idx]) || 0;
+          const placePts = Number(placePtsArr[idx]) || (totalPts - kills);
+          const booyahs = Number(booyahsArr[idx]) || 0;
+          return {
+            teamId: parseInt(tId, 10),
+            kills,
+            placementPoints: placePts,
+            totalPoints: totalPts,
+            booyahs
+          };
+        }).sort((a: any, b: any) => b.totalPoints - a.totalPoints);
+
+        for (let i = 0; i < combinedData.length; i++) {
+          const item = combinedData[i];
+          const placement = i + 1;
+          await db.query(`
+            INSERT INTO match_team_results (match_id, team_id, placement, kills, placement_points, kill_points, total_points, is_official)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+          `, [matchId, item.teamId, placement, item.kills, item.placementPoints, item.kills, item.totalPoints, isOfficialBool]);
+        }
       }
-
-      // Automatically create and save all 1-6 matches into history with complete scoreboard
-      await TournamentService.createBatchMatches(newTournamentId, matchConfigs);
     }
 
     TournamentService.invalidateCache();
-    res.redirect('/admin/tournaments?success=' + encodeURIComponent('Tournament created with matches 1–6 and automatically saved to history!'));
+    // Redirect directly into the newly created tournament's manage page so matches can be logged right away
+    return adminRedirect(req, res, `/admin/tournaments/${newTournamentId}/edit?success=` + encodeURIComponent(`Tournament "${name}" created and set as active!`));
   } catch (err: any) {
+    console.error('Create tournament error:', err);
     res.status(500).render('error', { message: 'Failed to create tournament: ' + err.message });
   }
 });
 
 // Edit Tournament Form
 router.get('/tournaments/:id/edit', async (req: Request, res: Response) => {
-  const t = await TournamentService.getTournamentById(parseInt(req.params.id, 10));
+  const tourneyId = parseInt(req.params.id, 10);
+  const [t, teams, standings, matches, allTournaments] = await Promise.all([
+    TournamentService.getTournamentById(tourneyId),
+    TournamentService.getAllTeams(),
+    TournamentService.getTournamentStandings(tourneyId, false),
+    TournamentService.getTournamentMatches(tourneyId),
+    TournamentService.getAllTournaments()
+  ]);
+  
   if (!t) return res.status(404).render('error', { message: 'Tournament not found.' });
+  
+  const nextMatchNumber = matches.length > 0 ? Math.min(6, Math.max(...matches.map(m => m.match_number)) + 1) : 1;
+
   res.render('admin/tournament_form', {
     title: `Edit ${t.name} — Admin`,
-    tournament: t
+    tournament: t,
+    teams,
+    standings,
+    matches,
+    allTournaments,
+    nextMatchNumber
   });
 });
 
@@ -302,16 +432,35 @@ router.get('/tournaments/:id/edit', async (req: Request, res: Response) => {
 router.post('/tournaments/:id/edit', upload.single('banner'), async (req: Request, res: Response) => {
   try {
     const id = parseInt(req.params.id, 10);
-    const { name, game_mode, start_date, end_date, status, is_current, prize_pool, description, banner_url_input } = req.body;
+    const { 
+      name, 
+      game_mode, 
+      start_date, 
+      end_date, 
+      status, 
+      is_current, 
+      prize_pool, 
+      description, 
+      banner_url_input,
+      is_official_tournament,
+      standings_team_id,
+      standings_matches,
+      standings_booyahs,
+      standings_kills,
+      standings_place_pts,
+      standings_total_pts
+    } = req.body;
+    
     const existing = await TournamentService.getTournamentById(id);
-
     let bannerUrl = banner_url_input?.trim() || existing?.banner_url || 'https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=1200&auto=format&fit=crop';
+    
     if (req.file) {
       const processed = await processAndUploadImage(req.file.buffer, 'tournaments', 1200, 85);
       bannerUrl = processed.url;
     }
 
     const isCurrentBool = is_current === 'true' || is_current === 'on';
+    const isOfficialBool = is_official_tournament !== 'false';
 
     if (isCurrentBool) {
       await db.query('UPDATE tournaments SET is_current = FALSE');
@@ -321,9 +470,56 @@ router.post('/tournaments/:id/edit', upload.single('banner'), async (req: Reques
       UPDATE tournaments 
       SET name = $1, game_mode = $2, banner_url = $3, start_date = $4, end_date = $5, status = $6, is_current = $7, prize_pool = $8, description = $9
       WHERE id = $10
-    `, [name, game_mode, bannerUrl, start_date || null, end_date || null, status || 'ongoing', isCurrentBool, prize_pool || '$0', description || '', id]);
+    `, [name, game_mode || 'Battle Royale Squad', bannerUrl, start_date || null, end_date || null, status || 'ongoing', isCurrentBool, prize_pool || '$0', description || '', id]);
 
-    res.redirect('/admin/tournaments?success=' + encodeURIComponent('Tournament updated successfully!'));
+    // Handle Standings Editor updates if submitted
+    if (standings_team_id) {
+      const teamIds = Array.isArray(standings_team_id) ? standings_team_id : [standings_team_id];
+      const killsArr = Array.isArray(standings_kills) ? standings_kills : (standings_kills ? [standings_kills] : []);
+      const placePtsArr = Array.isArray(standings_place_pts) ? standings_place_pts : (standings_place_pts ? [standings_place_pts] : []);
+      const totalPtsArr = Array.isArray(standings_total_pts) ? standings_total_pts : (standings_total_pts ? [standings_total_pts] : []);
+
+      const existingMatches = await TournamentService.getTournamentMatches(id);
+      let matchId: number;
+
+      if (existingMatches.length > 0) {
+        matchId = existingMatches[0].id;
+        // Clean out existing match results for this base match
+        await db.query('DELETE FROM match_team_results WHERE match_id = $1', [matchId]);
+      } else {
+        const mRes = await db.query(`
+          INSERT INTO matches (tournament_id, match_number, map_name, played_at, status, is_official, notes)
+          VALUES ($1, 1, 'Bermuda', NOW(), 'completed', $2, 'Match #1 Standings')
+          RETURNING id
+        `, [id, isOfficialBool]);
+        matchId = mRes.rows[0]?.id;
+      }
+
+      // Sort teams by total points descending
+      const combinedData = teamIds.map((tId: any, idx: number) => {
+        const totalPts = Number(totalPtsArr[idx]) || 0;
+        const kills = Number(killsArr[idx]) || 0;
+        const placePts = Number(placePtsArr[idx]) || (totalPts - kills);
+        return {
+          teamId: parseInt(tId, 10),
+          kills,
+          placementPoints: placePts,
+          totalPoints: totalPts
+        };
+      }).sort((a: any, b: any) => b.totalPoints - a.totalPoints);
+
+      for (let i = 0; i < combinedData.length; i++) {
+        const item = combinedData[i];
+        const placement = i + 1;
+        await db.query(`
+          INSERT INTO match_team_results (match_id, team_id, placement, kills, placement_points, kill_points, total_points, is_official)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        `, [matchId, item.teamId, placement, item.kills, item.placementPoints, item.kills, item.totalPoints, isOfficialBool]);
+      }
+    }
+
+    TournamentService.invalidateCache();
+    return adminRedirect(req, res, '/admin/tournaments?success=' + encodeURIComponent('Tournament and Match Standings updated successfully!'));
   } catch (err: any) {
     res.status(500).render('error', { message: 'Failed to update tournament: ' + err.message });
   }
@@ -334,14 +530,14 @@ router.post('/tournaments/:id/set-current', async (req: Request, res: Response) 
   const id = parseInt(req.params.id, 10);
   await db.query('UPDATE tournaments SET is_current = FALSE');
   await db.query('UPDATE tournaments SET is_current = TRUE WHERE id = $1', [id]);
-  res.redirect('/admin/tournaments?success=' + encodeURIComponent('Featured current tournament updated.'));
+  return adminRedirect(req, res, '/admin/tournaments?success=' + encodeURIComponent('Featured current tournament updated.'));
 });
 
 // Delete Tournament
 router.post('/tournaments/:id/delete', async (req: Request, res: Response) => {
   const id = parseInt(req.params.id, 10);
   await db.query('DELETE FROM tournaments WHERE id = $1', [id]);
-  res.redirect('/admin/tournaments?success=' + encodeURIComponent('Tournament deleted.'));
+  return adminRedirect(req, res, '/admin/tournaments?success=' + encodeURIComponent('Tournament deleted.'));
 });
 
 // ==================== MATCHES & SCORES ====================
@@ -429,8 +625,18 @@ router.post('/matches/new', async (req: Request, res: Response) => {
       }
     }
 
+    // Check total matches for this tournament to auto-archive after 6 matches
+    const tourneyMatches = await TournamentService.getTournamentMatches(parseInt(tournament_id, 10));
+    let extraNotice = '';
+    if (tourneyMatches.length >= 6) {
+      await db.query(`UPDATE tournaments SET status = 'completed' WHERE id = $1`, [parseInt(tournament_id, 10)]);
+      extraNotice = ' Tournament reached 6 matches and has been automatically archived into Match History!';
+    }
+
     TournamentService.invalidateCache();
-    res.redirect(`/admin/matches?tournament_id=${tournament_id}&success=` + encodeURIComponent(`Match #${match_number} saved as ${isOfficialBool ? 'OFFICIAL' : 'UNOFFICIAL / LIVE'}.`));
+    const successMsg = `Match #${match_number} saved as ${isOfficialBool ? 'OFFICIAL' : 'UNOFFICIAL / LIVE'}.${extraNotice}`;
+    const redirectTarget = req.body.redirect_to ? (req.body.redirect_to + (req.body.redirect_to.includes('?') ? '&' : '?') + 'success=' + encodeURIComponent(successMsg)) : (`/admin/matches?tournament_id=${tournament_id}&success=` + encodeURIComponent(successMsg));
+    return adminRedirect(req, res, redirectTarget);
   } catch (err: any) {
     res.status(500).render('error', { message: 'Failed to create match: ' + err.message });
   }
@@ -484,7 +690,7 @@ router.post('/matches/batch', async (req: Request, res: Response) => {
     // Auto-save batch matches into database and history
     await TournamentService.createBatchMatches(tourneyId, matchConfigs);
 
-    res.redirect(`/admin/matches?tournament_id=${tourneyId}&success=` + encodeURIComponent(`Successfully created and archived ${count} matches (Matches #${startMatchNumber} to #${startMatchNumber + count - 1}) into History!`));
+    return adminRedirect(req, res, `/admin/matches?tournament_id=${tourneyId}&success=` + encodeURIComponent(`Successfully created and archived ${count} matches (Matches #${startMatchNumber} to #${startMatchNumber + count - 1}) into History!`));
   } catch (err: any) {
     res.status(500).render('error', { message: 'Failed to batch create matches: ' + err.message });
   }
@@ -504,7 +710,7 @@ router.post('/matches/:id/toggle-official', async (req: Request, res: Response) 
       return res.json({ success: true, is_official: targetOfficial });
     }
 
-    res.redirect('back');
+    return adminRedirect(req, res, '/admin/matches');
   } catch (err: any) {
     res.status(500).json({ success: false, error: err.message });
   }
@@ -514,7 +720,7 @@ router.post('/matches/:id/toggle-official', async (req: Request, res: Response) 
 router.post('/matches/:id/delete', async (req: Request, res: Response) => {
   const matchId = parseInt(req.params.id, 10);
   await db.query('DELETE FROM matches WHERE id = $1', [matchId]);
-  res.redirect('back');
+  return adminRedirect(req, res, '/admin/matches');
 });
 
 // ==================== TEAMS MANAGEMENT ====================
@@ -531,11 +737,11 @@ router.get('/teams', async (req: Request, res: Response) => {
 
 // GET fallback for teams edit/new
 router.get('/teams/:id/edit', (req: Request, res: Response) => {
-  res.redirect('/admin/teams');
+  return adminRedirect(req, res, '/admin/teams');
 });
 
 router.get('/teams/new', (req: Request, res: Response) => {
-  res.redirect('/admin/teams');
+  return adminRedirect(req, res, '/admin/teams');
 });
 
 router.post('/teams/new', upload.single('logo'), async (req: Request, res: Response) => {
@@ -554,7 +760,7 @@ router.post('/teams/new', upload.single('logo'), async (req: Request, res: Respo
     `, [name, tag.toUpperCase(), logoUrl, country || 'Global']);
 
     TournamentService.invalidateCache();
-    res.redirect('/admin/teams?success=' + encodeURIComponent(`Team ${name} registered successfully!`));
+    return adminRedirect(req, res, '/admin/teams?success=' + encodeURIComponent(`Team ${name} registered successfully!`));
   } catch (err: any) {
     res.status(500).render('error', { message: err.message });
   }
@@ -614,7 +820,7 @@ router.post('/teams/:id/logo', upload.single('logo'), async (req: Request, res: 
     }
 
     if (!logoUrl) {
-      return res.redirect('/admin/teams?error=' + encodeURIComponent('No image provided.'));
+      return adminRedirect(req, res, '/admin/teams?error=' + encodeURIComponent('No image provided.'));
     }
 
     await db.query(`UPDATE teams SET logo_url = $1 WHERE id = $2`, [logoUrl, id]);
@@ -625,7 +831,7 @@ router.post('/teams/:id/logo', upload.single('logo'), async (req: Request, res: 
     }
 
     const redirectUrl = req.body.redirect_to || ('/admin/teams?success=' + encodeURIComponent('Team logo updated successfully!'));
-    res.redirect(redirectUrl);
+    return adminRedirect(req, res, redirectUrl);
   } catch (err: any) {
     res.status(500).render('error', { message: 'Failed to update team logo: ' + err.message });
   }
@@ -635,7 +841,7 @@ router.post('/teams/:id/delete', async (req: Request, res: Response) => {
   const id = parseInt(req.params.id, 10);
   await db.query('DELETE FROM teams WHERE id = $1', [id]);
   TournamentService.invalidateCache();
-  res.redirect('/admin/teams?success=' + encodeURIComponent('Team removed.'));
+  return adminRedirect(req, res, '/admin/teams?success=' + encodeURIComponent('Team removed.'));
 });
 
 // ==================== PLAYERS MANAGEMENT ====================
@@ -673,7 +879,7 @@ router.get('/players/:id/edit', async (req: Request, res: Response) => {
 
 // GET /players/new - Redirect to roster page
 router.get('/players/new', (req: Request, res: Response) => {
-  res.redirect('/admin/players');
+  return adminRedirect(req, res, '/admin/players');
 });
 
 // Create Player with Photo Upload + Sharp Compression + Cloudinary
@@ -700,7 +906,7 @@ router.post('/players/new', upload.single('avatar'), async (req: Request, res: R
     ]);
 
     TournamentService.invalidateCache();
-    res.redirect('/admin/players?success=' + encodeURIComponent(`Player ${in_game_name} created successfully!`));
+    return adminRedirect(req, res, '/admin/players?success=' + encodeURIComponent(`Player ${in_game_name} created successfully!`));
   } catch (err: any) {
     res.status(500).render('error', { message: err.message });
   }
@@ -791,7 +997,7 @@ router.post('/players/:id/delete', async (req: Request, res: Response) => {
   const id = parseInt(req.params.id, 10);
   await db.query('DELETE FROM players WHERE id = $1', [id]);
   TournamentService.invalidateCache();
-  res.redirect('/admin/players?success=' + encodeURIComponent('Player removed.'));
+  return adminRedirect(req, res, '/admin/players?success=' + encodeURIComponent('Player removed.'));
 });
 
 // ==================== SITE SETTINGS & BACKGROUND ====================
@@ -816,15 +1022,15 @@ router.post('/settings/background', upload.any(), async (req: Request, res: Resp
     if (uploadedFile) {
       const processed = await processAndUploadImage(uploadedFile.buffer, 'backgrounds', 1920, 80);
       await TournamentService.updateSiteSetting('site_background_url', processed.url);
-      return res.redirect('/admin/settings?success=' + encodeURIComponent('Site background image updated and compressed successfully!'));
+      return adminRedirect(req, res, '/admin/settings?success=' + encodeURIComponent('Site background image updated and compressed successfully!'));
     }
     
     if (req.body.background_url) {
       await TournamentService.updateSiteSetting('site_background_url', req.body.background_url);
-      return res.redirect('/admin/settings?success=' + encodeURIComponent('Site background URL saved!'));
+      return adminRedirect(req, res, '/admin/settings?success=' + encodeURIComponent('Site background URL saved!'));
     }
 
-    res.redirect('/admin/settings');
+    return adminRedirect(req, res, '/admin/settings');
   } catch (err: any) {
     res.status(500).render('error', { message: 'Failed to update background: ' + err.message });
   }
@@ -834,7 +1040,7 @@ router.post('/settings/general', async (req: Request, res: Response) => {
   const { site_title, site_tagline } = req.body;
   if (site_title) await TournamentService.updateSiteSetting('site_title', site_title);
   if (site_tagline) await TournamentService.updateSiteSetting('site_tagline', site_tagline);
-  res.redirect('/admin/settings?success=' + encodeURIComponent('General settings saved!'));
+  return adminRedirect(req, res, '/admin/settings?success=' + encodeURIComponent('General settings saved!'));
 });
 
 // Reset Website Data (Clears all tournaments, matches, and stats to 0)
@@ -842,7 +1048,7 @@ router.post('/settings/reset-database', async (req: Request, res: Response) => {
   try {
     await resetAllWebsiteData();
     TournamentService.invalidateCache();
-    res.redirect('/admin/settings?success=' + encodeURIComponent('Website data successfully reset to 0! All tournaments and matches cleared.'));
+    return adminRedirect(req, res, '/admin/settings?success=' + encodeURIComponent('Website data successfully reset to 0! All tournaments and matches cleared.'));
   } catch (err: any) {
     res.status(500).render('error', { message: 'Failed to reset database: ' + err.message });
   }

@@ -7,7 +7,7 @@ import dotenv from 'dotenv';
 import { initDb, ensureDbReady } from './config/db.js';
 import { TournamentService } from './services/tournamentService.js';
 import publicRoutes from './routes/publicRoutes.js';
-import adminRoutes from './routes/adminRoutes.js';
+import adminRoutes, { validateAdminRequest } from './routes/adminRoutes.js';
 
 dotenv.config();
 
@@ -23,16 +23,18 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(cors({ origin: true, credentials: true }));
 
-// Session Middleware
+// Session Middleware (Configured for Cloud Run HTTPS & cross-origin iframes)
 app.use(
   session({
     secret: process.env.SESSION_SECRET || 'tagfreefiremax_secret_session_key_2026',
-    resave: true,
-    saveUninitialized: true,
+    resave: false,
+    saveUninitialized: false,
+    proxy: true,
     cookie: {
-      secure: false, // compatible with Cloud Run proxy & iframe
-      sameSite: 'lax',
-      maxAge: 1000 * 60 * 60 * 24 * 30 // 30 days
+      secure: 'auto',
+      sameSite: 'none',
+      httpOnly: true,
+      maxAge: 1000 * 60 * 60 * 24 * 7 // 7 days
     }
   })
 );
@@ -69,21 +71,19 @@ app.use(async (req: Request, res: Response, next: NextFunction) => {
     };
   }
 
-  // Multi-tier admin verification (Session + Cookie token + Query token for seamless iframe compatibility)
-  const ADMIN_TOKEN = 'tag_admin_authorized_sujal_2026';
-  const hasAdminSession = Boolean(req.session && (req.session as any).isAdmin);
-  const hasAdminCookie = req.cookies?.tag_admin_token === ADMIN_TOKEN || req.cookies?.tag_admin_session === '1';
-  const hasAdminQuery = req.query?.auth_token === ADMIN_TOKEN;
-  const hasAdminHeader = req.headers['x-admin-token'] === ADMIN_TOKEN;
-
-  if (hasAdminCookie || hasAdminQuery || hasAdminHeader) {
-    if (req.session) {
-      (req.session as any).isAdmin = true;
-    }
-  }
+  // Admin verification check (Explicit password-authenticated session or active dynamic token)
+  const auth = validateAdminRequest(req);
+  const isUserAdmin = auth.isValid;
 
   res.locals.currentPath = req.path || '/';
-  res.locals.isAdmin = Boolean(req.session && (req.session as any).isAdmin) || hasAdminCookie || hasAdminQuery || hasAdminHeader;
+  res.locals.isAdmin = isUserAdmin;
+  res.locals.activeAdminToken = auth.token || '';
+  res.locals.adminHref = (url: string) => {
+    if (!auth.token) return url;
+    if (url.includes('tk=')) return url;
+    const sep = url.includes('?') ? '&' : '?';
+    return `${url}${sep}tk=${auth.token}`;
+  };
   res.locals.success = (req.query.success as string) || null;
   res.locals.error = (req.query.error as string) || null;
   next();

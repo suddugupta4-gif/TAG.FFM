@@ -233,20 +233,29 @@ router.get('/player/:id', async (req: Request, res: Response) => {
   }
 });
 
-// 7. Overall Analysis Dashboard (Official Stats Only vs Include Unofficial Stats)
+// 7. Overall Analysis & Map Analysis Dashboard (Official Stats Only vs Include Unofficial Stats)
 router.get('/analysis', async (req: Request, res: Response) => {
   try {
     const officialOnly = req.query.filter === 'official';
-    const analysis = await TournamentService.getOverallAnalysis(officialOnly);
+    const [analysis, mapAnalysis] = await Promise.all([
+      TournamentService.getOverallAnalysis(officialOnly),
+      TournamentService.getMapAnalysis(officialOnly)
+    ]);
 
     res.render('analysis', {
-      title: 'Overall Esports Analysis & Meta Trends — TAGFREEFIREMAX',
+      title: 'Overall Esports & Map Analysis — TAGFREEFIREMAX',
       analysis,
+      mapAnalysis,
       officialOnly
     });
   } catch (err: any) {
-    res.status(500).render('error', { message: err.message });
+    res.status(500).render('error', { message: 'Failed to load analysis: ' + err.message });
   }
+});
+
+// Map Analysis direct route
+router.get('/maps', (req: Request, res: Response) => {
+  res.redirect('/analysis#map-analysis');
 });
 
 // AJAX API Endpoint for instant dynamic stats switching
