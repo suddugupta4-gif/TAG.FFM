@@ -97,6 +97,14 @@
     const errorBox = document.getElementById('login-error-box');
     const errorText = document.getElementById('login-error-text');
 
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('success') || urlParams.get('logout')) {
+      try {
+        localStorage.removeItem('tag_admin_token');
+        sessionStorage.removeItem('tag_admin_token');
+      } catch (e) {}
+    }
+
     if (pwdInput) {
       pwdInput.focus();
     }
@@ -150,7 +158,14 @@
           submitBtn.classList.remove('btn-fire');
           submitBtn.classList.add('bg-emerald-600', 'text-white');
 
-          const destination = data.redirect || '/admin';
+          if (data.token) {
+            try {
+              localStorage.setItem('tag_admin_token', data.token);
+              sessionStorage.setItem('tag_admin_token', data.token);
+            } catch(e) {}
+          }
+
+          const destination = data.redirect || ('/admin?tk=' + encodeURIComponent(data.token || ''));
           window.location.replace(destination);
         } else {
           submitBtn.disabled = false;

@@ -382,69 +382,97 @@
   <div id="site-global-bg-layer" class="site-bg-layer" style="background-image: url('<%- (typeof settings !== 'undefined' && settings.site_background_url) ? settings.site_background_url : 'https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=2070&auto=format&fit=crop' %>');"></div>
   <div class="site-bg-overlay"></div>
 
-  <% if (isAdmin && typeof activeAdminToken !== 'undefined' && activeAdminToken) { %>
   <script>
     (function() {
-      const tk = "<%= activeAdminToken %>";
-      if (!tk) return;
-      try {
-        sessionStorage.setItem('tag_admin_token', tk);
-      } catch (e) {}
-
-      function syncAdminElements() {
-        // Automatically attach token to internal admin forms
-        document.querySelectorAll('form[action^="/admin"]').forEach(form => {
-          if (!form.querySelector('input[name="admin_token"]') && !form.action.includes('tk=')) {
-            const hidden = document.createElement('input');
-            hidden.type = 'hidden';
-            hidden.name = 'admin_token';
-            hidden.value = tk;
-            form.appendChild(hidden);
-          }
-        });
-
-        // Automatically attach token to internal admin links
-        document.querySelectorAll('a[href^="/admin"]').forEach(link => {
-          const href = link.getAttribute('href');
-          if (href && !href.includes('tk=') && !href.startsWith('/admin/login')) {
-            const sep = href.includes('?') ? '&' : '?';
-            link.setAttribute('href', href + sep + 'tk=' + encodeURIComponent(tk));
-          }
-        });
+      // Admin session & token synchronization for iframe preview resilience
+      const serverTk = "<%= (typeof activeAdminToken !== 'undefined' && activeAdminToken) ? activeAdminToken : '' %>";
+      const urlParams = new URLSearchParams(window.location.search);
+      const urlTk = urlParams.get('tk') || urlParams.get('auth_token');
+      
+      let tk = serverTk || urlTk;
+      if (!tk) {
+        try {
+          tk = localStorage.getItem('tag_admin_token') || sessionStorage.getItem('tag_admin_token') || '';
+        } catch (e) {}
       }
 
-      document.addEventListener('DOMContentLoaded', syncAdminElements);
+      if (tk) {
+        try {
+          localStorage.setItem('tag_admin_token', tk);
+          sessionStorage.setItem('tag_admin_token', tk);
+        } catch (e) {}
 
-      // Global click interceptor for admin navigation resilience
-      document.addEventListener('click', (e) => {
-        const link = e.target.closest('a[href^="/admin"]');
-        if (link) {
-          const href = link.getAttribute('href');
-          if (href && !href.includes('tk=') && !href.startsWith('/admin/login')) {
-            const sep = href.includes('?') ? '&' : '?';
-            link.setAttribute('href', href + sep + 'tk=' + encodeURIComponent(tk));
-          }
+        // If on an /admin page (except login/logout) and no tk in URL, append tk to preserve admin access in iframes
+        if (window.location.pathname.startsWith('/admin') && !window.location.pathname.startsWith('/admin/login') && !window.location.pathname.startsWith('/admin/logout') && !window.location.search.includes('tk=')) {
+          const sep = window.location.search ? '&' : '?';
+          window.location.replace(window.location.pathname + window.location.search + sep + 'tk=' + encodeURIComponent(tk));
+          return;
         }
-      }, true);
-      // Global form submit interceptor for admin token resilience
-      document.addEventListener('submit', (e) => {
-        const form = e.target.closest('form');
-        if (form) {
-          const action = form.getAttribute('action') || '';
-          if (action.startsWith('/admin') && !action.includes('tk=')) {
-            const sep = action.includes('?') ? '&' : '?';
-            form.setAttribute('action', action + sep + 'tk=' + encodeURIComponent(tk));
-          }
-          if (!form.querySelector('input[name="admin_token"]')) {
-            const hidden = document.createElement('input');
-            hidden.type = 'hidden';
-            hidden.name = 'admin_token';
-            hidden.value = tk;
-            form.appendChild(hidden);
-          }
+
+        function syncAdminElements() {
+          // Automatically attach token to internal admin forms
+          document.querySelectorAll('form[action^="/admin"]').forEach(form => {
+            const action = form.getAttribute('action') || '';
+            if (!action.includes('tk=') && !action.startsWith('/admin/login') && !action.startsWith('/admin/logout')) {
+              const sep = action.includes('?') ? '&' : '?';
+              form.setAttribute('action', action + sep + 'tk=' + encodeURIComponent(tk));
+            }
+            if (!form.querySelector('input[name="admin_token"]') && !action.startsWith('/admin/login') && !action.startsWith('/admin/logout')) {
+              const hidden = document.createElement('input');
+              hidden.type = 'hidden';
+              hidden.name = 'admin_token';
+              hidden.value = tk;
+              form.appendChild(hidden);
+            }
+          });
+
+          // Automatically attach token to internal admin links
+          document.querySelectorAll('a[href^="/admin"]').forEach(link => {
+            const href = link.getAttribute('href');
+            if (href && !href.includes('tk=') && !href.startsWith('/admin/login') && !href.startsWith('/admin/logout')) {
+              const sep = href.includes('?') ? '&' : '?';
+              link.setAttribute('href', href + sep + 'tk=' + encodeURIComponent(tk));
+            }
+          });
         }
-      }, true);
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', syncAdminElements);
+        } else {
+          syncAdminElements();
+        }
+
+        // Global click interceptor for admin navigation resilience
+        document.addEventListener('click', (e) => {
+          const link = e.target.closest('a[href^="/admin"]');
+          if (link) {
+            const href = link.getAttribute('href');
+            if (href && !href.includes('tk=') && !href.startsWith('/admin/login') && !href.startsWith('/admin/logout')) {
+              const sep = href.includes('?') ? '&' : '?';
+              link.setAttribute('href', href + sep + 'tk=' + encodeURIComponent(tk));
+            }
+          }
+        }, true);
+
+        // Global form submit interceptor for admin token resilience
+        document.addEventListener('submit', (e) => {
+          const form = e.target.closest('form');
+          if (form) {
+            const action = form.getAttribute('action') || '';
+            if (action.startsWith('/admin') && !action.includes('tk=') && !action.startsWith('/admin/login') && !action.startsWith('/admin/logout')) {
+              const sep = action.includes('?') ? '&' : '?';
+              form.setAttribute('action', action + sep + 'tk=' + encodeURIComponent(tk));
+            }
+            if (!form.querySelector('input[name="admin_token"]') && !action.startsWith('/admin/login') && !action.startsWith('/admin/logout')) {
+              const hidden = document.createElement('input');
+              hidden.type = 'hidden';
+              hidden.name = 'admin_token';
+              hidden.value = tk;
+              form.appendChild(hidden);
+            }
+          }
+        }, true);
+      }
     })();
   </script>
-  <% } %>
 

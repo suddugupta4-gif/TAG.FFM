@@ -15,9 +15,9 @@
       <p class="text-slate-400 text-sm">Lock in confirmed scoreboard results or keep provisional live match scores.</p>
     </div>
 
-    <a href="/admin/matches/new?tournament_id=<%= selectedTourneyId %>" class="btn-fire text-xs py-2 px-4 flex items-center gap-2">
+    <a href="<%= adminHref('/admin/tournaments/' + selectedTourneyId + '/edit#match-logger-box') %>" class="btn-fire text-xs py-2 px-4 flex items-center gap-2 font-bold">
       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-      Log New Match Result
+      Manage Matches & Scores
     </a>
   </div>
 
@@ -190,8 +190,8 @@
     <% if (matches.length === 0) { %>
       <div class="glass-card p-12 text-center text-slate-400">
         <p>No matches recorded for this tournament yet.</p>
-        <a href="/admin/matches/new?tournament_id=<%= selectedTourneyId %>" class="btn-fire text-xs mt-4 inline-flex">
-          Log First Match
+        <a href="<%= adminHref('/admin/tournaments/' + selectedTourneyId + '/edit#match-logger-box') %>" class="btn-fire text-xs mt-4 inline-flex font-bold">
+          Log Match in Tournament Editor
         </a>
       </div>
     <% } else { %>

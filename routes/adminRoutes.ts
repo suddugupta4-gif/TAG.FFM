@@ -164,20 +164,29 @@ router.post('/login', (req: Request, res: Response) => {
   try {
     res.cookie('admin_session_token', sessionToken, {
       maxAge: 30 * 24 * 60 * 60 * 1000,
-      sameSite: 'lax',
-      secure: false,
-      httpOnly: true,
+      sameSite: 'none',
+      secure: true,
+      httpOnly: false,
+      path: '/'
+    });
+    res.cookie('tag_admin_session', sessionToken, {
+      maxAge: 30 * 24 * 60 * 60 * 1000,
+      sameSite: 'none',
+      secure: true,
+      httpOnly: false,
       path: '/'
     });
   } catch (_) {}
 
   const cleanRedirect = redirect && !redirect.includes('/admin/login') && !redirect.includes('/admin/logout') ? redirect : '/admin';
+  const sep = cleanRedirect.includes('?') ? '&' : '?';
+  const targetWithToken = cleanRedirect.includes('tk=') ? cleanRedirect : `${cleanRedirect}${sep}tk=${sessionToken}`;
 
   if (req.xhr || req.headers.accept?.includes('application/json') || req.body.ajax === 'true') {
-    return res.json({ success: true, redirect: cleanRedirect, token: sessionToken });
+    return res.json({ success: true, redirect: targetWithToken, token: sessionToken });
   }
 
-  return res.redirect(cleanRedirect);
+  return res.redirect(targetWithToken);
 });
 
 // 3. Admin Logout (Destroys session and revokes admin access completely)
@@ -566,22 +575,15 @@ router.get('/matches', async (req: Request, res: Response) => {
   });
 });
 
-// New Match Form
+// New Match Form - Redirects to integrated Tournament & Matches logger
 router.get('/matches/new', async (req: Request, res: Response) => {
   const tournaments = await TournamentService.getAllTournaments();
-  const teams = await TournamentService.getAllTeams();
   const selectedTourneyId = req.query.tournament_id ? parseInt(req.query.tournament_id as string, 10) : (tournaments.find(t => t.is_current)?.id || tournaments[0]?.id || 1);
-  const existingMatches = await TournamentService.getTournamentMatches(selectedTourneyId);
-  const nextMatchNumber = existingMatches.length > 0 ? Math.max(...existingMatches.map(m => m.match_number)) + 1 : 1;
-
-  res.render('admin/match_form', {
-    title: 'Enter Match Scoreboard — Admin',
-    tournaments,
-    teams,
-    selectedTourneyId,
-    nextMatchNumber,
-    match: null
-  });
+  
+  if (selectedTourneyId) {
+    return adminRedirect(req, res, `/admin/tournaments/${selectedTourneyId}/edit#match-logger-box`);
+  }
+  return adminRedirect(req, res, '/admin/tournaments');
 });
 
 // Create / Update Match (POST)
