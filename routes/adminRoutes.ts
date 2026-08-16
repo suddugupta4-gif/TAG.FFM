@@ -38,12 +38,42 @@ function extractToken(val: any): string | undefined {
 }
 
 export function validateAdminRequest(req: Request): { isValid: boolean; token?: string } {
-  // Always grant full authorized access so that saving tournaments, matches, and rosters never fails or prompts for password
-  if (req.session) {
-    (req.session as any).isAdmin = true;
-    (req.session as any).adminToken = 'tag_admin_master';
+  // 1. Check active session
+  if (req.session && (req.session as any).isAdmin === true) {
+    return { isValid: true, token: (req.session as any).adminToken || 'tag_admin_session' };
   }
-  return { isValid: true, token: 'tag_admin_master' };
+
+  // 2. Check secure admin cookie
+  const cookieToken = req.cookies?.admin_session_token || req.cookies?.tag_admin_session;
+  if (cookieToken && activeAdminTokens.has(cookieToken)) {
+    const expiry = activeAdminTokens.get(cookieToken)!;
+    if (Date.now() < expiry) {
+      if (req.session) {
+        (req.session as any).isAdmin = true;
+        (req.session as any).adminToken = cookieToken;
+      }
+      return { isValid: true, token: cookieToken };
+    } else {
+      activeAdminTokens.delete(cookieToken);
+    }
+  }
+
+  // 3. Check explicit auth token in query or headers
+  const rawToken = extractToken(req.query?.tk) || extractToken(req.query?.auth_token) || (req.headers['x-admin-token'] as string);
+  if (rawToken && activeAdminTokens.has(rawToken)) {
+    const expiry = activeAdminTokens.get(rawToken)!;
+    if (Date.now() < expiry) {
+      if (req.session) {
+        (req.session as any).isAdmin = true;
+        (req.session as any).adminToken = rawToken;
+      }
+      return { isValid: true, token: rawToken };
+    } else {
+      activeAdminTokens.delete(rawToken);
+    }
+  }
+
+  return { isValid: false };
 }
 
 function resolveMapName(rawMap?: string, defaultMap = 'Bermuda'): string {
@@ -53,18 +83,33 @@ function resolveMapName(rawMap?: string, defaultMap = 'Bermuda'): string {
   return rawMap;
 }
 
-// Admin Authentication Middleware (Direct access enabled as requested)
+// Admin Authentication Middleware: Requires valid admin login
 export function requireAdmin(req: Request, res: Response, next: NextFunction) {
-  if (req.session) {
-    (req.session as any).isAdmin = true;
+  const auth = validateAdminRequest(req);
+  if (auth.isValid) {
+    res.locals.isAdmin = true;
+    res.locals.activeAdminToken = auth.token || '';
+    return next();
   }
-  res.locals.isAdmin = true;
-  res.locals.activeAdminToken = 'tag_admin_master';
-  return next();
+
+  if (req.xhr || req.headers.accept?.includes('application/json')) {
+    return res.status(401).json({ success: false, error: 'Unauthorized: Admin session required.' });
+  }
+
+  const redirectUrl = req.originalUrl && !req.originalUrl.includes('/admin/login') && !req.originalUrl.includes('/admin/logout')
+    ? req.originalUrl
+    : '/admin';
+
+  return res.redirect('/admin/login?redirect=' + encodeURIComponent(redirectUrl));
 }
 
 // Redirect helper that cleanly redirects to the target admin URL
 export function adminRedirect(req: Request, res: Response, targetUrl: string) {
+  const token = (req.session as any)?.adminToken || (req.query?.tk as string) || req.cookies?.admin_session_token;
+  if (token && !targetUrl.includes('tk=')) {
+    const sep = targetUrl.includes('?') ? '&' : '?';
+    return res.redirect(`${targetUrl}${sep}tk=${token}`);
+  }
   return res.redirect(targetUrl);
 }
 
@@ -78,16 +123,37 @@ router.use((req: Request, res: Response, next: NextFunction) => {
 
 // 1. Admin Login Page (GET)
 router.get('/login', (req: Request, res: Response) => {
+  const auth = validateAdminRequest(req);
+  if (auth.isValid) {
+    return res.redirect(req.query.redirect as string || '/admin');
+  }
+
   res.render('admin/login', {
     title: 'Admin Access — TAGFREEFIREMAX',
     error: req.query.error as string || null,
+    success: req.query.success as string || null,
     redirect: req.query.redirect as string || '/admin'
   });
 });
 
-// 2. Admin Login (POST) - Automatically accepts and enters admin dashboard
+// 2. Admin Login (POST) - Validates configured password and establishes session
 router.post('/login', (req: Request, res: Response) => {
-  const { redirect } = req.body;
+  const { password, redirect } = req.body;
+  const adminPassword = (process.env.ADMIN_PASSWORD || 'Taggontoppp379@').trim();
+  const enteredPassword = (password || '').trim();
+
+  if (!enteredPassword || enteredPassword !== adminPassword) {
+    if (req.xhr || req.headers.accept?.includes('application/json') || req.body.ajax === 'true') {
+      return res.status(401).json({ success: false, message: 'Invalid admin password. Please try again.' });
+    }
+    return res.render('admin/login', {
+      title: 'Admin Access — TAGFREEFIREMAX',
+      error: 'Invalid admin password. Please try again.',
+      success: null,
+      redirect: redirect || '/admin'
+    });
+  }
+
   const sessionToken = issueAdminToken();
 
   if (req.session) {
@@ -98,14 +164,14 @@ router.post('/login', (req: Request, res: Response) => {
   try {
     res.cookie('admin_session_token', sessionToken, {
       maxAge: 30 * 24 * 60 * 60 * 1000,
-      sameSite: 'none',
-      secure: true,
+      sameSite: 'lax',
+      secure: false,
       httpOnly: true,
       path: '/'
     });
   } catch (_) {}
 
-  const cleanRedirect = redirect && !redirect.includes('/admin/login') ? redirect : '/admin';
+  const cleanRedirect = redirect && !redirect.includes('/admin/login') && !redirect.includes('/admin/logout') ? redirect : '/admin';
 
   if (req.xhr || req.headers.accept?.includes('application/json') || req.body.ajax === 'true') {
     return res.json({ success: true, redirect: cleanRedirect, token: sessionToken });
@@ -132,6 +198,8 @@ router.get('/logout', (req: Request, res: Response) => {
   res.clearCookie('tag_admin_token', { path: '/' });
   
   if (req.session) {
+    (req.session as any).isAdmin = false;
+    (req.session as any).adminToken = undefined;
     req.session.destroy(() => {
       res.redirect('/admin/login?success=' + encodeURIComponent('You have logged out successfully.'));
     });

@@ -14,18 +14,25 @@
     </div>
 
     <!-- Error Alert Box -->
-    <div id="login-error-box" class="hidden p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-300 text-xs font-mono flex items-center gap-2">
+    <div id="login-error-box" class="<%= (typeof error !== 'undefined' && error) ? '' : 'hidden' %> p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-300 text-xs font-mono flex items-center gap-2">
       <svg class="w-4 h-4 shrink-0 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
       <span id="login-error-text"><%= typeof error !== 'undefined' && error ? error : '' %></span>
     </div>
+
+    <!-- Success Alert Box (e.g. on logout) -->
+    <% if (typeof success !== 'undefined' && success) { %>
+      <div class="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs font-mono flex items-center gap-2">
+        <svg class="w-4 h-4 shrink-0 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+        <span><%= success %></span>
+      </div>
+    <% } %>
 
     <form id="admin-login-form" action="/admin/login" method="POST" class="space-y-4" autocomplete="off">
       <input type="hidden" id="redirect-input" name="redirect" value="<%= redirect %>">
       
       <div class="space-y-1.5">
         <div class="flex items-center justify-between">
-          <label for="password" class="block text-xs font-mono text-slate-300 uppercase">Admin Access Key</label>
-          <span class="text-[10px] font-mono text-emerald-400 font-bold">✓ Direct Access Ready</span>
+          <label for="password" class="block text-xs font-mono text-slate-300 uppercase">Admin Password</label>
         </div>
 
         <div class="relative">
@@ -33,9 +40,10 @@
             type="password" 
             id="password" 
             name="password" 
-            autocomplete="new-password"
-            placeholder="Password (Optional - Click Enter Below)"
-            value="Taggontoppp379@"
+            autocomplete="current-password"
+            placeholder="Enter admin password..."
+            value=""
+            required
             class="w-full pl-4 pr-11 py-2.5 rounded-xl bg-slate-900/80 border border-white/15 text-white placeholder-slate-500 focus:outline-none focus:border-orange-500 text-sm font-mono tracking-wider"
           >
           <button 
@@ -60,7 +68,7 @@
         id="submit-btn"
         class="btn-fire w-full py-3 flex items-center justify-center gap-2 touch-manipulation active:scale-[0.98] transition-all cursor-pointer font-bold shadow-xl shadow-orange-950/60"
       >
-        <span id="btn-text">Enter Admin Dashboard</span>
+        <span id="btn-text">Log In to Admin</span>
         <svg id="spinner-icon" class="w-4 h-4 animate-spin hidden text-white" fill="none" viewBox="0 0 24 24">
           <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
           <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
@@ -68,8 +76,8 @@
       </button>
 
       <div class="text-center pt-2">
-        <a href="<%= redirect || '/admin' %>" class="text-xs font-mono text-slate-400 hover:text-orange-400 inline-flex items-center gap-1">
-          <span>&rarr; Direct Jump to Admin Control</span>
+        <a href="/" class="text-xs font-mono text-slate-400 hover:text-orange-400 inline-flex items-center gap-1">
+          <span>&larr; Back to Public Portal</span>
         </a>
       </div>
     </form>
@@ -89,17 +97,10 @@
     const errorBox = document.getElementById('login-error-box');
     const errorText = document.getElementById('login-error-text');
 
-    // Show initial error if present from server query
-    <% if (typeof error !== 'undefined' && error) { %>
-      errorBox.classList.remove('hidden');
-    <% } %>
-
-    // Focus input automatically
     if (pwdInput) {
       pwdInput.focus();
     }
 
-    // Toggle Password Visibility
     if (toggleBtn) {
       toggleBtn.addEventListener('click', () => {
         const isPassword = pwdInput.type === 'password';
@@ -109,15 +110,22 @@
       });
     }
 
-    // Form Submission with AJAX & Iframe Persistence
+    // Form Submission with AJAX & verification
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       
-      const enteredPassword = (pwdInput ? pwdInput.value.trim() : '') || 'Taggontoppp379@';
+      const enteredPassword = pwdInput ? pwdInput.value.trim() : '';
+      if (!enteredPassword) {
+        if (errorBox) {
+          errorText.textContent = 'Please enter the admin password.';
+          errorBox.classList.remove('hidden');
+        }
+        return;
+      }
 
       // Loading state
       submitBtn.disabled = true;
-      btnText.textContent = 'Entering Admin Dashboard...';
+      btnText.textContent = 'Verifying Credentials...';
       spinner.classList.remove('hidden');
       if (errorBox) errorBox.classList.add('hidden');
 
@@ -142,15 +150,24 @@
           submitBtn.classList.remove('btn-fire');
           submitBtn.classList.add('bg-emerald-600', 'text-white');
 
-          // Immediate Navigation to Admin Dashboard
           const destination = data.redirect || '/admin';
           window.location.replace(destination);
         } else {
-          // Fallback direct redirect
-          window.location.replace(document.getElementById('redirect-input').value || '/admin');
+          submitBtn.disabled = false;
+          btnText.textContent = 'Log In to Admin';
+          spinner.classList.add('hidden');
+          if (errorBox) {
+            errorText.textContent = data.message || 'Invalid admin password. Please try again.';
+            errorBox.classList.remove('hidden');
+          }
+          if (pwdInput) {
+            pwdInput.value = '';
+            pwdInput.focus();
+          }
         }
       } catch (err) {
-        window.location.replace(document.getElementById('redirect-input').value || '/admin');
+        // Submit standard form fallback
+        form.submit();
       }
     });
   });
