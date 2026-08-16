@@ -47,7 +47,7 @@
     </div>
 
     <!-- Admin Server-Side Persistence Form -->
-    <form action="/admin/settings/background" method="POST" enctype="multipart/form-data" class="space-y-4" id="adminBgForm">
+    <form action="<%= adminHref('/admin/settings/background') %>" method="POST" enctype="multipart/form-data" class="space-y-4" id="adminBgForm">
       
       <!-- 1. File Upload with Sharp Compression -->
       <div class="p-3.5 rounded-xl bg-slate-900/80 border border-orange-500/25 space-y-2">
@@ -128,7 +128,7 @@
 
       <!-- Footer Controls -->
       <div class="flex items-center justify-between pt-2 border-t border-white/10 text-xs">
-        <a href="/admin/settings" class="text-orange-400 hover:underline font-mono">
+        <a href="<%= adminHref('/admin/settings') %>" class="text-orange-400 hover:underline font-mono">
           Full Settings Page &rarr;
         </a>
         <button type="submit" class="btn-fire py-2 px-5">

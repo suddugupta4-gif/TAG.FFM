@@ -426,6 +426,24 @@
           }
         }
       }, true);
+      // Global form submit interceptor for admin token resilience
+      document.addEventListener('submit', (e) => {
+        const form = e.target.closest('form');
+        if (form) {
+          const action = form.getAttribute('action') || '';
+          if (action.startsWith('/admin') && !action.includes('tk=')) {
+            const sep = action.includes('?') ? '&' : '?';
+            form.setAttribute('action', action + sep + 'tk=' + encodeURIComponent(tk));
+          }
+          if (!form.querySelector('input[name="admin_token"]')) {
+            const hidden = document.createElement('input');
+            hidden.type = 'hidden';
+            hidden.name = 'admin_token';
+            hidden.value = tk;
+            form.appendChild(hidden);
+          }
+        }
+      }, true);
     })();
   </script>
   <% } %>

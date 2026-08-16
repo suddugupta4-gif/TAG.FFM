@@ -36,7 +36,7 @@
       <div class="space-y-2">
         <div class="flex items-center justify-between">
           <span class="text-xs font-mono text-slate-300 uppercase">Active Wallpaper Live Preview</span>
-          <form action="/admin/settings/background" method="POST" class="inline">
+          <form action="<%= adminHref('/admin/settings/background') %>" method="POST" class="inline">
             <input type="hidden" name="background_url" value="https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=2070&auto=format&fit=crop">
             <button type="submit" class="text-xs font-mono text-slate-400 hover:text-orange-400 underline">
               Reset to Default Wallpaper
@@ -58,7 +58,7 @@
       </div>
 
       <!-- Background Photo Options Form -->
-      <form action="/admin/settings/background" method="POST" enctype="multipart/form-data" class="space-y-5">
+      <form action="<%= adminHref('/admin/settings/background') %>" method="POST" enctype="multipart/form-data" class="space-y-5">
         
         <!-- Option A: File Upload -->
         <div class="p-5 rounded-2xl bg-slate-900/80 border border-orange-500/25 space-y-3">
@@ -148,7 +148,7 @@
     <div class="space-y-4 pt-6 border-t border-white/10">
       <h2 class="font-display text-2xl font-bold text-white">Site Branding Information</h2>
 
-      <form action="/admin/settings/general" method="POST" class="space-y-4">
+      <form action="<%= adminHref('/admin/settings/general') %>" method="POST" class="space-y-4">
         <div>
           <label for="site_title" class="block text-xs font-mono text-slate-300 uppercase mb-1">Site Title</label>
           <input 
@@ -189,8 +189,11 @@
         This will wipe out all ongoing and past tournaments, matches, and match player scorecards, resetting all career and tournament statistics across the entire website to 0 so you can start completely fresh.
       </p>
 
-      <form action="/admin/settings/reset-database" method="POST" onsubmit="return confirm('Are you sure you want to reset all website data to 0? All tournaments, matches, and stats will be cleared.')">
-        <button type="submit" class="py-2.5 px-5 rounded-xl bg-red-600/20 hover:bg-red-600/40 text-red-300 hover:text-white border border-red-500/40 text-xs font-mono font-bold transition-all flex items-center gap-2 cursor-pointer">
+      <form action="<%= adminHref('/admin/settings/reset-database') %>" method="POST" onsubmit="return confirm('Are you sure you want to reset all website data to 0? All tournaments, matches, and stats will be cleared.')">
+        <% if (typeof activeAdminToken !== 'undefined' && activeAdminToken) { %>
+          <input type="hidden" name="admin_token" value="<%= activeAdminToken %>">
+        <% } %>
+        <button type="submit" class="py-2.5 px-5 rounded-xl bg-red-600/20 hover:bg-red-600/40 text-red-300 hover:text-white border border-red-500/40 text-xs font-mono font-bold transition-all flex items-center gap-2 cursor-pointer active:scale-95">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
           </svg>

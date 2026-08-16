@@ -1044,12 +1044,13 @@ router.post('/settings/general', async (req: Request, res: Response) => {
 });
 
 // Reset Website Data (Clears all tournaments, matches, and stats to 0)
-router.post('/settings/reset-database', async (req: Request, res: Response) => {
+router.all('/settings/reset-database', async (req: Request, res: Response) => {
   try {
     await resetAllWebsiteData();
     TournamentService.invalidateCache();
     return adminRedirect(req, res, '/admin/settings?success=' + encodeURIComponent('Website data successfully reset to 0! All tournaments and matches cleared.'));
   } catch (err: any) {
+    console.error('Reset database error:', err);
     res.status(500).render('error', { message: 'Failed to reset database: ' + err.message });
   }
 });
