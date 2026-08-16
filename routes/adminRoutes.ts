@@ -30,14 +30,21 @@ export function revokeAdminToken(token?: string): void {
   }
 }
 
+function extractToken(val: any): string | undefined {
+  if (!val) return undefined;
+  if (Array.isArray(val)) return val[0];
+  if (typeof val === 'string') return val;
+  return undefined;
+}
+
 export function validateAdminRequest(req: Request): { isValid: boolean; token?: string } {
   // 1. Check token passed via query, header, cookie, or body
   const rawToken = 
-    (req.query?.tk as string) || 
-    (req.query?.auth_token as string) ||
-    req.cookies?.admin_session_token || 
-    (req.headers['x-admin-token'] as string) || 
-    (req.body && (req.body as any).admin_token);
+    extractToken(req.query?.tk) || 
+    extractToken(req.query?.auth_token) ||
+    extractToken(req.cookies?.admin_session_token) || 
+    extractToken(req.headers['x-admin-token']) || 
+    extractToken(req.body && (req.body as any).admin_token);
 
   if (rawToken && activeAdminTokens.has(rawToken)) {
     const expiry = activeAdminTokens.get(rawToken);
@@ -285,9 +292,10 @@ router.get('/tournaments', async (req: Request, res: Response) => {
 
 // New Tournament Form
 router.get('/tournaments/new', async (req: Request, res: Response) => {
-  const [teams, allTournaments] = await Promise.all([
+  const [teams, allTournaments, allPlayers] = await Promise.all([
     TournamentService.getAllTeams(),
-    TournamentService.getAllTournaments()
+    TournamentService.getAllTournaments(),
+    TournamentService.getAllPlayers()
   ]);
   res.render('admin/tournament_form', {
     title: 'Create Tournament — Admin',
@@ -296,6 +304,7 @@ router.get('/tournaments/new', async (req: Request, res: Response) => {
     standings: [],
     matches: [],
     allTournaments,
+    players: allPlayers,
     nextMatchNumber: 1
   });
 });
@@ -405,12 +414,13 @@ router.post('/tournaments/new', upload.single('banner'), async (req: Request, re
 // Edit Tournament Form
 router.get('/tournaments/:id/edit', async (req: Request, res: Response) => {
   const tourneyId = parseInt(req.params.id, 10);
-  const [t, teams, standings, matches, allTournaments] = await Promise.all([
+  const [t, teams, standings, matches, allTournaments, allPlayers] = await Promise.all([
     TournamentService.getTournamentById(tourneyId),
     TournamentService.getAllTeams(),
     TournamentService.getTournamentStandings(tourneyId, false),
     TournamentService.getTournamentMatches(tourneyId),
-    TournamentService.getAllTournaments()
+    TournamentService.getAllTournaments(),
+    TournamentService.getAllPlayers()
   ]);
   
   if (!t) return res.status(404).render('error', { message: 'Tournament not found.' });
@@ -424,6 +434,7 @@ router.get('/tournaments/:id/edit', async (req: Request, res: Response) => {
     standings,
     matches,
     allTournaments,
+    players: allPlayers,
     nextMatchNumber
   });
 });
@@ -526,18 +537,40 @@ router.post('/tournaments/:id/edit', upload.single('banner'), async (req: Reques
 });
 
 // Set as Current Tournament
-router.post('/tournaments/:id/set-current', async (req: Request, res: Response) => {
-  const id = parseInt(req.params.id, 10);
-  await db.query('UPDATE tournaments SET is_current = FALSE');
-  await db.query('UPDATE tournaments SET is_current = TRUE WHERE id = $1', [id]);
-  return adminRedirect(req, res, '/admin/tournaments?success=' + encodeURIComponent('Featured current tournament updated.'));
+router.all('/tournaments/:id/set-current', async (req: Request, res: Response) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+    await db.query('UPDATE tournaments SET is_current = FALSE');
+    await db.query('UPDATE tournaments SET is_current = TRUE WHERE id = $1', [id]);
+    TournamentService.invalidateCache();
+    return adminRedirect(req, res, '/admin/tournaments?success=' + encodeURIComponent('Featured current tournament updated.'));
+  } catch (err: any) {
+    return adminRedirect(req, res, '/admin/tournaments?error=' + encodeURIComponent(err.message));
+  }
 });
 
 // Delete Tournament
-router.post('/tournaments/:id/delete', async (req: Request, res: Response) => {
-  const id = parseInt(req.params.id, 10);
-  await db.query('DELETE FROM tournaments WHERE id = $1', [id]);
-  return adminRedirect(req, res, '/admin/tournaments?success=' + encodeURIComponent('Tournament deleted.'));
+router.all('/tournaments/:id/delete', async (req: Request, res: Response) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+    // Delete matches, match_team_results, match_player_stats associated with this tournament
+    await db.query(`
+      DELETE FROM match_player_stats WHERE match_id IN (SELECT id FROM matches WHERE tournament_id = $1)
+    `, [id]).catch(() => {});
+    await db.query(`
+      DELETE FROM match_team_results WHERE match_id IN (SELECT id FROM matches WHERE tournament_id = $1)
+    `, [id]).catch(() => {});
+    await db.query(`
+      DELETE FROM matches WHERE tournament_id = $1
+    `, [id]).catch(() => {});
+    await db.query('DELETE FROM tournaments WHERE id = $1', [id]);
+
+    TournamentService.invalidateCache();
+    return adminRedirect(req, res, '/admin/tournaments?success=' + encodeURIComponent('Tournament and associated matches deleted successfully.'));
+  } catch (err: any) {
+    console.error('Delete tournament error:', err);
+    return adminRedirect(req, res, '/admin/tournaments?error=' + encodeURIComponent('Failed to delete tournament: ' + err.message));
+  }
 });
 
 // ==================== MATCHES & SCORES ====================
@@ -575,36 +608,89 @@ router.get('/matches/new', async (req: Request, res: Response) => {
   });
 });
 
-// Create Match (POST)
+// Create / Update Match (POST)
 router.post('/matches/new', async (req: Request, res: Response) => {
   try {
     const { tournament_id, match_number, map_name, played_at, status, is_official, notes } = req.body;
     const isOfficialBool = is_official === 'true' || is_official === 'on' || is_official === true;
+    const tourneyId = parseInt(tournament_id, 10);
+    const matchNum = parseInt(match_number, 10);
 
-    // Create match entry
-    const matchRes = await db.query(`
-      INSERT INTO matches (tournament_id, match_number, map_name, played_at, status, is_official, notes)
-      VALUES ($1, $2, $3, $4, $5, $6, $7)
-      RETURNING id
-    `, [
-      parseInt(tournament_id, 10),
-      parseInt(match_number, 10),
-      map_name || 'Bermuda',
-      played_at ? new Date(played_at) : new Date(),
-      status || 'completed',
-      isOfficialBool,
-      notes || ''
-    ]);
+    // Check if match already exists for this tournament & match_number to avoid duplicates
+    let matchId: number;
+    const existingMatchRes = await db.query(`
+      SELECT id FROM matches WHERE tournament_id = $1 AND match_number = $2
+    `, [tourneyId, matchNum]);
 
-    const matchId = matchRes.rows[0]?.id || memoryDb.matches[memoryDb.matches.length - 1]?.id;
+    if (existingMatchRes.rows.length > 0) {
+      matchId = existingMatchRes.rows[0].id;
+      await db.query(`
+        UPDATE matches 
+        SET map_name = $1, played_at = $2, status = $3, is_official = $4, notes = $5
+        WHERE id = $6
+      `, [
+        map_name || 'Bermuda',
+        played_at ? new Date(played_at) : new Date(),
+        status || 'completed',
+        isOfficialBool,
+        notes || '',
+        matchId
+      ]);
+      // Clear previous results for this match to re-insert fresh updated values
+      await db.query('DELETE FROM match_player_stats WHERE match_id = $1', [matchId]).catch(() => {});
+      await db.query('DELETE FROM match_team_results WHERE match_id = $1', [matchId]).catch(() => {});
+    } else {
+      // Create match entry
+      const matchRes = await db.query(`
+        INSERT INTO matches (tournament_id, match_number, map_name, played_at, status, is_official, notes)
+        VALUES ($1, $2, $3, $4, $5, $6, $7)
+        RETURNING id
+      `, [
+        tourneyId,
+        matchNum,
+        map_name || 'Bermuda',
+        played_at ? new Date(played_at) : new Date(),
+        status || 'completed',
+        isOfficialBool,
+        notes || ''
+      ]);
 
-    // Parse team results
+      matchId = matchRes.rows[0]?.id || memoryDb.matches[memoryDb.matches.length - 1]?.id;
+    }
+
+    // 1. Parse individual player kills if submitted
+    const rawPlayerIds = req.body['player_id[]'] || req.body.player_id || req.body.player_ids;
+    const rawPlayerKills = req.body['player_kills[]'] || req.body.player_kills || req.body.player_kill;
+    const rawPlayerDamage = req.body['player_damage[]'] || req.body.player_damage;
+    const rawPlayerHeadshots = req.body['player_headshots[]'] || req.body.player_headshots;
+
+    const playerIds = Array.isArray(rawPlayerIds) ? rawPlayerIds : (rawPlayerIds ? [rawPlayerIds] : []);
+    const playerKillsArr = Array.isArray(rawPlayerKills) ? rawPlayerKills : (rawPlayerKills ? [rawPlayerKills] : []);
+    const playerDamageArr = Array.isArray(rawPlayerDamage) ? rawPlayerDamage : (rawPlayerDamage ? [rawPlayerDamage] : []);
+    const playerHeadshotsArr = Array.isArray(rawPlayerHeadshots) ? rawPlayerHeadshots : (rawPlayerHeadshots ? [rawPlayerHeadshots] : []);
+
+    let sumPlayerKills = 0;
+    const playerStatsToInsert: { playerId: number; kills: number; damage: number; headshots: number }[] = [];
+
+    if (playerIds.length > 0) {
+      for (let p = 0; p < playerIds.length; p++) {
+        const pId = parseInt(playerIds[p], 10);
+        if (isNaN(pId)) continue;
+        const pKills = parseInt(playerKillsArr[p], 10) || 0;
+        const pDamage = parseInt(playerDamageArr[p], 10) || (pKills * 220);
+        const pHeadshots = parseInt(playerHeadshotsArr[p], 10) || Math.floor(pKills * 0.4);
+        sumPlayerKills += pKills;
+        playerStatsToInsert.push({ playerId: pId, kills: pKills, damage: pDamage, headshots: pHeadshots });
+      }
+    }
+
+    // 2. Parse team results
     const rawTeamIds = req.body.team_id || req.body.team_ids;
     const rawPlacements = req.body.placement || req.body.placements;
     const rawKills = req.body.kills || req.body.kill;
 
-    const teamIds = Array.isArray(rawTeamIds) ? rawTeamIds : (rawTeamIds ? [rawTeamIds] : []);
-    const placements = Array.isArray(rawPlacements) ? rawPlacements : (rawPlacements ? [rawPlacements] : []);
+    const teamIds = Array.isArray(rawTeamIds) ? rawTeamIds : (rawTeamIds ? [rawTeamIds] : ['1']);
+    const placements = Array.isArray(rawPlacements) ? rawPlacements : (rawPlacements ? [rawPlacements] : ['1']);
     const killsArr = Array.isArray(rawKills) ? rawKills : (rawKills ? [rawKills] : []);
 
     if (teamIds.length > 0) {
@@ -612,7 +698,14 @@ router.post('/matches/new', async (req: Request, res: Response) => {
         const teamId = parseInt(teamIds[i], 10);
         if (isNaN(teamId)) continue;
         const placement = parseInt(placements[i], 10) || (i + 1);
-        const kills = parseInt(killsArr[i], 10) || 0;
+        
+        let kills = parseInt(killsArr[i], 10);
+        if (isNaN(kills) || (kills === 0 && sumPlayerKills > 0)) {
+          kills = sumPlayerKills;
+        } else if (sumPlayerKills > 0 && isNaN(kills)) {
+          kills = sumPlayerKills;
+        }
+        if (isNaN(kills)) kills = 0;
         
         // Placement points: 1st=12, 2nd=9, 3rd=8, 4th=7, 5th=6, 6th=5, etc.
         const placementPoints = placement === 1 ? 12 : Math.max(0, 10 - placement);
@@ -622,19 +715,28 @@ router.post('/matches/new', async (req: Request, res: Response) => {
           INSERT INTO match_team_results (match_id, team_id, placement, kills, placement_points, kill_points, total_points, is_official)
           VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
         `, [matchId, teamId, placement, kills, placementPoints, kills, totalPoints, isOfficialBool]);
+
+        // Insert individual player stats for this team
+        for (const ps of playerStatsToInsert) {
+          await db.query(`
+            INSERT INTO match_player_stats (match_id, player_id, team_id, kills, damage, headshots, survival_time_sec, is_official)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+          `, [matchId, ps.playerId, teamId, ps.kills, ps.damage, ps.headshots, 600, isOfficialBool]);
+        }
       }
     }
 
     // Check total matches for this tournament to auto-archive after 6 matches
-    const tourneyMatches = await TournamentService.getTournamentMatches(parseInt(tournament_id, 10));
+    const tourneyMatches = await TournamentService.getTournamentMatches(tourneyId);
     let extraNotice = '';
     if (tourneyMatches.length >= 6) {
-      await db.query(`UPDATE tournaments SET status = 'completed' WHERE id = $1`, [parseInt(tournament_id, 10)]);
+      await db.query(`UPDATE tournaments SET status = 'completed' WHERE id = $1`, [tourneyId]);
       extraNotice = ' Tournament reached 6 matches and has been automatically archived into Match History!';
     }
 
     TournamentService.invalidateCache();
-    const successMsg = `Match #${match_number} saved as ${isOfficialBool ? 'OFFICIAL' : 'UNOFFICIAL / LIVE'}.${extraNotice}`;
+    const finalKillsRecorded = sumPlayerKills || (killsArr[0] ? parseInt(killsArr[0], 10) : 0);
+    const successMsg = `Match #${match_number} saved with ${finalKillsRecorded} Team Kills (${isOfficialBool ? 'OFFICIAL' : 'UNOFFICIAL / LIVE'}).${extraNotice}`;
     const redirectTarget = req.body.redirect_to ? (req.body.redirect_to + (req.body.redirect_to.includes('?') ? '&' : '?') + 'success=' + encodeURIComponent(successMsg)) : (`/admin/matches?tournament_id=${tournament_id}&success=` + encodeURIComponent(successMsg));
     return adminRedirect(req, res, redirectTarget);
   } catch (err: any) {
@@ -697,10 +799,10 @@ router.post('/matches/batch', async (req: Request, res: Response) => {
 });
 
 // Toggle Match Official Status (Locks in or unlocks)
-router.post('/matches/:id/toggle-official', async (req: Request, res: Response) => {
+router.all('/matches/:id/toggle-official', async (req: Request, res: Response) => {
   try {
     const matchId = parseInt(req.params.id, 10);
-    const targetOfficial = req.body.is_official === 'true' || req.body.is_official === true;
+    const targetOfficial = req.body?.is_official === 'true' || req.body?.is_official === true || req.query?.is_official === 'true';
     
     await db.query('UPDATE matches SET is_official = $1 WHERE id = $2', [targetOfficial, matchId]);
     await db.query('UPDATE match_team_results SET is_official = $1 WHERE match_id = $2', [targetOfficial, matchId]);
@@ -717,10 +819,17 @@ router.post('/matches/:id/toggle-official', async (req: Request, res: Response) 
 });
 
 // Delete Match
-router.post('/matches/:id/delete', async (req: Request, res: Response) => {
+router.all('/matches/:id/delete', async (req: Request, res: Response) => {
   const matchId = parseInt(req.params.id, 10);
-  await db.query('DELETE FROM matches WHERE id = $1', [matchId]);
-  return adminRedirect(req, res, '/admin/matches');
+  try {
+    await db.query('DELETE FROM match_player_stats WHERE match_id = $1', [matchId]).catch(() => {});
+    await db.query('DELETE FROM match_team_results WHERE match_id = $1', [matchId]).catch(() => {});
+    await db.query('DELETE FROM matches WHERE id = $1', [matchId]);
+    TournamentService.invalidateCache();
+    return adminRedirect(req, res, '/admin/matches?success=' + encodeURIComponent('Match deleted.'));
+  } catch (err: any) {
+    return adminRedirect(req, res, '/admin/matches?error=' + encodeURIComponent(err.message));
+  }
 });
 
 // ==================== TEAMS MANAGEMENT ====================
@@ -837,11 +946,15 @@ router.post('/teams/:id/logo', upload.single('logo'), async (req: Request, res: 
   }
 });
 
-router.post('/teams/:id/delete', async (req: Request, res: Response) => {
+router.all('/teams/:id/delete', async (req: Request, res: Response) => {
   const id = parseInt(req.params.id, 10);
-  await db.query('DELETE FROM teams WHERE id = $1', [id]);
-  TournamentService.invalidateCache();
-  return adminRedirect(req, res, '/admin/teams?success=' + encodeURIComponent('Team removed.'));
+  try {
+    await db.query('DELETE FROM teams WHERE id = $1', [id]);
+    TournamentService.invalidateCache();
+    return adminRedirect(req, res, '/admin/teams?success=' + encodeURIComponent('Team removed.'));
+  } catch (err: any) {
+    return adminRedirect(req, res, '/admin/teams?error=' + encodeURIComponent(err.message));
+  }
 });
 
 // ==================== PLAYERS MANAGEMENT ====================
@@ -993,11 +1106,15 @@ router.post('/players/:id/photo', upload.single('avatar'), async (req: Request, 
   }
 });
 
-router.post('/players/:id/delete', async (req: Request, res: Response) => {
+router.all('/players/:id/delete', async (req: Request, res: Response) => {
   const id = parseInt(req.params.id, 10);
-  await db.query('DELETE FROM players WHERE id = $1', [id]);
-  TournamentService.invalidateCache();
-  return adminRedirect(req, res, '/admin/players?success=' + encodeURIComponent('Player removed.'));
+  try {
+    await db.query('DELETE FROM players WHERE id = $1', [id]);
+    TournamentService.invalidateCache();
+    return adminRedirect(req, res, '/admin/players?success=' + encodeURIComponent('Player removed.'));
+  } catch (err: any) {
+    return adminRedirect(req, res, '/admin/players?error=' + encodeURIComponent(err.message));
+  }
 });
 
 // ==================== SITE SETTINGS & BACKGROUND ====================

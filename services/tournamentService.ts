@@ -307,8 +307,23 @@ export class TournamentService {
             resultsByMatch[r.match_id].push(r);
           });
 
+          const playerStatsRes = await db.query(`
+            SELECT ps.*, p.name as player_name, p.in_game_name, p.avatar_url, p.role
+            FROM match_player_stats ps
+            JOIN players p ON p.id = ps.player_id
+            WHERE ps.match_id = ANY($1::int[])
+            ORDER BY ps.kills DESC
+          `, [matchIds]).catch(() => ({ rows: [] }));
+
+          const playerStatsByMatch: { [matchId: number]: any[] } = {};
+          playerStatsRes.rows.forEach((ps: any) => {
+            if (!playerStatsByMatch[ps.match_id]) playerStatsByMatch[ps.match_id] = [];
+            playerStatsByMatch[ps.match_id].push(ps);
+          });
+
           matches.forEach(m => {
             m.results = resultsByMatch[m.id] || [];
+            m.player_stats = playerStatsByMatch[m.id] || [];
           });
         }
       } else {
@@ -323,7 +338,14 @@ export class TournamentService {
                 return { ...r, team_name: tm?.name, team_tag: tm?.tag, team_logo: tm?.logo_url };
               })
               .sort((a, b) => a.placement - b.placement);
-            return { ...m, results };
+            const player_stats = memoryDb.match_player_stats
+              .filter(s => s.match_id === m.id)
+              .map(s => {
+                const p = memoryDb.players.find(pl => pl.id === s.player_id);
+                return { ...s, player_name: p?.name, in_game_name: p?.in_game_name, avatar_url: p?.avatar_url, role: p?.role };
+              })
+              .sort((a, b) => b.kills - a.kills);
+            return { ...m, results, player_stats };
           });
       }
       return matches;
@@ -922,7 +944,7 @@ export class TournamentService {
 
       rankedTeams.sort((a, b) => b.total_points - a.total_points);
 
-      const sortedPlayers = [...playerSummaries].map(p => {
+      const allSortedPlayers = [...playerSummaries].map(p => {
         const activeStat = officialOnly ? p.official : p.combined;
         return {
           ...p,
@@ -932,12 +954,13 @@ export class TournamentService {
           active_avg_kills: activeStat.avg_kills,
           active_headshots: activeStat.headshots
         };
-      }).filter(p => p.active_matches > 0);
+      });
 
-      sortedPlayers.sort((a, b) => b.active_kills - a.active_kills);
+      allSortedPlayers.sort((a, b) => b.active_kills - a.active_kills);
 
+      const sortedPlayers = allSortedPlayers.filter(p => p.active_matches > 0);
+      const topFragger = sortedPlayers[0] || allSortedPlayers[0] || null;
       const mostConsistentTeam = [...rankedTeams].sort((a, b) => b.consistency_score - a.consistency_score)[0] || null;
-      const topFragger = sortedPlayers[0] || null;
 
       const totalTournaments = tournaments.length;
       const totalMatchesCount = allMatches.length;
@@ -967,13 +990,14 @@ export class TournamentService {
         totalMatchesCount,
         totalKillsAcross,
         rankedTeams,
-        topPlayers: sortedPlayers.slice(0, 10),
+        topPlayers: sortedPlayers.length > 0 ? sortedPlayers.slice(0, 10) : allSortedPlayers.slice(0, 10),
+        allPlayersRanked: allSortedPlayers,
         mostConsistentTeam,
         topFragger,
         tournamentsCount: tournaments.length,
         tagCareer,
         tournamentsBreakdown,
-        tagPlayers: sortedPlayers.filter(p => p.team_tag === 'TAG' || p.team_name.includes('TAG'))
+        tagPlayers: allSortedPlayers.filter(p => p.team_tag === 'TAG' || p.team_name.includes('TAG'))
       };
     }, 10000);
   }
@@ -1265,15 +1289,42 @@ export class TournamentService {
         resultsByMatch[r.match_id].push(r);
       });
 
+      let allPlayerStatsRows: any[] = [];
+      if (isPostgresActive) {
+        const psRes = await db.query(`
+          SELECT ps.*, p.name as player_name, p.in_game_name, p.avatar_url, p.role
+          FROM match_player_stats ps
+          JOIN players p ON p.id = ps.player_id
+          WHERE ps.match_id = ANY($1::int[])
+          ORDER BY ps.kills DESC
+        `, [matchIds]).catch(() => ({ rows: [] }));
+        allPlayerStatsRows = psRes.rows;
+      } else {
+        allPlayerStatsRows = memoryDb.match_player_stats.filter(s => matchIds.includes(s.match_id)).map(s => {
+          const p = memoryDb.players.find(pl => pl.id === s.player_id);
+          return { ...s, player_name: p?.name, in_game_name: p?.in_game_name, avatar_url: p?.avatar_url, role: p?.role };
+        }).sort((a, b) => b.kills - a.kills);
+      }
+
+      const playerStatsByMatch: { [matchId: number]: any[] } = {};
+      allPlayerStatsRows.forEach(ps => {
+        if (!playerStatsByMatch[ps.match_id]) playerStatsByMatch[ps.match_id] = [];
+        playerStatsByMatch[ps.match_id].push(ps);
+      });
+
       return matchesList.map(m => {
         const results = resultsByMatch[m.id] || [];
+        const playerStats = playerStatsByMatch[m.id] || [];
         const booyahTeam = results.find(r => r.placement === 1) || null;
         const tagResult = results.find(r => r.team_id === tagTeamId || r.team_tag === 'TAG') || null;
         const topFraggerTeam = [...results].sort((a, b) => b.kills - a.kills)[0] || null;
+        const topPlayer = playerStats[0] || null;
 
         return {
           ...m,
           results,
+          player_stats: playerStats,
+          topPlayer,
           booyahTeam,
           tagResult,
           topFraggerTeam

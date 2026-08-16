@@ -191,7 +191,10 @@
                     <a href="/player/<%= playerId %>" class="btn-glass text-xs py-1 px-2">
                       View
                     </a>
-                    <form action="/admin/players/<%= playerId %>/delete" method="POST" onsubmit="return confirm('Delete player <%= p.in_game_name %>?');" class="inline">
+                    <form action="<%= adminHref('/admin/players/' + playerId + '/delete') %>" method="POST" onsubmit="return confirm('Delete player <%= p.in_game_name %>?');" class="inline">
+                      <% if (typeof activeAdminToken !== 'undefined' && activeAdminToken) { %>
+                        <input type="hidden" name="admin_token" value="<%= activeAdminToken %>">
+                      <% } %>
                       <button type="submit" class="btn-glass text-xs py-1 px-2 text-red-400 hover:bg-red-500/20" title="Delete">
                         &times;
                       </button>

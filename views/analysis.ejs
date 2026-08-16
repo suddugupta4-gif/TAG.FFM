@@ -376,6 +376,102 @@
     </div>
   </section>
 
+  <!-- SQUAD PLAYERS CROSS-MATCH KILLS & INDIVIDUAL METRICS BREAKDOWN -->
+  <section class="space-y-4">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div>
+        <div class="flex items-center gap-2">
+          <span class="badge-live">CROSS-COUNTED SQUAD ROSTER</span>
+          <span class="text-xs font-mono text-[#ff4e00]">ALL-TIME PLAYERS FRAG LEDGER</span>
+        </div>
+        <h2 class="font-display text-3xl font-bold text-white tracking-wide">Squad Individual Player Kill Breakdown</h2>
+        <p class="text-gray-400 text-sm">Cumulative kills, damage telemetry, and headshot efficiency cross-counted across all tournament matches.</p>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <span class="text-xs font-mono text-slate-400">Filter:</span>
+        <span class="<%= officialOnly ? 'badge-official' : 'badge-unofficial' %>">
+          <%= officialOnly ? 'OFFICIAL ONLY' : 'ALL MATCHES (LIVE + OFFICIAL)' %>
+        </span>
+      </div>
+    </div>
+
+    <div class="glass-panel p-4 sm:p-6 overflow-x-auto">
+      <table class="glass-table">
+        <thead>
+          <tr>
+            <th class="w-16 text-center">Rank</th>
+            <th>Squad Player</th>
+            <th>Role</th>
+            <th class="text-center">Matches</th>
+            <th class="text-center text-[#ff4e00] font-bold">Total Kills</th>
+            <th class="text-center">Avg Kills / Match</th>
+            <th class="text-center">Damage Dealt</th>
+            <th class="text-center">Headshots</th>
+            <th class="text-right">Player Status</th>
+          </tr>
+        </thead>
+        <tbody id="squad-players-cross-tbody">
+          <% 
+            const squadRosterList = (analysis.tagPlayers && analysis.tagPlayers.length > 0) 
+              ? analysis.tagPlayers 
+              : (analysis.allPlayersRanked || analysis.topPlayers || []);
+            
+            if (squadRosterList.length === 0) {
+          %>
+            <tr>
+              <td colspan="9" class="text-center py-6 text-gray-500 font-mono text-xs">
+                No squad player stats available for this filter.
+              </td>
+            </tr>
+          <% } else { %>
+            <% squadRosterList.forEach((p, pIdx) => { %>
+              <tr class="table-row hover:bg-white/5 transition-colors">
+                <td class="text-center font-display text-xl font-bold <%= pIdx === 0 ? 'text-amber-400' : (pIdx === 1 ? 'text-gray-300' : (pIdx === 2 ? 'text-amber-600' : 'text-gray-500')) %>">
+                  #<%= pIdx + 1 %>
+                </td>
+                <td>
+                  <div class="flex items-center gap-3">
+                    <img 
+                      src="<%= p.avatar_url %>" 
+                      alt="<%= p.in_game_name %>" 
+                      class="w-10 h-10 rounded-xl object-cover bg-gray-900 border border-white/15"
+                      onerror="this.src='https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=200&auto=format&fit=crop'"
+                    >
+                    <div>
+                      <a href="/player/<%= p.player_id %>" class="font-bold text-white hover:text-[#ff4e00] transition-colors flex items-center gap-1.5">
+                        <span><%= p.in_game_name %></span>
+                        <% if (pIdx === 0 && p.active_kills > 0) { %>
+                          <span class="px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 text-[10px] font-mono font-bold">MVP</span>
+                        <% } %>
+                      </a>
+                      <span class="text-xs text-gray-400 font-mono"><%= p.player_name %></span>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <span class="text-xs font-mono text-orange-400 bg-orange-500/10 px-2 py-1 rounded-md border border-orange-500/20">
+                    <%= p.role || 'Rusher' %>
+                  </span>
+                </td>
+                <td class="text-center font-mono text-gray-300"><%= p.active_matches %></td>
+                <td class="text-center font-display text-2xl font-bold text-[#ff4e00]">
+                  <%= p.active_kills %>
+                </td>
+                <td class="text-center font-mono text-amber-300 font-bold"><%= p.active_avg_kills %></td>
+                <td class="text-center font-mono text-gray-300"><%= p.active_damage.toLocaleString() %></td>
+                <td class="text-center font-mono text-emerald-400"><%= p.active_headshots %></td>
+                <td class="text-right font-mono text-xs">
+                  <span class="text-emerald-400 font-bold">✓ Active Roster</span>
+                </td>
+              </tr>
+            <% }); %>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
   <!-- TOP PLAYERS & FRAGGERS ACROSS ALL SEASONS -->
   <section class="space-y-4">
     <div class="flex items-center justify-between">

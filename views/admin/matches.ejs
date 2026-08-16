@@ -236,7 +236,10 @@
                 <% } %>
               </button>
 
-              <form action="/admin/matches/<%= match.id %>/delete" method="POST" onsubmit="return confirm('Delete this match and all team scores?');" class="inline">
+              <form action="<%= adminHref('/admin/matches/' + match.id + '/delete') %>" method="POST" onsubmit="return confirm('Delete this match and all team scores?');" class="inline">
+                <% if (typeof activeAdminToken !== 'undefined' && activeAdminToken) { %>
+                  <input type="hidden" name="admin_token" value="<%= activeAdminToken %>">
+                <% } %>
                 <button type="submit" class="btn-glass text-xs py-1.5 px-2 text-red-400 hover:bg-red-500/20" title="Delete Match">
                   &times;
                 </button>

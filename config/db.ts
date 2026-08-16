@@ -665,6 +665,40 @@ export const db: DbClient = {
       return { rows: [], rowCount: 1 };
     }
 
+    // 7. Match player stats
+    if (cleanText.includes('FROM match_player_stats WHERE match_id = $1')) {
+      const mid = parseInt(params[0], 10);
+      const list = memoryDb.match_player_stats
+        .filter(s => s.match_id === mid)
+        .map(s => {
+          const p = memoryDb.players.find(pl => pl.id === s.player_id);
+          return { ...s, player_name: p?.name, in_game_name: p?.in_game_name, avatar_url: p?.avatar_url, role: p?.role };
+        });
+      return { rows: list, rowCount: list.length };
+    }
+    if (cleanText.includes('INSERT INTO match_player_stats')) {
+      autoIncrementId++;
+      const newPs = {
+        id: autoIncrementId,
+        match_id: parseInt(params[0], 10),
+        player_id: parseInt(params[1], 10),
+        team_id: parseInt(params[2], 10),
+        kills: parseInt(params[3], 10) || 0,
+        damage: parseInt(params[4], 10) || 0,
+        headshots: parseInt(params[5], 10) || 0,
+        survival_time_sec: parseInt(params[6], 10) || 0,
+        is_official: params[7] === true || params[7] === 'true',
+        created_at: new Date()
+      };
+      memoryDb.match_player_stats.push(newPs);
+      return { rows: [newPs], rowCount: 1 };
+    }
+    if (cleanText.includes('DELETE FROM match_player_stats WHERE match_id = $1')) {
+      const mid = parseInt(params[0], 10);
+      memoryDb.match_player_stats = memoryDb.match_player_stats.filter(x => x.match_id !== mid);
+      return { rows: [], rowCount: 1 };
+    }
+
     // Default fallback
     return { rows: [], rowCount: 0 };
   }
