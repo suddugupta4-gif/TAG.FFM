@@ -208,7 +208,6 @@
       <!-- Tournament ID Hidden / Select -->
       <input type="hidden" name="tournament_id" id="match_tourney_id_input" value="<%= currentTourneyId %>">
       <input type="hidden" name="redirect_to" value="<%= tournament ? `/admin/tournaments/${tournament.id}/edit#match-logger-box` : '/admin/tournaments#match-logger-box' %>">
-      <input type="hidden" name="team_id" value="1"> <!-- Defaults to TAG / Squad -->
 
       <!-- Match Metadata Grid: Match Number, Map, Match Circuit, Position (1-12), Kills -->
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 p-5 rounded-2xl bg-black/50 border border-white/10">

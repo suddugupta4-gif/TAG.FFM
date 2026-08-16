@@ -232,34 +232,59 @@
                         </div>
                       </div>
 
-                      <!-- Match Key Highlights (Champion, TAG & MVP) -->
+                      <!-- Match Key Telemetry (Position 1-12, Total Kills, Total Points of Match) -->
                       <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-xs font-mono">
                         
-                        <!-- 1. Booyah Winner -->
+                        <!-- 1. POSITION 1-12 -->
                         <div class="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20 flex flex-col justify-between">
-                          <span class="text-[9px] text-amber-400 uppercase font-bold block">👑 Champion</span>
-                          <span class="font-bold text-white truncate text-xs"><%= m.booyahTeam ? m.booyahTeam.team_name : 'N/A' %></span>
-                          <span class="text-[10px] text-amber-400 font-bold"><%= m.booyahTeam ? m.booyahTeam.kills + ' Kills' : '' %></span>
+                          <span class="text-[9px] text-amber-400 uppercase font-bold block">📍 POSITION (1-12)</span>
+                          <span class="font-bold text-white text-xs sm:text-sm">
+                            #<%= m.tagResult ? m.tagResult.placement : 1 %> Place
+                          </span>
+                          <span class="text-[10px] text-amber-400 font-bold">
+                            <%= m.tagResult ? (m.tagResult.placement_points || (m.tagResult.placement === 1 ? 12 : Math.max(1, 10 - m.tagResult.placement))) + ' Placement PTS' : '12 Placement PTS' %>
+                          </span>
                         </div>
 
-                        <!-- 2. TAG Result -->
+                        <!-- 2. TOTAL KILLS -->
                         <div class="p-2.5 rounded-xl bg-orange-500/10 border border-orange-500/20 flex flex-col justify-between">
-                          <span class="text-[9px] text-orange-400 uppercase font-bold block">TAG Squad</span>
-                          <span class="font-bold text-white text-xs">#<%= m.tagResult ? m.tagResult.placement : 'N/A' %> Place</span>
-                          <span class="text-[10px] text-orange-400 font-bold"><%= m.tagResult ? m.tagResult.kills + ' Kills (' + m.tagResult.total_points + ' PTS)' : '0 Kills' %></span>
+                          <span class="text-[9px] text-orange-400 uppercase font-bold block">💥 TOTAL KILLS</span>
+                          <span class="font-bold text-white text-xs sm:text-sm">
+                            <%= m.tagResult ? (m.tagResult.kills || 0) : (uniqueHistSquadStats ? uniqueHistSquadStats.reduce((acc, ps) => acc + Number(ps.kills || 0), 0) : 0) %> Kills
+                          </span>
+                          <span class="text-[10px] text-orange-400 font-bold">
+                            <%= m.tagResult ? (m.tagResult.kills || 0) + ' Kill PTS' : '0 Kill PTS' %>
+                          </span>
                         </div>
 
-                        <!-- 3. Player MVP -->
+                        <!-- 3. TOTAL POINTS OF MATCH -->
                         <div class="p-2.5 rounded-xl bg-red-500/10 border border-red-500/20 flex flex-col justify-between">
-                          <span class="text-[9px] text-red-400 uppercase font-bold block">⚔️ Match MVP</span>
-                          <span class="font-bold text-white truncate text-xs"><%= m.topPlayer ? (m.topPlayer.in_game_name || m.topPlayer.player_name) : (m.topFraggerTeam ? m.topFraggerTeam.team_name : 'N/A') %></span>
-                          <span class="text-[10px] text-red-400 font-bold"><%= m.topPlayer ? m.topPlayer.kills + ' Kills' : (m.topFraggerTeam ? m.topFraggerTeam.kills + ' Kills' : '') %></span>
+                          <span class="text-[9px] text-red-400 uppercase font-bold block">🏆 TOTAL POINTS</span>
+                          <span class="font-bold text-white text-xs sm:text-sm">
+                            <%= m.tagResult ? (m.tagResult.total_points || 0) : 0 %> PTS
+                          </span>
+                          <span class="text-[10px] text-red-400 font-bold">
+                            <%= m.tagResult ? (m.tagResult.placement_points || 0) : 0 %> Place + <%= m.tagResult ? (m.tagResult.kills || 0) : 0 %> Kill PTS
+                          </span>
                         </div>
 
                       </div>
 
                       <!-- Individual Squad Player Kills Pills (Match Telemetry) -->
-                      <% if (m.player_stats && m.player_stats.length > 0) { %>
+                      <% 
+                        const uniqueHistSquadStats = [];
+                        const seenHistPMap = new Set();
+                        if (m.player_stats && Array.isArray(m.player_stats)) {
+                          m.player_stats.forEach(ps => {
+                            const pid = ps.player_id || ps.id || ps.in_game_name;
+                            if (!seenHistPMap.has(pid)) {
+                              seenHistPMap.add(pid);
+                              uniqueHistSquadStats.push(ps);
+                            }
+                          });
+                        }
+                      %>
+                      <% if (uniqueHistSquadStats.length > 0) { %>
                         <div class="p-3 rounded-xl bg-black/50 border border-white/5 space-y-2">
                           <div class="flex items-center justify-between text-[11px] font-mono">
                             <span class="text-slate-400 font-bold uppercase flex items-center gap-1.5">
@@ -267,15 +292,15 @@
                               Squad Player Kills (Match #<%= m.match_number %>)
                             </span>
                             <span class="text-orange-400 font-bold">
-                              Sum: <%= m.player_stats.reduce((acc, ps) => acc + Number(ps.kills || 0), 0) %> Kills
+                              Sum: <%= uniqueHistSquadStats.reduce((acc, ps) => acc + Number(ps.kills || 0), 0) %> Kills
                             </span>
                           </div>
 
                           <div class="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
-                            <% m.player_stats.forEach((ps, psIdx) => { %>
+                            <% uniqueHistSquadStats.forEach((ps) => { %>
                               <div class="p-1.5 rounded-lg bg-white/5 border border-white/5 flex items-center justify-between text-[11px] font-mono">
                                 <span class="text-white font-bold truncate pr-1"><%= ps.in_game_name || ps.player_name %></span>
-                                <span class="text-orange-400 font-bold shrink-0"><%= ps.kills %>K</span>
+                                <span class="text-orange-400 font-bold shrink-0"><%= ps.kills || 0 %>K</span>
                               </div>
                             <% }); %>
                           </div>
@@ -410,13 +435,17 @@
                   <table class="w-full text-left text-xs font-mono">
                     <thead>
                       <tr class="bg-white/5 border-b border-white/10 text-slate-400 text-[11px] uppercase">
-                        <th class="py-2.5 px-4 text-center w-12">#</th>
-                        <th class="py-2.5 px-4">Team</th>
-                        <th class="py-2.5 px-3 text-center">Matches</th>
-                        <th class="py-2.5 px-3 text-center text-amber-400 font-bold">Booyah</th>
-                        <th class="py-2.5 px-3 text-center text-red-400">Kills</th>
-                        <th class="py-2.5 px-3 text-center text-slate-400">Place PTS</th>
-                        <th class="py-2.5 px-4 text-right text-orange-400 font-bold">Total PTS</th>
+                        <th class="py-2.5 px-3 text-center w-10">#</th>
+                        <th class="py-2.5 px-3 min-w-[130px]">Team</th>
+                        <th class="py-2.5 px-2 text-center text-orange-400 font-bold">M1</th>
+                        <th class="py-2.5 px-2 text-center text-orange-400 font-bold">M2</th>
+                        <th class="py-2.5 px-2 text-center text-orange-400 font-bold">M3</th>
+                        <th class="py-2.5 px-2 text-center text-orange-400 font-bold">M4</th>
+                        <th class="py-2.5 px-2 text-center text-orange-400 font-bold">M5</th>
+                        <th class="py-2.5 px-2 text-center text-orange-400 font-bold">M6</th>
+                        <th class="py-2.5 px-2 text-center text-amber-400 font-bold">👑 Booyah</th>
+                        <th class="py-2.5 px-2 text-center text-red-400 font-bold">Kills</th>
+                        <th class="py-2.5 px-4 text-right text-orange-400 font-bold bg-orange-500/10 border-l border-orange-500/20">TOTAL PTS</th>
                       </tr>
                     </thead>
                     <tbody class="divide-y divide-white/5">
@@ -424,10 +453,10 @@
                         const isTag = (st.team_tag === 'TAG' || (st.team_name || '').includes('TAG'));
                       %>
                         <tr class="hover:bg-white/5 transition-colors <%= isTag ? 'bg-orange-500/10 border-l-2 border-orange-500 font-bold' : '' %>">
-                          <td class="py-2.5 px-4 text-center font-display text-sm font-bold <%= sIdx === 0 ? 'text-amber-400' : 'text-slate-400' %>">
+                          <td class="py-2.5 px-3 text-center font-display text-sm font-bold <%= sIdx === 0 ? 'text-amber-400' : 'text-slate-400' %>">
                             #<%= sIdx + 1 %>
                           </td>
-                          <td class="py-2.5 px-4">
+                          <td class="py-2.5 px-3">
                             <div class="flex items-center gap-2">
                               <% if (st.team_logo) { %>
                                 <img src="<%= st.team_logo %>" alt="" class="w-5 h-5 rounded-full object-cover">
@@ -436,12 +465,31 @@
                               <span class="text-[10px] text-slate-500">[<%= st.team_tag %>]</span>
                             </div>
                           </td>
-                          <td class="py-2.5 px-3 text-center text-slate-300"><%= st.matches_played %></td>
-                          <td class="py-2.5 px-3 text-center text-amber-400 font-bold"><%= st.booyahs %></td>
-                          <td class="py-2.5 px-3 text-center text-red-400"><%= st.total_kills || st.kill_points %></td>
-                          <td class="py-2.5 px-3 text-center text-slate-400"><%= st.placement_points %></td>
-                          <td class="py-2.5 px-4 text-right font-display text-sm font-bold <%= isTag ? 'text-orange-400' : 'text-white' %>">
-                            <%= st.total_points %> PTS
+
+                          <!-- Match 1 to 6 Individual Match Points Breakdown -->
+                          <% for (let m = 1; m <= 6; m++) { 
+                              const mScore = (st.match_scores && st.match_scores[m]) ? st.match_scores[m] : null;
+                          %>
+                            <td class="py-2.5 px-2 text-center font-mono">
+                              <% if (mScore) { %>
+                                <div class="flex flex-col items-center">
+                                  <span class="font-bold text-white text-xs <%= mScore.placement === 1 ? 'text-amber-400 font-display' : '' %>">
+                                    <%= mScore.total_points %>
+                                  </span>
+                                  <span class="text-[9px] text-slate-400 font-normal">
+                                    #<%= mScore.placement %> | <%= mScore.kills %>K
+                                  </span>
+                                </div>
+                              <% } else { %>
+                                <span class="text-slate-600 text-xs">-</span>
+                              <% } %>
+                            </td>
+                          <% } %>
+
+                          <td class="py-2.5 px-2 text-center text-amber-400 font-bold"><%= st.booyahs %></td>
+                          <td class="py-2.5 px-2 text-center text-red-400 font-bold"><%= st.total_kills || st.kill_points %></td>
+                          <td class="py-2.5 px-4 text-right font-display text-sm font-bold <%= isTag ? 'text-orange-400' : 'text-white' %> bg-orange-500/5 border-l border-orange-500/20">
+                            <%= st.total_points %> <span class="text-[10px] font-normal text-slate-500">PTS</span>
                           </td>
                         </tr>
                       <% }); %>

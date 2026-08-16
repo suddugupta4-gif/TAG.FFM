@@ -13,6 +13,16 @@ export interface StandingsRow {
   total_kills: number;
   is_official: boolean;
   has_unofficial_matches: boolean;
+  match_scores: { 
+    [matchNumber: number]: { 
+      match_id: number;
+      placement: number; 
+      kills: number; 
+      placement_points: number; 
+      kill_points: number; 
+      total_points: number 
+    } 
+  };
 }
 
 export const ALL_FREE_FIRE_MAPS = [
@@ -322,8 +332,49 @@ export class TournamentService {
           });
 
           matches.forEach(m => {
-            m.results = resultsByMatch[m.id] || [];
-            m.player_stats = playerStatsByMatch[m.id] || [];
+            const results = resultsByMatch[m.id] || [];
+            const rawPlayerStats = playerStatsByMatch[m.id] || [];
+            
+            // Deduplicate player stats by player_id
+            const seenPIds = new Set<number>();
+            const player_stats: any[] = [];
+            for (const ps of rawPlayerStats) {
+              const pid = Number(ps.player_id);
+              if (!seenPIds.has(pid)) {
+                seenPIds.add(pid);
+                player_stats.push(ps);
+              }
+            }
+            player_stats.sort((a, b) => (Number(b.kills) || 0) - (Number(a.kills) || 0));
+
+            const tagResult = results.find((r: any) => r.team_tag === 'TAG' || (r.team_name || '').toUpperCase().includes('TAG') || r.team_id === 1) || results[0] || {
+              team_name: 'TAGFREEFIREMAX',
+              team_tag: 'TAG',
+              placement: 1,
+              kills: player_stats.reduce((acc, p) => acc + (Number(p.kills) || 0), 0),
+              total_points: player_stats.reduce((acc, p) => acc + (Number(p.kills) || 0), 0) + 12
+            };
+
+            let booyahTeam = results.find((r: any) => r.placement === 1) || null;
+            if (!booyahTeam) {
+              if (tagResult && tagResult.placement === 1) {
+                booyahTeam = tagResult;
+              } else if (results.length > 0) {
+                booyahTeam = results[0];
+              } else {
+                booyahTeam = tagResult;
+              }
+            }
+
+            const topFraggerTeam = [...results].sort((a: any, b: any) => (Number(b.kills) || 0) - (Number(a.kills) || 0))[0] || booyahTeam;
+            const topPlayer = player_stats[0] || null;
+
+            m.results = results;
+            m.player_stats = player_stats;
+            m.booyahTeam = booyahTeam;
+            m.tagResult = tagResult;
+            m.topFraggerTeam = topFraggerTeam;
+            m.topPlayer = topPlayer;
           });
         }
       } else {
@@ -335,17 +386,60 @@ export class TournamentService {
               .filter(r => r.match_id === m.id)
               .map(r => {
                 const tm = memoryDb.teams.find(t => t.id === r.team_id);
-                return { ...r, team_name: tm?.name, team_tag: tm?.tag, team_logo: tm?.logo_url };
+                return { ...r, team_name: tm?.name || 'TAGFREEFIREMAX', team_tag: tm?.tag || 'TAG', team_logo: tm?.logo_url };
               })
               .sort((a, b) => a.placement - b.placement);
-            const player_stats = memoryDb.match_player_stats
+
+            const rawPlayerStats = memoryDb.match_player_stats
               .filter(s => s.match_id === m.id)
               .map(s => {
                 const p = memoryDb.players.find(pl => pl.id === s.player_id);
                 return { ...s, player_name: p?.name, in_game_name: p?.in_game_name, avatar_url: p?.avatar_url, role: p?.role };
-              })
-              .sort((a, b) => b.kills - a.kills);
-            return { ...m, results, player_stats };
+              });
+
+            // Deduplicate player stats
+            const seenPIds = new Set<number>();
+            const player_stats: any[] = [];
+            for (const ps of rawPlayerStats) {
+              const pid = Number(ps.player_id);
+              if (!seenPIds.has(pid)) {
+                seenPIds.add(pid);
+                player_stats.push(ps);
+              }
+            }
+            player_stats.sort((a, b) => (Number(b.kills) || 0) - (Number(a.kills) || 0));
+
+            const tagResult = results.find(r => r.team_tag === 'TAG' || (r.team_name || '').toUpperCase().includes('TAG') || r.team_id === 1) || results[0] || {
+              team_name: 'TAGFREEFIREMAX',
+              team_tag: 'TAG',
+              placement: 1,
+              kills: player_stats.reduce((acc, p) => acc + (Number(p.kills) || 0), 0),
+              total_points: player_stats.reduce((acc, p) => acc + (Number(p.kills) || 0), 0) + 12
+            };
+
+            let booyahTeam = results.find(r => r.placement === 1) || null;
+            if (!booyahTeam) {
+              if (tagResult && tagResult.placement === 1) {
+                booyahTeam = tagResult;
+              } else if (results.length > 0) {
+                booyahTeam = results[0];
+              } else {
+                booyahTeam = tagResult;
+              }
+            }
+
+            const topFraggerTeam = [...results].sort((a, b) => (Number(b.kills) || 0) - (Number(a.kills) || 0))[0] || booyahTeam;
+            const topPlayer = player_stats[0] || null;
+
+            return { 
+              ...m, 
+              results, 
+              player_stats,
+              booyahTeam,
+              tagResult,
+              topFraggerTeam,
+              topPlayer
+            };
           });
       }
       return matches;
@@ -619,7 +713,8 @@ export class TournamentService {
           total_points: 0,
           total_kills: 0,
           is_official: true,
-          has_unofficial_matches: false
+          has_unofficial_matches: false,
+          match_scores: {}
         };
       });
 
@@ -627,6 +722,8 @@ export class TournamentService {
         if (officialOnly && !match.is_official) {
           continue;
         }
+
+        const matchNum = match.match_number || 1;
 
         if (!match.results || match.results.length === 0) continue;
 
@@ -648,6 +745,15 @@ export class TournamentService {
             row.kill_points += kPoints;
             row.placement_points += pPoints;
             row.total_points += tPoints;
+
+            row.match_scores[matchNum] = {
+              match_id: match.id,
+              placement: res.placement,
+              kills: kills,
+              placement_points: pPoints,
+              kill_points: kPoints,
+              total_points: tPoints
+            };
 
             if (!res.is_official || !match.is_official) {
               row.has_unofficial_matches = true;

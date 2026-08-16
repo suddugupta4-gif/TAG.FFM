@@ -120,6 +120,87 @@
     </div>
   <% } %>
 
+  <!-- 12-SQUAD STANDINGS LEADERBOARD (1-6 MATCHES & TOTAL POINTS) -->
+  <% if (typeof standings !== 'undefined' && standings && standings.length > 0) { %>
+    <section class="space-y-4">
+      <div class="flex items-center justify-between border-b border-white/10 pb-3">
+        <div class="flex items-center gap-2">
+          <span class="w-2.5 h-2.5 rounded-full bg-orange-500 animate-pulse"></span>
+          <h2 class="font-display text-2xl sm:text-3xl font-bold text-white tracking-wide">Tournament Standings Leaderboard</h2>
+        </div>
+        <span class="text-xs font-mono text-orange-400 font-bold bg-orange-500/10 px-3 py-1 rounded-lg border border-orange-500/20">
+          Matches 1–6 Breakdown
+        </span>
+      </div>
+
+      <div class="overflow-x-auto rounded-2xl border border-white/10 bg-black/60 shadow-2xl">
+        <table class="w-full text-left text-xs font-mono">
+          <thead>
+            <tr class="bg-white/5 text-slate-400 uppercase border-b border-white/10 text-[11px]">
+              <th class="py-3 px-3 text-center w-10">#</th>
+              <th class="py-3 px-3 min-w-[140px]">Team</th>
+              <th class="py-3 px-2 text-center text-orange-400 font-bold">M1</th>
+              <th class="py-3 px-2 text-center text-orange-400 font-bold">M2</th>
+              <th class="py-3 px-2 text-center text-orange-400 font-bold">M3</th>
+              <th class="py-3 px-2 text-center text-orange-400 font-bold">M4</th>
+              <th class="py-3 px-2 text-center text-orange-400 font-bold">M5</th>
+              <th class="py-3 px-2 text-center text-orange-400 font-bold">M6</th>
+              <th class="py-3 px-2 text-center text-amber-400 font-bold">👑 Booyah</th>
+              <th class="py-3 px-2 text-center text-red-400 font-bold">Kills</th>
+              <th class="py-3 px-4 text-right text-orange-400 font-bold bg-orange-500/10 border-l border-orange-500/20">TOTAL PTS</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-white/5">
+            <% standings.forEach((st, idx) => { 
+              const isTag = (st.team_tag === 'TAG' || (st.team_name || '').includes('TAG'));
+            %>
+              <tr class="hover:bg-white/5 transition-colors <%= isTag ? 'bg-orange-500/15 font-bold border-l-2 border-orange-500' : '' %>">
+                <td class="py-3 px-3 text-center font-display text-sm <%= idx === 0 ? 'text-amber-400 font-bold' : (idx === 1 ? 'text-slate-300' : (idx === 2 ? 'text-amber-600' : 'text-slate-400')) %>">
+                  #<%= idx + 1 %>
+                </td>
+                <td class="py-3 px-3">
+                  <div class="flex items-center gap-2">
+                    <img src="<%= st.team_logo %>" alt="<%= st.team_name %>" class="w-6 h-6 rounded object-cover border border-white/10 shrink-0" onerror="this.src='https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=100&auto=format&fit=crop'">
+                    <div class="truncate max-w-[120px] sm:max-w-[180px]">
+                      <span class="text-white font-bold <%= isTag ? 'text-orange-400' : '' %>"><%= st.team_name %></span>
+                      <span class="text-[10px] text-slate-400 ml-1">(<%= st.team_tag %>)</span>
+                    </div>
+                  </div>
+                </td>
+
+                <!-- Match 1 to 6 Individual Match Points Breakdown -->
+                <% for (let m = 1; m <= 6; m++) { 
+                    const mScore = (st.match_scores && st.match_scores[m]) ? st.match_scores[m] : null;
+                %>
+                  <td class="py-3 px-2 text-center font-mono">
+                    <% if (mScore) { %>
+                      <div class="flex flex-col items-center">
+                        <span class="font-bold text-white text-xs <%= mScore.placement === 1 ? 'text-amber-400 font-display' : '' %>">
+                          <%= mScore.total_points %>
+                        </span>
+                        <span class="text-[9px] text-slate-400 font-normal">
+                          #<%= mScore.placement %> | <%= mScore.kills %>K
+                        </span>
+                      </div>
+                    <% } else { %>
+                      <span class="text-slate-600 text-xs">-</span>
+                    <% } %>
+                  </td>
+                <% } %>
+
+                <td class="py-3 px-2 text-center text-amber-400 font-bold"><%= st.booyahs %></td>
+                <td class="py-3 px-2 text-center text-red-400 font-bold"><%= st.total_kills || st.kill_points %></td>
+                <td class="py-3 px-4 text-right font-display text-sm font-bold <%= isTag ? 'text-orange-400' : 'text-white' %> bg-orange-500/5 border-l border-orange-500/20">
+                  <%= st.total_points %> <span class="text-[10px] font-normal text-slate-500">PTS</span>
+                </td>
+              </tr>
+            <% }); %>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  <% } %>
+
   <!-- MATCHES & SCOREBOARDS -->
   <section class="space-y-6">
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-white/10 pb-4">

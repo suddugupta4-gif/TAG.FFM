@@ -631,28 +631,36 @@ export const db: DbClient = {
     }
 
     // 6. Match team results
-    if (cleanText.includes('FROM match_team_results WHERE match_id = $1')) {
-      const mid = parseInt(params[0], 10);
-      const list = memoryDb.match_team_results
-        .filter(r => r.match_id === mid)
-        .map(r => {
-          const tm = memoryDb.teams.find(t => t.id === r.team_id);
-          return { ...r, team_name: tm?.name, team_tag: tm?.tag, team_logo: tm?.logo_url };
-        })
-        .sort((a, b) => a.placement - b.placement);
-      return { rows: list, rowCount: list.length };
+    if (cleanText.includes('FROM match_team_results')) {
+      let list = memoryDb.match_team_results;
+      if (cleanText.includes('WHERE match_id = $1') || cleanText.includes('WHERE r.match_id = $1')) {
+        const mid = parseInt(params[0], 10);
+        list = list.filter(r => r.match_id === mid);
+      } else if (cleanText.includes('match_id = ANY') || cleanText.includes('r.match_id = ANY')) {
+        const targetIds: number[] = Array.isArray(params[0]) ? params[0].map(Number) : [parseInt(params[0], 10)];
+        list = list.filter(r => targetIds.includes(r.match_id));
+      }
+      const formatted = list.map(r => {
+        const tm = memoryDb.teams.find(t => t.id === r.team_id);
+        return { ...r, team_name: tm?.name || 'TAGFREEFIREMAX', team_tag: tm?.tag || 'TAG', team_logo: tm?.logo_url || '' };
+      }).sort((a, b) => a.placement - b.placement);
+      return { rows: formatted, rowCount: formatted.length };
     }
     if (cleanText.includes('INSERT INTO match_team_results')) {
       autoIncrementId++;
+      const matchId = parseInt(params[0], 10);
+      const teamId = parseInt(params[1], 10);
+      // Remove any prior entry for this same match and team to avoid duplicates
+      memoryDb.match_team_results = memoryDb.match_team_results.filter(x => !(x.match_id === matchId && x.team_id === teamId));
       const newR = {
         id: autoIncrementId,
-        match_id: parseInt(params[0], 10),
-        team_id: parseInt(params[1], 10),
-        placement: parseInt(params[2], 10),
-        kills: parseInt(params[3], 10),
-        placement_points: parseInt(params[4], 10),
-        kill_points: parseInt(params[5], 10),
-        total_points: parseInt(params[6], 10),
+        match_id: matchId,
+        team_id: teamId,
+        placement: parseInt(params[2], 10) || 1,
+        kills: parseInt(params[3], 10) || 0,
+        placement_points: parseInt(params[4], 10) || 0,
+        kill_points: parseInt(params[5], 10) || 0,
+        total_points: parseInt(params[6], 10) || 0,
         is_official: params[7] === true || params[7] === 'true',
         created_at: new Date()
       };
@@ -666,23 +674,50 @@ export const db: DbClient = {
     }
 
     // 7. Match player stats
-    if (cleanText.includes('FROM match_player_stats WHERE match_id = $1')) {
-      const mid = parseInt(params[0], 10);
-      const list = memoryDb.match_player_stats
-        .filter(s => s.match_id === mid)
-        .map(s => {
-          const p = memoryDb.players.find(pl => pl.id === s.player_id);
-          return { ...s, player_name: p?.name, in_game_name: p?.in_game_name, avatar_url: p?.avatar_url, role: p?.role };
-        });
-      return { rows: list, rowCount: list.length };
+    if (cleanText.includes('FROM match_player_stats')) {
+      let list = memoryDb.match_player_stats;
+      if (cleanText.includes('WHERE match_id = $1') || cleanText.includes('WHERE ps.match_id = $1')) {
+        const mid = parseInt(params[0], 10);
+        list = list.filter(s => s.match_id === mid);
+      } else if (cleanText.includes('match_id = ANY') || cleanText.includes('ps.match_id = ANY')) {
+        const targetIds: number[] = Array.isArray(params[0]) ? params[0].map(Number) : [parseInt(params[0], 10)];
+        list = list.filter(s => targetIds.includes(s.match_id));
+      }
+      
+      // Deduplicate by match_id + player_id to prevent duplicates
+      const seen = new Set<string>();
+      const dedupedList: any[] = [];
+      for (const s of list) {
+        const key = `${s.match_id}_${s.player_id}`;
+        if (!seen.has(key)) {
+          seen.add(key);
+          dedupedList.push(s);
+        }
+      }
+
+      const formatted = dedupedList.map(s => {
+        const p = memoryDb.players.find(pl => pl.id === s.player_id);
+        return { 
+          ...s, 
+          player_name: p?.name || 'Player', 
+          in_game_name: p?.in_game_name || `TAG P${s.player_id}`, 
+          avatar_url: p?.avatar_url || '', 
+          role: p?.role || 'Rusher' 
+        };
+      }).sort((a, b) => (b.kills || 0) - (a.kills || 0));
+      return { rows: formatted, rowCount: formatted.length };
     }
     if (cleanText.includes('INSERT INTO match_player_stats')) {
       autoIncrementId++;
+      const matchId = parseInt(params[0], 10);
+      const playerId = parseInt(params[1], 10);
+      // Remove any prior entry for this match & player to ensure NO duplicates
+      memoryDb.match_player_stats = memoryDb.match_player_stats.filter(x => !(x.match_id === matchId && x.player_id === playerId));
       const newPs = {
         id: autoIncrementId,
-        match_id: parseInt(params[0], 10),
-        player_id: parseInt(params[1], 10),
-        team_id: parseInt(params[2], 10),
+        match_id: matchId,
+        player_id: playerId,
+        team_id: parseInt(params[2], 10) || 1,
         kills: parseInt(params[3], 10) || 0,
         damage: parseInt(params[4], 10) || 0,
         headshots: parseInt(params[5], 10) || 0,

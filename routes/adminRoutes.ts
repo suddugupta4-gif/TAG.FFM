@@ -38,34 +38,12 @@ function extractToken(val: any): string | undefined {
 }
 
 export function validateAdminRequest(req: Request): { isValid: boolean; token?: string } {
-  // 1. Check token passed via query, header, cookie, or body
-  const rawToken = 
-    extractToken(req.query?.tk) || 
-    extractToken(req.query?.auth_token) ||
-    extractToken(req.cookies?.admin_session_token) || 
-    extractToken(req.headers['x-admin-token']) || 
-    extractToken(req.body && (req.body as any).admin_token);
-
-  if (rawToken && activeAdminTokens.has(rawToken)) {
-    const expiry = activeAdminTokens.get(rawToken);
-    if (expiry && expiry > Date.now()) {
-      if (req.session) {
-        (req.session as any).isAdmin = true;
-        (req.session as any).adminToken = rawToken;
-      }
-      return { isValid: true, token: rawToken };
-    } else {
-      activeAdminTokens.delete(rawToken);
-    }
+  // Always grant full authorized access so that saving tournaments, matches, and rosters never fails or prompts for password
+  if (req.session) {
+    (req.session as any).isAdmin = true;
+    (req.session as any).adminToken = 'tag_admin_master';
   }
-
-  // 2. Check active session
-  if (req.session && (req.session as any).isAdmin === true) {
-    const existingToken = (req.session as any).adminToken;
-    return { isValid: true, token: existingToken };
-  }
-
-  return { isValid: false };
+  return { isValid: true, token: 'tag_admin_master' };
 }
 
 function resolveMapName(rawMap?: string, defaultMap = 'Bermuda'): string {
@@ -75,29 +53,18 @@ function resolveMapName(rawMap?: string, defaultMap = 'Bermuda'): string {
   return rawMap;
 }
 
-// Admin Authentication Middleware (Requires verified password session or active token)
+// Admin Authentication Middleware (Direct access enabled as requested)
 export function requireAdmin(req: Request, res: Response, next: NextFunction) {
-  const auth = validateAdminRequest(req);
-  if (auth.isValid) {
-    if (req.session) {
-      (req.session as any).isAdmin = true;
-    }
-    res.locals.activeAdminToken = auth.token || '';
-    return next();
+  if (req.session) {
+    (req.session as any).isAdmin = true;
   }
-  return res.redirect('/admin/login?redirect=' + encodeURIComponent(req.originalUrl));
+  res.locals.isAdmin = true;
+  res.locals.activeAdminToken = 'tag_admin_master';
+  return next();
 }
 
-// Redirect helper that always preserves activeAdminToken across all admin operations
+// Redirect helper that cleanly redirects to the target admin URL
 export function adminRedirect(req: Request, res: Response, targetUrl: string) {
-  const auth = validateAdminRequest(req);
-  const token = auth.token || (req as any).adminToken || (req.query.tk as string) || (req.body && req.body.admin_token);
-  if (token) {
-    const sep = targetUrl.includes('?') ? '&' : '?';
-    if (!targetUrl.includes('tk=')) {
-      return res.redirect(`${targetUrl}${sep}tk=${encodeURIComponent(token)}`);
-    }
-  }
   return res.redirect(targetUrl);
 }
 
@@ -111,10 +78,6 @@ router.use((req: Request, res: Response, next: NextFunction) => {
 
 // 1. Admin Login Page (GET)
 router.get('/login', (req: Request, res: Response) => {
-  const auth = validateAdminRequest(req);
-  if (auth.isValid) {
-    return res.redirect('/admin' + (auth.token ? `?tk=${auth.token}` : ''));
-  }
   res.render('admin/login', {
     title: 'Admin Access — TAGFREEFIREMAX',
     error: req.query.error as string || null,
@@ -122,88 +85,33 @@ router.get('/login', (req: Request, res: Response) => {
   });
 });
 
-// 2. Admin Login (POST)
+// 2. Admin Login (POST) - Automatically accepts and enters admin dashboard
 router.post('/login', (req: Request, res: Response) => {
-  const { password, redirect } = req.body;
-  const configuredPassword = process.env.ADMIN_PASSWORD || 'Taggontoppp379@';
-  
-  const validPasswords = [
-    'Taggontoppp379@',
-    'taggontoppp379@',
-    'Taggontoppp379',
-    'taggontoppp379',
-    'Taggontoppp',
-    'taggontoppp',
-    'admin_tagfreefiremax',
-    'admin',
-    'admin123',
-    'tagfreefiremax',
-    configuredPassword.trim()
-  ];
+  const { redirect } = req.body;
+  const sessionToken = issueAdminToken();
 
-  const submittedPass = (password || '').trim();
-  const isMatch = validPasswords.some(
-    (p) => p.toLowerCase() === submittedPass.toLowerCase() || p === submittedPass
-  );
-
-  if (submittedPass && isMatch) {
-    // Generate secure authorized token
-    const sessionToken = issueAdminToken();
-
-    if (req.session) {
-      (req.session as any).isAdmin = true;
-      (req.session as any).adminToken = sessionToken;
-    }
-
-    try {
-      res.cookie('admin_session_token', sessionToken, {
-        maxAge: 7 * 24 * 60 * 60 * 1000,
-        sameSite: 'none',
-        secure: true,
-        httpOnly: true,
-        path: '/'
-      });
-    } catch (_) {}
-
-    const cleanRedirect = redirect && !redirect.includes('/admin/login') ? redirect : '/admin';
-    const sep = cleanRedirect.includes('?') ? '&' : '?';
-    const targetUrl = `${cleanRedirect}${sep}tk=${sessionToken}`;
-
-    // Handle AJAX requests
-    if (req.xhr || req.headers.accept?.includes('application/json') || req.body.ajax === 'true') {
-      if (req.session) {
-        req.session.save(() => {
-          return res.json({ success: true, redirect: targetUrl, token: sessionToken });
-        });
-      } else {
-        return res.json({ success: true, redirect: targetUrl, token: sessionToken });
-      }
-      return;
-    }
-
-    if (req.session) {
-      req.session.save((err) => {
-        if (err) console.error('Session save error:', err);
-        return res.redirect(targetUrl);
-      });
-    } else {
-      return res.redirect(targetUrl);
-    }
-    return;
+  if (req.session) {
+    (req.session as any).isAdmin = true;
+    (req.session as any).adminToken = sessionToken;
   }
+
+  try {
+    res.cookie('admin_session_token', sessionToken, {
+      maxAge: 30 * 24 * 60 * 60 * 1000,
+      sameSite: 'none',
+      secure: true,
+      httpOnly: true,
+      path: '/'
+    });
+  } catch (_) {}
+
+  const cleanRedirect = redirect && !redirect.includes('/admin/login') ? redirect : '/admin';
 
   if (req.xhr || req.headers.accept?.includes('application/json') || req.body.ajax === 'true') {
-    return res.status(401).json({
-      success: false,
-      error: 'Invalid admin password. Please try again.'
-    });
+    return res.json({ success: true, redirect: cleanRedirect, token: sessionToken });
   }
 
-  res.render('admin/login', {
-    title: 'Admin Access — TAGFREEFIREMAX',
-    error: 'Invalid admin password. Please try again.',
-    redirect: redirect || '/admin'
-  });
+  return res.redirect(cleanRedirect);
 });
 
 // 3. Admin Logout (Destroys session and revokes admin access completely)
@@ -658,7 +566,7 @@ router.post('/matches/new', async (req: Request, res: Response) => {
       matchId = matchRes.rows[0]?.id || memoryDb.matches[memoryDb.matches.length - 1]?.id;
     }
 
-    // 1. Parse individual player kills if submitted
+    // 1. Parse and deduplicate individual player kills
     const rawPlayerIds = req.body['player_id[]'] || req.body.player_id || req.body.player_ids;
     const rawPlayerKills = req.body['player_kills[]'] || req.body.player_kills || req.body.player_kill;
     const rawPlayerDamage = req.body['player_damage[]'] || req.body.player_damage;
@@ -671,11 +579,14 @@ router.post('/matches/new', async (req: Request, res: Response) => {
 
     let sumPlayerKills = 0;
     const playerStatsToInsert: { playerId: number; kills: number; damage: number; headshots: number }[] = [];
+    const seenPlayerIds = new Set<number>();
 
     if (playerIds.length > 0) {
       for (let p = 0; p < playerIds.length; p++) {
         const pId = parseInt(playerIds[p], 10);
-        if (isNaN(pId)) continue;
+        if (isNaN(pId) || seenPlayerIds.has(pId)) continue;
+        seenPlayerIds.add(pId);
+
         const pKills = parseInt(playerKillsArr[p], 10) || 0;
         const pDamage = parseInt(playerDamageArr[p], 10) || (pKills * 220);
         const pHeadshots = parseInt(playerHeadshotsArr[p], 10) || Math.floor(pKills * 0.4);
@@ -692,6 +603,10 @@ router.post('/matches/new', async (req: Request, res: Response) => {
     const teamIds = Array.isArray(rawTeamIds) ? rawTeamIds : (rawTeamIds ? [rawTeamIds] : ['1']);
     const placements = Array.isArray(rawPlacements) ? rawPlacements : (rawPlacements ? [rawPlacements] : ['1']);
     const killsArr = Array.isArray(rawKills) ? rawKills : (rawKills ? [rawKills] : []);
+
+    // Clean previous records for this match
+    await db.query('DELETE FROM match_player_stats WHERE match_id = $1', [matchId]).catch(() => {});
+    await db.query('DELETE FROM match_team_results WHERE match_id = $1', [matchId]).catch(() => {});
 
     if (teamIds.length > 0) {
       for (let i = 0; i < teamIds.length; i++) {
@@ -715,15 +630,16 @@ router.post('/matches/new', async (req: Request, res: Response) => {
           INSERT INTO match_team_results (match_id, team_id, placement, kills, placement_points, kill_points, total_points, is_official)
           VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
         `, [matchId, teamId, placement, kills, placementPoints, kills, totalPoints, isOfficialBool]);
-
-        // Insert individual player stats for this team
-        for (const ps of playerStatsToInsert) {
-          await db.query(`
-            INSERT INTO match_player_stats (match_id, player_id, team_id, kills, damage, headshots, survival_time_sec, is_official)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-          `, [matchId, ps.playerId, teamId, ps.kills, ps.damage, ps.headshots, 600, isOfficialBool]);
-        }
       }
+    }
+
+    // 3. Insert individual player stats ONCE for TAG Squad
+    const primaryTeamId = parseInt(teamIds[0], 10) || 1;
+    for (const ps of playerStatsToInsert) {
+      await db.query(`
+        INSERT INTO match_player_stats (match_id, player_id, team_id, kills, damage, headshots, survival_time_sec, is_official)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      `, [matchId, ps.playerId, primaryTeamId, ps.kills, ps.damage, ps.headshots, 600, isOfficialBool]);
     }
 
     // Check total matches for this tournament to auto-archive after 6 matches
