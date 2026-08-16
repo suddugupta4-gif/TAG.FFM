@@ -1429,4 +1429,67 @@ export class TournamentService {
     this.invalidateCache();
     return createdMatchIds;
   }
+
+  // Get All Tournaments with their full 1-6 Matches, Maps, and Player Kills for History View
+  static async getTournamentsHistoryArchive(officialOnly = false) {
+    const tournaments = await this.getAllTournaments();
+    const historyList: any[] = [];
+
+    for (const t of tournaments) {
+      const matches = await this.getFullMatchHistory({
+        tournamentId: t.id,
+        officialOnly: officialOnly ? true : undefined
+      });
+
+      // Sort matches in natural order 1..6
+      matches.sort((a, b) => a.match_number - b.match_number);
+
+      const standings = await this.getTournamentStandings(t.id, officialOnly);
+      const summary = await this.getTournamentSummary(t.id);
+
+      // Aggregate player kills & damage for this specific tournament
+      const playerStatsMap = new Map<string | number, any>();
+      matches.forEach(m => {
+        if (m.player_stats && Array.isArray(m.player_stats)) {
+          m.player_stats.forEach((ps: any) => {
+            const key = ps.player_id || ps.in_game_name;
+            if (!playerStatsMap.has(key)) {
+              playerStatsMap.set(key, {
+                player_id: ps.player_id,
+                player_name: ps.player_name || ps.in_game_name,
+                in_game_name: ps.in_game_name,
+                avatar_url: ps.avatar_url,
+                role: ps.role || 'Rusher',
+                total_kills: 0,
+                total_damage: 0,
+                matches_count: 0
+              });
+            }
+            const pEntry = playerStatsMap.get(key);
+            pEntry.total_kills += Number(ps.kills || 0);
+            pEntry.total_damage += Number(ps.damage || 0);
+            pEntry.matches_count += 1;
+          });
+        }
+      });
+
+      const tournamentPlayers = Array.from(playerStatsMap.values()).map(p => ({
+        ...p,
+        avg_kills: p.matches_count > 0 ? (p.total_kills / p.matches_count).toFixed(1) : '0.0'
+      })).sort((a, b) => b.total_kills - a.total_kills);
+
+      historyList.push({
+        tournament: t,
+        matches,
+        standings,
+        summary,
+        tournamentPlayers,
+        totalMatchesCount: matches.length,
+        champion: standings[0] || null,
+        tagStanding: standings.find(s => s.team_tag === 'TAG' || (s.team_name || '').includes('TAG')) || null
+      });
+    }
+
+    return historyList;
+  }
 }

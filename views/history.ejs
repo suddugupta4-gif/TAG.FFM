@@ -6,24 +6,24 @@
   <%- include('partials/flash') %>
 
   <!-- History Page Header -->
-  <div class="glass-panel p-6 sm:p-8 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+  <div class="glass-panel bg-black/80 backdrop-blur-xl p-6 sm:p-8 rounded-3xl border border-white/15 shadow-2xl flex flex-col lg:flex-row lg:items-center justify-between gap-6">
     <div>
       <div class="flex items-center gap-2 mb-2">
         <span class="badge-official flex items-center gap-1">
           <svg class="w-3.5 h-3.5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-          MATCHES 1–6 & MAP ARCHIVE
+          SAVED TOURNAMENTS & MATCHES 1–6
         </span>
         <% if (officialOnly) { %>
           <span class="badge-official text-[10px]">OFFICIAL ONLY</span>
         <% } else { %>
-          <span class="badge-unofficial text-[10px]">ALL MATCHES</span>
+          <span class="badge-unofficial text-[10px]">ALL MATCHES (LIVE + OFFICIAL)</span>
         <% } %>
       </div>
       <h1 class="font-display text-4xl sm:text-5xl font-bold text-white tracking-wide">
-        Tournament History (Matches 1–6)
+        Tournament History
       </h1>
       <p class="text-slate-400 text-sm mt-1 max-w-2xl">
-        Match-by-match ledger for matches 1 to 6 featuring individual player kill MVPs and map performance analysis.
+        Every saved tournament with all 6 matches, map locations, individual squad player kills, and match MVPs automatically archived.
       </p>
     </div>
 
@@ -32,7 +32,7 @@
       <% if (isAdmin) { %>
         <a href="<%= adminHref('/admin/tournaments') %>" class="btn-fire text-xs py-2.5 px-4 flex items-center gap-2">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-          Manage Matches
+          Manage Tournaments & Matches
         </a>
       <% } %>
       <a href="/analysis" class="btn-glass text-xs py-2.5 px-4 flex items-center gap-2">
@@ -42,308 +42,427 @@
     </div>
   </div>
 
-  <!-- Filters Bar & Quick Match 1-6 Jump -->
-  <div class="glass-panel p-5 space-y-4">
-    <form method="GET" action="/history" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 items-end">
+  <!-- Interactive Tournament Selector Tabs -->
+  <div class="glass-panel bg-black/75 backdrop-blur-xl p-5 rounded-2xl border border-white/10 space-y-4">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/10 pb-3">
+      <span class="text-xs font-mono text-slate-300 font-bold uppercase tracking-wider flex items-center gap-2">
+        <span class="w-2 h-2 rounded-full bg-orange-500 animate-pulse"></span>
+        Select Tournament to View Matches (1–6) & Player Kills
+      </span>
       
-      <!-- Tournament Filter -->
-      <div>
-        <label class="block text-xs font-mono text-slate-400 mb-1">Tournament</label>
-        <select name="tournament_id" class="form-input text-xs py-2">
-          <option value="">All Tournaments (<%= allTournaments.length %>)</option>
-          <% allTournaments.forEach(t => { %>
-            <option value="<%= t.id %>" <%= selectedTournamentId === t.id ? 'selected' : '' %>>
-              <%= t.name %> <%= t.is_current ? '⭐ (Current)' : '' %>
-            </option>
-          <% }); %>
-        </select>
-      </div>
-
-      <!-- Map Filter -->
-      <div>
-        <label class="block text-xs font-mono text-slate-400 mb-1">Map Selection</label>
-        <select name="map" class="form-input text-xs py-2">
-          <option value="all" <%= selectedMap === 'all' ? 'selected' : '' %>>All Maps</option>
-          <option value="Bermuda" <%= selectedMap === 'Bermuda' ? 'selected' : '' %>>Bermuda</option>
-          <option value="Purgatory" <%= selectedMap === 'Purgatory' ? 'selected' : '' %>>Purgatory</option>
-          <option value="Kalahari" <%= selectedMap === 'Kalahari' ? 'selected' : '' %>>Kalahari</option>
-          <option value="Alpine" <%= selectedMap === 'Alpine' ? 'selected' : '' %>>Alpine</option>
-          <option value="Nexterra" <%= selectedMap === 'Nexterra' ? 'selected' : '' %>>Nexterra</option>
-        </select>
-      </div>
-
-      <!-- Match Number Filter (1–6) -->
-      <div>
-        <label class="block text-xs font-mono text-slate-400 mb-1">Match # (1–6)</label>
-        <select name="match_number" class="form-input text-xs py-2">
-          <option value="">All Matches (1–6)</option>
-          <% [1, 2, 3, 4, 5, 6].forEach(num => { %>
-            <option value="<%= num %>" <%= selectedMatchNumber === num ? 'selected' : '' %>>Match #<%= num %></option>
-          <% }); %>
-        </select>
-      </div>
-
-      <!-- Mode Filter -->
-      <div>
-        <label class="block text-xs font-mono text-slate-400 mb-1">Status</label>
-        <select name="filter" class="form-input text-xs py-2">
-          <option value="all" <%= !officialOnly ? 'selected' : '' %>>All Matches</option>
-          <option value="official" <%= officialOnly ? 'selected' : '' %>>Official Only</option>
-        </select>
-      </div>
-
-      <!-- Buttons -->
+      <!-- Official vs All Toggle -->
       <div class="flex items-center gap-2">
-        <button type="submit" class="btn-fire text-xs py-2 px-4 flex-1 justify-center">
-          Filter
-        </button>
-        <a href="/history" class="btn-glass text-xs py-2 px-3 text-slate-400 hover:text-white" title="Reset Filters">
-          Reset
+        <a href="/history<%= selectedTournamentId ? '?tournament_id=' + selectedTournamentId : '' %>" 
+           class="px-3 py-1 rounded-lg text-xs font-mono transition-all <%= !officialOnly ? 'bg-orange-500 text-white font-bold' : 'bg-white/5 text-slate-400 hover:text-white' %>">
+          All Matches
+        </a>
+        <a href="/history?filter=official<%= selectedTournamentId ? '&tournament_id=' + selectedTournamentId : '' %>" 
+           class="px-3 py-1 rounded-lg text-xs font-mono transition-all <%= officialOnly ? 'bg-emerald-500 text-white font-bold' : 'bg-white/5 text-slate-400 hover:text-white' %>">
+          Official Only
         </a>
       </div>
-    </form>
+    </div>
 
-    <!-- Quick Match 1-6 Pills -->
-    <div class="flex flex-wrap items-center gap-2 pt-2 border-t border-white/5">
-      <span class="text-xs font-mono text-slate-400 mr-1">Quick Select:</span>
-      <a href="/history<%= selectedTournamentId ? '?tournament_id=' + selectedTournamentId : '' %>" 
-         class="px-3 py-1 rounded-lg text-xs font-mono <%= !selectedMatchNumber ? 'bg-orange-500 text-white font-bold' : 'bg-white/5 text-slate-300 hover:bg-white/10' %>">
-        All Matches
+    <!-- Tournament Pills / Tabs -->
+    <div class="flex flex-wrap items-center gap-2">
+      <a href="/history<%= officialOnly ? '?filter=official' : '' %>" 
+         class="px-4 py-2 rounded-xl text-xs font-mono font-bold transition-all flex items-center gap-1.5 <%= !selectedTournamentId ? 'bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-lg shadow-orange-950/50' : 'bg-white/5 text-slate-300 hover:bg-white/10 border border-white/10' %>">
+        <span>🏆 All Saved Tournaments</span>
+        <span class="px-1.5 py-0.5 rounded bg-black/40 text-[10px]"><%= tournamentsHistory.length %></span>
       </a>
-      <% [1, 2, 3, 4, 5, 6].forEach(num => { %>
-        <a href="/history?match_number=<%= num %><%= selectedTournamentId ? '&tournament_id=' + selectedTournamentId : '' %><%= selectedMap !== 'all' ? '&map=' + selectedMap : '' %><%= officialOnly ? '&filter=official' : '' %>" 
-           class="px-3 py-1 rounded-lg text-xs font-mono transition-all <%= selectedMatchNumber === num ? 'bg-orange-500 text-white font-bold shadow-md shadow-orange-500/30' : 'bg-white/5 text-slate-300 hover:bg-white/10' %>">
-          Match #<%= num %>
+
+      <% tournamentsHistory.forEach(th => { 
+        const isSelected = (selectedTournamentId === th.tournament.id);
+      %>
+        <a href="/history?tournament_id=<%= th.tournament.id %><%= officialOnly ? '&filter=official' : '' %>" 
+           class="px-4 py-2 rounded-xl text-xs font-mono font-bold transition-all flex items-center gap-2 <%= isSelected ? 'bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-lg shadow-orange-950/50' : 'bg-white/5 text-slate-300 hover:bg-white/10 border border-white/10' %>">
+          <span><%= th.tournament.name %></span>
+          <% if (th.tournament.is_current) { %>
+            <span class="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[10px]">Current</span>
+          <% } %>
+          <span class="px-1.5 py-0.5 rounded bg-black/40 text-[10px] text-amber-300"><%= th.totalMatchesCount %> M</span>
         </a>
       <% }); %>
     </div>
   </div>
 
   <!-- ========================================================================= -->
-  <!-- 1. MATCHES 1 TO 6 DETAILED LEDGER WITH PLAYER KILLS & MVP                 -->
+  <!-- TOURNAMENTS WITH MATCHES 1 TO 6 & INDIVIDUAL PLAYER STATS                 -->
   <!-- ========================================================================= -->
-  <section class="space-y-4">
-    <div class="flex items-center justify-between">
-      <div class="flex items-center gap-2">
-        <h2 class="font-display text-2xl font-bold text-white tracking-wide">Match Records (1–6)</h2>
-        <span class="px-2.5 py-0.5 rounded-full text-xs font-mono bg-white/10 text-slate-300">
-          <%= historyMatches.length %> Matches Logged
-        </span>
+  <% 
+    const displayedTournaments = selectedTournamentId 
+      ? tournamentsHistory.filter(th => th.tournament.id === selectedTournamentId)
+      : tournamentsHistory;
+
+    if (displayedTournaments.length === 0) { 
+  %>
+    <div class="glass-panel bg-black/80 backdrop-blur-xl p-12 text-center space-y-4 rounded-3xl border border-white/10">
+      <div class="w-14 h-14 rounded-2xl bg-orange-500/20 text-orange-400 mx-auto flex items-center justify-center border border-orange-500/30">
+        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
       </div>
+      <h2 class="font-display text-2xl font-bold text-white">No tournaments saved in history yet</h2>
+      <p class="text-xs text-slate-400 max-w-md mx-auto">
+        When tournaments and their 6 matches are logged and saved in Admin, they will automatically appear here grouped by tournament name.
+      </p>
+      <% if (isAdmin) { %>
+        <a href="<%= adminHref('/admin/tournaments/new') %>" class="btn-fire text-xs py-2 px-4 inline-block">Create & Save Tournament</a>
+      <% } %>
     </div>
+  <% } else { %>
 
-    <% if (historyMatches.length === 0) { %>
-      <div class="glass-panel p-12 text-center space-y-3">
-        <div class="w-12 h-12 rounded-xl bg-orange-500/20 text-orange-400 mx-auto flex items-center justify-center">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-        </div>
-        <h3 class="font-display text-xl font-bold text-white">No matches found for this filter</h3>
-        <p class="text-xs text-slate-400 max-w-sm mx-auto">Try clearing your match or map filters.</p>
-        <a href="/history" class="btn-fire text-xs py-2 px-4 inline-block mt-2">View All Matches</a>
-      </div>
-    <% } else { %>
-      <div class="space-y-4">
-        <% historyMatches.forEach((m) => { %>
-          <div class="glass-card p-5 sm:p-6 border-l-4 <%= m.is_official ? 'border-l-emerald-500' : 'border-l-amber-500' %> transition-all">
+    <div class="space-y-10">
+      <% displayedTournaments.forEach((th, tIdx) => { 
+        const t = th.tournament;
+        const matchesList = th.matches;
+        const squadPlayers = th.tournamentPlayers;
+        const standingsList = th.standings;
+      %>
+        <!-- SINGLE UNIFIED BLACK BLUR GLASS TOURNAMENT BOX -->
+        <section class="glass-panel bg-black/85 backdrop-blur-2xl p-6 sm:p-8 md:p-10 rounded-3xl border border-white/15 shadow-2xl space-y-8 relative overflow-hidden transition-all duration-300">
+          
+          <!-- Banner Backdrop Overlay -->
+          <% if (t.banner_url) { %>
+            <div class="absolute inset-0 z-0 opacity-20 bg-cover bg-center" style="background-image: url('<%= t.banner_url %>'); filter: blur(2px);"></div>
+            <div class="absolute inset-0 bg-gradient-to-b from-[#050508]/80 via-[#050508]/95 to-[#050508] z-0"></div>
+          <% } %>
+
+          <div class="relative z-10 space-y-6">
             
-            <!-- Match Header -->
-            <div class="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 pb-4 mb-4">
+            <!-- Tournament Card Header -->
+            <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-white/10 pb-6">
+              <div class="space-y-2">
+                <div class="flex flex-wrap items-center gap-2">
+                  <% if (t.is_current) { %>
+                    <span class="badge-live">
+                      <span class="live-dot"></span>
+                      CURRENT TOURNAMENT
+                    </span>
+                  <% } else { %>
+                    <span class="badge-official">ARCHIVED TOURNAMENT</span>
+                  <% } %>
+                  <span class="px-2.5 py-0.5 rounded-md text-xs font-mono bg-white/10 text-gray-200 border border-white/15">
+                    <%= t.game_mode || 'Battle Royale Squad' %>
+                  </span>
+                  <span class="px-2.5 py-0.5 rounded-md text-xs font-mono bg-orange-500/20 text-orange-300 border border-orange-500/30 font-bold">
+                    <%= matchesList.length %> Matches Logged (1–6)
+                  </span>
+                </div>
+
+                <h2 class="font-display text-3xl sm:text-4xl md:text-5xl font-bold text-white tracking-wide">
+                  <%= t.name %>
+                </h2>
+                <p class="text-slate-300 text-sm max-w-3xl leading-relaxed">
+                  <%= t.description || 'Premier Free Fire MAX tournament ledger. All match maps, scores, and player frags recorded.' %>
+                </p>
+              </div>
+
+              <!-- Quick Tournament Metrics Summary Pills -->
               <div class="flex flex-wrap items-center gap-3">
-                <span class="font-display text-2xl font-bold text-white">MATCH #<%= m.match_number %></span>
-                
-                <!-- Map Badge -->
-                <span class="px-3 py-1 rounded-md bg-white/5 border border-white/10 text-xs font-mono text-slate-200 flex items-center gap-1.5">
-                  <span class="w-2 h-2 rounded-full bg-orange-500"></span>
-                  Map: <strong class="text-orange-400"><%= m.map_name %></strong>
-                </span>
-
-                <!-- Tournament Pill -->
-                <a href="/tournament/<%= m.tournament_id %>" class="px-2.5 py-1 rounded-md bg-white/5 hover:bg-white/10 text-xs font-mono text-slate-300 hover:text-white transition-colors">
-                  🏆 <%= m.tournament_name %>
-                </a>
-              </div>
-
-              <div class="flex items-center gap-3">
-                <% if (m.is_official) { %>
-                  <span class="badge-official">OFFICIAL MATCH</span>
-                <% } else { %>
-                  <span class="badge-unofficial">LOCAL / LIVE</span>
-                <% } %>
-                <span class="text-xs font-mono text-slate-500">
-                  <%= new Date(m.played_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) %>
-                </span>
-              </div>
-            </div>
-
-            <!-- Key Match Highlights & Player MVP -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
-              
-              <!-- 1. Booyah Champion -->
-              <% if (m.booyahTeam) { %>
-                <div class="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-between">
-                  <div class="flex items-center gap-2.5">
-                    <div class="w-9 h-9 rounded-lg bg-amber-500/20 flex items-center justify-center text-amber-400 font-bold font-mono text-sm">
+                <% if (th.champion) { %>
+                  <div class="p-3 rounded-2xl bg-amber-500/10 border border-amber-500/25 flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-amber-500/20 flex items-center justify-center text-amber-400 font-bold text-lg">
                       👑
                     </div>
                     <div>
-                      <span class="text-[10px] font-mono uppercase text-amber-400/80 font-bold block">Match Champion</span>
-                      <span class="font-bold text-sm text-white"><%= m.booyahTeam.team_name %></span>
+                      <span class="text-[10px] font-mono text-amber-400/80 uppercase font-bold block">Tournament Leader</span>
+                      <span class="font-bold text-sm text-white"><%= th.champion.team_name %></span>
+                      <span class="text-xs font-mono text-amber-400 block"><%= th.champion.total_points %> PTS (<%= th.champion.booyahs %> Booyah)</span>
                     </div>
                   </div>
-                  <div class="text-right font-mono">
-                    <span class="text-xs text-amber-400 font-bold block"><%= m.booyahTeam.kills %> Kills</span>
-                    <span class="text-[10px] text-slate-400"><%= m.booyahTeam.total_points %> Points</span>
-                  </div>
-                </div>
-              <% } %>
+                <% } %>
 
-              <!-- 2. TAG Squad Performance -->
-              <% if (m.tagResult) { %>
-                <div class="p-3.5 rounded-xl bg-orange-500/10 border border-orange-500/20 flex items-center justify-between">
-                  <div class="flex items-center gap-2.5">
-                    <div class="w-9 h-9 rounded-lg bg-orange-500/20 flex items-center justify-center text-orange-400 font-bold font-mono text-xs">
+                <% if (th.tagStanding) { %>
+                  <div class="p-3 rounded-2xl bg-orange-500/10 border border-orange-500/25 flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-orange-500/20 flex items-center justify-center text-orange-400 font-bold font-mono text-sm">
                       TAG
                     </div>
                     <div>
-                      <span class="text-[10px] font-mono uppercase text-orange-400/80 font-bold block">TAG Squad</span>
-                      <span class="font-bold text-sm text-white">Placement #<%= m.tagResult.placement %></span>
+                      <span class="text-[10px] font-mono text-orange-400/80 uppercase font-bold block">TAG Squad</span>
+                      <span class="font-bold text-sm text-white">#<%= th.tagStanding.rank || 1 %> Standing</span>
+                      <span class="text-xs font-mono text-orange-400 block"><%= th.tagStanding.total_points %> PTS (<%= th.tagStanding.total_kills || 0 %> Kills)</span>
                     </div>
                   </div>
-                  <div class="text-right font-mono">
-                    <span class="text-xs text-orange-400 font-bold block"><%= m.tagResult.kills %> Kills</span>
-                    <span class="text-[10px] text-slate-400"><%= m.tagResult.total_points %> Points</span>
-                  </div>
-                </div>
-              <% } %>
-
-              <!-- 3. Match Player MVP (Top Fragger in this match) -->
-              <% if (m.topPlayer) { %>
-                <div class="p-3.5 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center justify-between">
-                  <div class="flex items-center gap-2.5">
-                    <div class="w-9 h-9 rounded-lg bg-red-500/20 flex items-center justify-center text-red-400 font-bold font-mono text-xs">
-                      ⚔️
-                    </div>
-                    <div>
-                      <span class="text-[10px] font-mono uppercase text-red-400/80 font-bold block">Match Player MVP</span>
-                      <span class="font-bold text-sm text-white"><%= m.topPlayer.in_game_name || m.topPlayer.player_name %></span>
-                    </div>
-                  </div>
-                  <div class="text-right font-mono">
-                    <span class="text-xs text-red-400 font-bold block"><%= m.topPlayer.kills %> Kills</span>
-                    <span class="text-[10px] text-slate-400"><%= m.topPlayer.damage || 0 %> DMG</span>
-                  </div>
-                </div>
-              <% } else if (m.topFraggerTeam) { %>
-                <div class="p-3.5 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center justify-between">
-                  <div class="flex items-center gap-2.5">
-                    <div class="w-9 h-9 rounded-lg bg-red-500/20 flex items-center justify-center text-red-400 font-bold font-mono text-xs">
-                      ⚔️
-                    </div>
-                    <div>
-                      <span class="text-[10px] font-mono uppercase text-red-400/80 font-bold block">Top Fragger Squad</span>
-                      <span class="font-bold text-sm text-white"><%= m.topFraggerTeam.team_name %></span>
-                    </div>
-                  </div>
-                  <div class="text-right font-mono">
-                    <span class="text-xs text-red-400 font-bold block"><%= m.topFraggerTeam.kills %> Kills</span>
-                    <span class="text-[10px] text-slate-400">#<%= m.topFraggerTeam.placement %> Place</span>
-                  </div>
-                </div>
-              <% } %>
-
+                <% } %>
+              </div>
             </div>
 
-            <!-- Squad Individual Players Kill breakdown if logged -->
-            <% if (m.player_stats && m.player_stats.length > 0) { %>
-              <div class="mb-4 p-3 rounded-xl bg-black/40 border border-white/5">
-                <div class="flex items-center justify-between mb-2">
-                  <span class="text-xs font-mono uppercase text-slate-400 font-bold flex items-center gap-1.5">
-                    <span class="w-1.5 h-1.5 rounded-full bg-orange-400"></span>
-                    Individual Player Kills (Match #<%= m.match_number %>)
-                  </span>
-                  <span class="text-[11px] font-mono text-orange-400 font-bold">
-                    Sum: <%= m.player_stats.reduce((acc, p) => acc + Number(p.kills || 0), 0) %> Kills
-                  </span>
+            <!-- ========================================================================= -->
+            <!-- 1. MATCHES 1 TO 6 LEDGER CARDS WITH MAPS & PLAYER STATS                   -->
+            <!-- ========================================================================= -->
+            <div class="space-y-4">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                  <span class="w-2.5 h-2.5 rounded-full bg-[#ff4e00]"></span>
+                  <h3 class="font-display text-2xl font-bold text-white tracking-wide">
+                    Matches 1–6 Ledger & Map Telemetry
+                  </h3>
                 </div>
-                <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
-                  <% m.player_stats.forEach((ps, pIdx) => { %>
-                    <div class="p-2 rounded-lg bg-white/5 border border-white/5 flex items-center justify-between">
-                      <div class="truncate">
-                        <span class="text-xs font-bold text-white block truncate"><%= ps.in_game_name || ps.player_name %></span>
-                        <span class="text-[10px] text-slate-400 font-mono"><%= ps.damage || 0 %> DMG</span>
+                <span class="text-xs font-mono text-slate-400">
+                  Total <%= matchesList.length %> / 6 Matches Played
+                </span>
+              </div>
+
+              <% if (matchesList.length === 0) { %>
+                <div class="p-6 rounded-2xl bg-black/40 border border-white/5 text-center text-slate-400 font-mono text-xs">
+                  No matches logged yet for <%= t.name %>. Use the Admin logger to add Matches 1 through 6.
+                </div>
+              <% } else { %>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                  <% matchesList.forEach((m) => { %>
+                    <div class="glass-card bg-black/60 backdrop-blur-md p-5 rounded-2xl border border-white/10 hover:border-orange-500/40 transition-all space-y-4">
+                      
+                      <!-- Match Header -->
+                      <div class="flex items-center justify-between border-b border-white/10 pb-3">
+                        <div class="flex items-center gap-3">
+                          <span class="font-display text-xl sm:text-2xl font-bold text-white">
+                            MATCH #<%= m.match_number %>
+                          </span>
+                          <span class="px-2.5 py-1 rounded-lg bg-orange-500/15 border border-orange-500/30 font-mono text-xs text-orange-300 font-bold flex items-center gap-1.5">
+                            <span class="w-1.5 h-1.5 rounded-full bg-orange-400"></span>
+                            Map: <%= m.map_name %>
+                          </span>
+                        </div>
+
+                        <div>
+                          <% if (m.is_official) { %>
+                            <span class="badge-official text-[10px]">OFFICIAL</span>
+                          <% } else { %>
+                            <span class="badge-unofficial text-[10px]">LOCAL</span>
+                          <% } %>
+                        </div>
                       </div>
-                      <div class="text-right font-mono shrink-0 pl-1.5">
-                        <span class="text-xs font-bold text-orange-400"><%= ps.kills %> K</span>
-                        <% if (pIdx === 0 && Number(ps.kills) > 0) { %>
-                          <span class="text-[9px] block text-amber-400 font-bold">MVP</span>
-                        <% } %>
+
+                      <!-- Match Key Highlights (Champion, TAG & MVP) -->
+                      <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-xs font-mono">
+                        
+                        <!-- 1. Booyah Winner -->
+                        <div class="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20 flex flex-col justify-between">
+                          <span class="text-[9px] text-amber-400 uppercase font-bold block">👑 Champion</span>
+                          <span class="font-bold text-white truncate text-xs"><%= m.booyahTeam ? m.booyahTeam.team_name : 'N/A' %></span>
+                          <span class="text-[10px] text-amber-400 font-bold"><%= m.booyahTeam ? m.booyahTeam.kills + ' Kills' : '' %></span>
+                        </div>
+
+                        <!-- 2. TAG Result -->
+                        <div class="p-2.5 rounded-xl bg-orange-500/10 border border-orange-500/20 flex flex-col justify-between">
+                          <span class="text-[9px] text-orange-400 uppercase font-bold block">TAG Squad</span>
+                          <span class="font-bold text-white text-xs">#<%= m.tagResult ? m.tagResult.placement : 'N/A' %> Place</span>
+                          <span class="text-[10px] text-orange-400 font-bold"><%= m.tagResult ? m.tagResult.kills + ' Kills (' + m.tagResult.total_points + ' PTS)' : '0 Kills' %></span>
+                        </div>
+
+                        <!-- 3. Player MVP -->
+                        <div class="p-2.5 rounded-xl bg-red-500/10 border border-red-500/20 flex flex-col justify-between">
+                          <span class="text-[9px] text-red-400 uppercase font-bold block">⚔️ Match MVP</span>
+                          <span class="font-bold text-white truncate text-xs"><%= m.topPlayer ? (m.topPlayer.in_game_name || m.topPlayer.player_name) : (m.topFraggerTeam ? m.topFraggerTeam.team_name : 'N/A') %></span>
+                          <span class="text-[10px] text-red-400 font-bold"><%= m.topPlayer ? m.topPlayer.kills + ' Kills' : (m.topFraggerTeam ? m.topFraggerTeam.kills + ' Kills' : '') %></span>
+                        </div>
+
                       </div>
+
+                      <!-- Individual Squad Player Kills Pills (Match Telemetry) -->
+                      <% if (m.player_stats && m.player_stats.length > 0) { %>
+                        <div class="p-3 rounded-xl bg-black/50 border border-white/5 space-y-2">
+                          <div class="flex items-center justify-between text-[11px] font-mono">
+                            <span class="text-slate-400 font-bold uppercase flex items-center gap-1.5">
+                              <span class="w-1.5 h-1.5 rounded-full bg-orange-400"></span>
+                              Squad Player Kills (Match #<%= m.match_number %>)
+                            </span>
+                            <span class="text-orange-400 font-bold">
+                              Sum: <%= m.player_stats.reduce((acc, ps) => acc + Number(ps.kills || 0), 0) %> Kills
+                            </span>
+                          </div>
+
+                          <div class="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+                            <% m.player_stats.forEach((ps, psIdx) => { %>
+                              <div class="p-1.5 rounded-lg bg-white/5 border border-white/5 flex items-center justify-between text-[11px] font-mono">
+                                <span class="text-white font-bold truncate pr-1"><%= ps.in_game_name || ps.player_name %></span>
+                                <span class="text-orange-400 font-bold shrink-0"><%= ps.kills %>K</span>
+                              </div>
+                            <% }); %>
+                          </div>
+                        </div>
+                      <% } %>
+
+                      <!-- 12-Squad Standings Dropdown Toggle -->
+                      <% if (m.results && m.results.length > 0) { %>
+                        <details class="group">
+                          <summary class="cursor-pointer text-xs font-mono text-slate-400 hover:text-orange-400 flex items-center gap-1.5 select-none pt-1">
+                            <svg class="w-3.5 h-3.5 text-orange-400 group-open:rotate-90 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                            <span>View 12-Squad Match Scoreboard</span>
+                          </summary>
+
+                          <div class="mt-2.5 overflow-x-auto rounded-xl border border-white/5 bg-black/40">
+                            <table class="w-full text-left text-[11px] font-mono">
+                              <thead>
+                                <tr class="bg-white/5 text-slate-400 border-b border-white/5">
+                                  <th class="py-1.5 px-2.5">#</th>
+                                  <th class="py-1.5 px-2.5">Team</th>
+                                  <th class="py-1.5 px-2 text-center">Kills</th>
+                                  <th class="py-1.5 px-2 text-center">Place PTS</th>
+                                  <th class="py-1.5 px-2.5 text-right">Total PTS</th>
+                                </tr>
+                              </thead>
+                              <tbody class="divide-y divide-white/5">
+                                <% m.results.forEach(res => { 
+                                  const isTag = (res.team_tag === 'TAG' || (res.team_name || '').includes('TAG'));
+                                %>
+                                  <tr class="<%= res.placement === 1 ? 'bg-amber-500/10 text-amber-300 font-bold' : (isTag ? 'bg-orange-500/10 text-orange-300 font-bold' : 'text-slate-300 hover:bg-white/5') %>">
+                                    <td class="py-1.5 px-2.5"><%= res.placement === 1 ? '👑 #1' : '#' + res.placement %></td>
+                                    <td class="py-1.5 px-2.5 font-bold truncate max-w-[120px]"><%= res.team_name %></td>
+                                    <td class="py-1.5 px-2 text-center text-red-400"><%= res.kills %></td>
+                                    <td class="py-1.5 px-2 text-center text-slate-400"><%= res.placement_points %></td>
+                                    <td class="py-1.5 px-2.5 text-right font-bold text-white"><%= res.total_points %></td>
+                                  </tr>
+                                <% }); %>
+                              </tbody>
+                            </table>
+                          </div>
+                        </details>
+                      <% } %>
+
                     </div>
                   <% }); %>
                 </div>
-              </div>
-            <% } %>
+              <% } %>
+            </div>
 
-            <!-- Expandable Detailed 12-Squad Match Scoreboard -->
-            <% if (m.results && m.results.length > 0) { %>
-              <details class="group">
-                <summary class="cursor-pointer select-none text-xs font-mono text-slate-400 hover:text-orange-400 flex items-center gap-1.5 py-1">
-                  <svg class="w-4 h-4 group-open:rotate-90 transition-transform text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-                  <span>View Full 12-Squad Match Standings</span>
-                </summary>
-                
-                <div class="mt-3 overflow-x-auto rounded-xl border border-white/5 bg-black/40">
+            <!-- ========================================================================= -->
+            <!-- 2. SQUAD CUMULATIVE PLAYER KILLS IN THIS TOURNAMENT                       -->
+            <!-- ========================================================================= -->
+            <% if (squadPlayers && squadPlayers.length > 0) { %>
+              <div class="space-y-3 pt-4 border-t border-white/10">
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+                    <h3 class="font-display text-xl sm:text-2xl font-bold text-white tracking-wide">
+                      <%= t.name %> — Squad Player Kills & Frags
+                    </h3>
+                  </div>
+                  <span class="text-xs font-mono text-amber-400 font-bold">
+                    Cumulative Tournament Stats
+                  </span>
+                </div>
+
+                <div class="overflow-x-auto rounded-2xl border border-white/10 bg-black/50">
                   <table class="w-full text-left text-xs font-mono">
                     <thead>
-                      <tr class="border-b border-white/10 bg-white/5 text-slate-400">
-                        <th class="py-2.5 px-3">Rank</th>
-                        <th class="py-2.5 px-3">Squad / Team</th>
-                        <th class="py-2.5 px-3 text-center">Kills</th>
-                        <th class="py-2.5 px-3 text-center">Place PTS</th>
-                        <th class="py-2.5 px-3 text-right">Total PTS</th>
+                      <tr class="bg-white/5 border-b border-white/10 text-slate-400 text-[11px] uppercase">
+                        <th class="py-2.5 px-4 text-center w-12">#</th>
+                        <th class="py-2.5 px-4">Squad Player</th>
+                        <th class="py-2.5 px-3">Role</th>
+                        <th class="py-2.5 px-3 text-center">Matches</th>
+                        <th class="py-2.5 px-3 text-center text-orange-400 font-bold">Total Kills</th>
+                        <th class="py-2.5 px-3 text-center text-amber-400">Avg Kills</th>
+                        <th class="py-2.5 px-4 text-right">Total Damage</th>
                       </tr>
                     </thead>
                     <tbody class="divide-y divide-white/5">
-                      <% m.results.forEach(res => { %>
-                        <tr class="<%= res.placement === 1 ? 'bg-amber-500/10 text-amber-300 font-bold' : (res.team_tag === 'TAG' ? 'bg-orange-500/10 text-orange-300 font-bold' : 'hover:bg-white/5 text-slate-300') %>">
-                          <td class="py-2 px-3">
-                            <% if (res.placement === 1) { %>
-                              <span class="px-2 py-0.5 rounded bg-amber-500/30 text-amber-300 font-bold">#1 BOOYAH</span>
-                            <% } else { %>
-                              <span class="text-slate-500">#<%= res.placement %></span>
-                            <% } %>
+                      <% squadPlayers.forEach((sp, spIdx) => { %>
+                        <tr class="hover:bg-white/5 transition-colors">
+                          <td class="py-3 px-4 text-center font-display text-sm font-bold <%= spIdx === 0 ? 'text-amber-400' : 'text-slate-400' %>">
+                            #<%= spIdx + 1 %>
                           </td>
-                          <td class="py-2 px-3">
-                            <div class="flex items-center gap-2">
-                              <% if (res.team_logo) { %>
-                                <img src="<%= res.team_logo %>" alt="" class="w-5 h-5 rounded-full object-cover">
+                          <td class="py-3 px-4">
+                            <div class="flex items-center gap-2.5">
+                              <% if (sp.avatar_url) { %>
+                                <img src="<%= sp.avatar_url %>" alt="" class="w-7 h-7 rounded-lg object-cover border border-white/10">
                               <% } %>
-                              <span class="font-bold <%= res.placement === 1 ? 'text-white' : '' %>"><%= res.team_name %></span>
-                              <span class="text-[10px] text-slate-500">[<%= res.team_tag %>]</span>
+                              <div>
+                                <a href="/player/<%= sp.player_id %>" class="font-bold text-white hover:text-orange-400 transition-colors">
+                                  <%= sp.in_game_name || sp.player_name %>
+                                </a>
+                                <% if (spIdx === 0 && sp.total_kills > 0) { %>
+                                  <span class="ml-1 px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 text-[9px] font-bold">MVP</span>
+                                <% } %>
+                              </div>
                             </div>
                           </td>
-                          <td class="py-2 px-3 text-center font-bold text-orange-400"><%= res.kills %></td>
-                          <td class="py-2 px-3 text-center text-slate-400"><%= res.placement_points %></td>
-                          <td class="py-2 px-3 text-right font-bold text-white"><%= res.total_points %></td>
+                          <td class="py-3 px-3 text-slate-300"><%= sp.role || 'Rusher' %></td>
+                          <td class="py-3 px-3 text-center text-slate-300"><%= sp.matches_count %></td>
+                          <td class="py-3 px-3 text-center font-display text-base font-bold text-orange-400"><%= sp.total_kills %></td>
+                          <td class="py-3 px-3 text-center text-amber-400 font-bold"><%= sp.avg_kills %></td>
+                          <td class="py-3 px-4 text-right text-slate-300 font-bold"><%= sp.total_damage.toLocaleString() %></td>
                         </tr>
                       <% }); %>
                     </tbody>
                   </table>
                 </div>
-              </details>
+              </div>
+            <% } %>
+
+            <!-- ========================================================================= -->
+            <!-- 3. TOURNAMENT STANDINGS SCOREBOARD (12 TEAMS)                             -->
+            <!-- ========================================================================= -->
+            <% if (standingsList && standingsList.length > 0) { %>
+              <div class="space-y-3 pt-4 border-t border-white/10">
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                    <h3 class="font-display text-xl sm:text-2xl font-bold text-white tracking-wide">
+                      <%= t.name %> — Tournament Standings
+                    </h3>
+                  </div>
+                  <span class="text-xs font-mono text-emerald-400 font-bold">
+                    Official 12-Squad Standings
+                  </span>
+                </div>
+
+                <div class="overflow-x-auto rounded-2xl border border-white/10 bg-black/50">
+                  <table class="w-full text-left text-xs font-mono">
+                    <thead>
+                      <tr class="bg-white/5 border-b border-white/10 text-slate-400 text-[11px] uppercase">
+                        <th class="py-2.5 px-4 text-center w-12">#</th>
+                        <th class="py-2.5 px-4">Team</th>
+                        <th class="py-2.5 px-3 text-center">Matches</th>
+                        <th class="py-2.5 px-3 text-center text-amber-400 font-bold">Booyah</th>
+                        <th class="py-2.5 px-3 text-center text-red-400">Kills</th>
+                        <th class="py-2.5 px-3 text-center text-slate-400">Place PTS</th>
+                        <th class="py-2.5 px-4 text-right text-orange-400 font-bold">Total PTS</th>
+                      </tr>
+                    </thead>
+                    <tbody class="divide-y divide-white/5">
+                      <% standingsList.forEach((st, sIdx) => { 
+                        const isTag = (st.team_tag === 'TAG' || (st.team_name || '').includes('TAG'));
+                      %>
+                        <tr class="hover:bg-white/5 transition-colors <%= isTag ? 'bg-orange-500/10 border-l-2 border-orange-500 font-bold' : '' %>">
+                          <td class="py-2.5 px-4 text-center font-display text-sm font-bold <%= sIdx === 0 ? 'text-amber-400' : 'text-slate-400' %>">
+                            #<%= sIdx + 1 %>
+                          </td>
+                          <td class="py-2.5 px-4">
+                            <div class="flex items-center gap-2">
+                              <% if (st.team_logo) { %>
+                                <img src="<%= st.team_logo %>" alt="" class="w-5 h-5 rounded-full object-cover">
+                              <% } %>
+                              <span class="font-bold <%= isTag ? 'text-orange-400' : 'text-white' %>"><%= st.team_name %></span>
+                              <span class="text-[10px] text-slate-500">[<%= st.team_tag %>]</span>
+                            </div>
+                          </td>
+                          <td class="py-2.5 px-3 text-center text-slate-300"><%= st.matches_played %></td>
+                          <td class="py-2.5 px-3 text-center text-amber-400 font-bold"><%= st.booyahs %></td>
+                          <td class="py-2.5 px-3 text-center text-red-400"><%= st.total_kills || st.kill_points %></td>
+                          <td class="py-2.5 px-3 text-center text-slate-400"><%= st.placement_points %></td>
+                          <td class="py-2.5 px-4 text-right font-display text-sm font-bold <%= isTag ? 'text-orange-400' : 'text-white' %>">
+                            <%= st.total_points %> PTS
+                          </td>
+                        </tr>
+                      <% }); %>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
             <% } %>
 
           </div>
-        <% }); %>
-      </div>
-    <% } %>
-  </section>
+        </section>
+      <% }); %>
+    </div>
+
+  <% } %>
 
   <!-- ========================================================================= -->
-  <!-- 2. MAP PERFORMANCE ANALYSIS (5 OFFICIAL FREE FIRE MAPS)                   -->
+  <!-- 5-MAP PERFORMANCE INTELLIGENCE ARCHIVE                                    -->
   <!-- ========================================================================= -->
   <% if (mapAnalysis && mapAnalysis.maps) { %>
-    <section class="space-y-4" id="map-analysis-section">
+    <section class="glass-panel bg-black/80 backdrop-blur-xl p-6 sm:p-8 rounded-3xl border border-white/10 space-y-4">
       <div class="flex items-center justify-between">
         <div>
           <div class="flex items-center gap-2">
@@ -357,7 +476,7 @@
 
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         <% mapAnalysis.maps.forEach(mapItem => { %>
-          <div class="glass-card p-4 space-y-3 relative overflow-hidden group hover:border-orange-500/40 transition-all">
+          <div class="glass-card bg-black/60 p-4 rounded-2xl border border-white/10 space-y-3 relative overflow-hidden group hover:border-orange-500/40 transition-all">
             <div class="flex items-center justify-between">
               <span class="font-display text-lg font-bold text-white group-hover:text-orange-400 transition-colors"><%= mapItem.map_name %></span>
               <span class="text-xs font-mono px-2 py-0.5 rounded bg-white/5 text-slate-300">
@@ -366,19 +485,19 @@
             </div>
 
             <div class="grid grid-cols-2 gap-2 text-xs font-mono">
-              <div class="p-2 rounded-lg bg-black/30">
+              <div class="p-2 rounded-lg bg-black/40">
                 <span class="text-[10px] text-slate-500 block">Win Rate</span>
                 <span class="font-bold text-amber-400"><%= mapItem.tag_win_rate %>%</span>
               </div>
-              <div class="p-2 rounded-lg bg-black/30">
+              <div class="p-2 rounded-lg bg-black/40">
                 <span class="text-[10px] text-slate-500 block">Booyahs</span>
                 <span class="font-bold text-emerald-400"><%= mapItem.tag_booyahs %></span>
               </div>
-              <div class="p-2 rounded-lg bg-black/30">
+              <div class="p-2 rounded-lg bg-black/40">
                 <span class="text-[10px] text-slate-500 block">TAG Kills</span>
                 <span class="font-bold text-orange-400"><%= mapItem.tag_kills %></span>
               </div>
-              <div class="p-2 rounded-lg bg-black/30">
+              <div class="p-2 rounded-lg bg-black/40">
                 <span class="text-[10px] text-slate-500 block">Avg Kills</span>
                 <span class="font-bold text-slate-200"><%= mapItem.tag_avg_kills %></span>
               </div>

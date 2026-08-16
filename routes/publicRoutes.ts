@@ -84,7 +84,7 @@ router.get('/history', async (req: Request, res: Response) => {
     const matchNumber = req.query.match_number ? parseInt(req.query.match_number as string, 10) : undefined;
     const officialOnly = req.query.filter === 'official';
 
-    const [allTournaments, historyMatches, careerSummary, mapAnalysis] = await Promise.all([
+    const [allTournaments, historyMatches, careerSummary, mapAnalysis, tournamentsHistory] = await Promise.all([
       TournamentService.getAllTournaments(),
       TournamentService.getFullMatchHistory({
         tournamentId,
@@ -93,7 +93,8 @@ router.get('/history', async (req: Request, res: Response) => {
         officialOnly
       }),
       TournamentService.getCareerSummary(),
-      TournamentService.getMapAnalysis(officialOnly, tournamentId)
+      TournamentService.getMapAnalysis(officialOnly, tournamentId),
+      TournamentService.getTournamentsHistoryArchive(officialOnly)
     ]);
 
     const activeTournament = tournamentId ? allTournaments.find(t => t.id === tournamentId) || null : null;
@@ -101,6 +102,7 @@ router.get('/history', async (req: Request, res: Response) => {
     res.render('history', {
       title: 'Tournament Match History (1–6) & Map Ledger — TAGFREEFIREMAX',
       allTournaments,
+      tournamentsHistory,
       historyMatches,
       careerSummary,
       mapAnalysis,

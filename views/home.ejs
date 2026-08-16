@@ -1,146 +1,102 @@
 <%- include('partials/header') %>
 <%- include('partials/navbar') %>
 
-<main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
+<main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-8">
 
   <%- include('partials/flash') %>
 
   <!-- ========================================================================= -->
-  <!-- 1. TOP OF EVERYTHING: GLOBAL OFFICIAL / UNOFFICIAL MODE SELECTOR           -->
+  <!-- 1. TOP OF EVERYTHING: GLOBAL DATA MODE SELECTOR                           -->
   <!-- ========================================================================= -->
-  <section class="w-full relative z-20" id="global-mode-selector-section">
-    <div class="glass-panel p-3.5 sm:p-4 border-white/15 bg-[#0a0c14]/90 backdrop-blur-2xl shadow-2xl rounded-2xl">
-      <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
-        <!-- Label & Context -->
-        <div class="flex items-center gap-3">
-          <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-[#ff4e00]/20 to-amber-500/10 border border-[#ff4e00]/30 flex items-center justify-center text-[#ff4e00] shadow-lg shrink-0">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/>
-            </svg>
-          </div>
-          <div>
-            <div class="flex items-center gap-2">
-              <span class="text-xs font-mono font-bold text-gray-400 uppercase tracking-wider">GLOBAL DATA FILTER</span>
-              <span id="active-mode-indicator" class="badge-official text-[10px] py-0.5">OFFICIAL MODE</span>
-            </div>
-            <h2 class="text-sm sm:text-base font-bold text-white tracking-tight">Select Tournament Type to Filter All Data</h2>
-          </div>
+  <section class="glass-panel p-4 sm:p-5 border-[#ff4e00]/30 shadow-2xl relative overflow-hidden bg-black/60 backdrop-blur-xl rounded-2xl">
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      
+      <!-- Selector Label -->
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-[#ff4e00] to-amber-500 flex items-center justify-center text-white shadow-lg shadow-orange-950/50 shrink-0">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/>
+          </svg>
         </div>
-
-        <!-- 3-Way Smooth Touch Mode Selector Buttons -->
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 p-1.5 rounded-xl bg-black/60 border border-white/10" id="mode-switcher-container">
-          
-          <!-- 1. OFFICIAL TOURNAMENT -->
-          <button 
-            type="button"
-            id="btn-mode-official" 
-            data-mode="official"
-            class="global-mode-btn touch-manipulation select-none py-2 px-3.5 rounded-lg font-mono text-xs font-bold flex items-center justify-center sm:justify-start gap-2 transition-all duration-300 cursor-pointer active:scale-95 bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shadow-lg shadow-emerald-950/40">
-            <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 shadow-sm shadow-emerald-400 shrink-0"></span>
-            <div class="text-left leading-tight">
-              <div class="font-bold flex items-center gap-1">
-                <span>Official</span>
-                <span class="text-[10px] opacity-75 font-normal hidden sm:inline">(Esports)</span>
-              </div>
-              <div class="text-[9px] text-emerald-400/80 font-normal font-sans hidden lg:block">Official Garena / FFWS</div>
-            </div>
-          </button>
-
-          <!-- 2. UNOFFICIAL (LOCAL TOURNAMENT ORGANIZER) -->
-          <button 
-            type="button"
-            id="btn-mode-unofficial" 
-            data-mode="unofficial"
-            class="global-mode-btn touch-manipulation select-none py-2 px-3.5 rounded-lg font-mono text-xs font-bold flex items-center justify-center sm:justify-start gap-2 transition-all duration-300 cursor-pointer active:scale-95 bg-black/30 text-gray-400 hover:text-amber-300 hover:bg-amber-500/10 border border-transparent">
-            <span class="w-2.5 h-2.5 rounded-full bg-amber-400/50 shrink-0"></span>
-            <div class="text-left leading-tight">
-              <div class="font-bold flex items-center gap-1">
-                <span>Unofficial</span>
-                <span class="text-[10px] opacity-75 font-normal hidden sm:inline">(Local)</span>
-              </div>
-              <div class="text-[9px] text-gray-500 font-normal font-sans hidden lg:block">Local Organizer / Scrims</div>
-            </div>
-          </button>
-
-          <!-- 3. ALL / COMBINED -->
-          <button 
-            type="button"
-            id="btn-mode-all" 
-            data-mode="all"
-            class="global-mode-btn touch-manipulation select-none py-2 px-3.5 rounded-lg font-mono text-xs font-bold flex items-center justify-center sm:justify-start gap-2 transition-all duration-300 cursor-pointer active:scale-95 bg-black/30 text-gray-400 hover:text-[#ff4e00] hover:bg-[#ff4e00]/10 border border-transparent">
-            <span class="w-2.5 h-2.5 rounded-full bg-[#ff4e00]/50 shrink-0"></span>
-            <div class="text-left leading-tight">
-              <div class="font-bold flex items-center gap-1">
-                <span>All Data</span>
-                <span class="text-[10px] opacity-75 font-normal hidden sm:inline">(Combined)</span>
-              </div>
-              <div class="text-[9px] text-gray-500 font-normal font-sans hidden lg:block">Overall Add-Up Total</div>
-            </div>
-          </button>
-
+        <div>
+          <h2 class="font-display text-base sm:text-lg font-bold text-white tracking-wide flex items-center gap-2">
+            <span>TOURNAMENT DATA FILTER</span>
+            <span id="active-mode-indicator" class="badge-official text-[10px] py-0.5">OFFICIAL MODE</span>
+          </h2>
+          <p class="text-xs text-gray-400 font-mono">
+            Switch between official esports circuits, local organizer tournaments, or combined totals.
+          </p>
         </div>
       </div>
+
+      <!-- Mode Switcher Buttons -->
+      <div class="grid grid-cols-3 gap-1.5 p-1.5 rounded-xl bg-black/70 border border-white/10 shrink-0">
+        
+        <!-- Button 1: Official Circuit -->
+        <button 
+          type="button"
+          class="global-mode-btn touch-manipulation select-none py-2 px-3.5 rounded-lg font-mono text-xs font-bold flex items-center justify-center sm:justify-start gap-2 transition-all duration-300 cursor-pointer active:scale-95 bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shadow-lg shadow-emerald-950/40"
+          data-mode="official">
+          <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 shadow-sm shadow-emerald-400 shrink-0"></span>
+          <span class="truncate">Official</span>
+        </button>
+
+        <!-- Button 2: Local Organizer -->
+        <button 
+          type="button"
+          class="global-mode-btn touch-manipulation select-none py-2 px-3.5 rounded-lg font-mono text-xs font-bold flex items-center justify-center sm:justify-start gap-2 transition-all duration-300 cursor-pointer active:scale-95 bg-black/30 text-gray-400 hover:text-gray-200 border border-transparent"
+          data-mode="unofficial">
+          <span class="w-2.5 h-2.5 rounded-full bg-gray-600 shrink-0"></span>
+          <span class="truncate">Local</span>
+        </button>
+
+        <!-- Button 3: All Combined -->
+        <button 
+          type="button"
+          class="global-mode-btn touch-manipulation select-none py-2 px-3.5 rounded-lg font-mono text-xs font-bold flex items-center justify-center sm:justify-start gap-2 transition-all duration-300 cursor-pointer active:scale-95 bg-black/30 text-gray-400 hover:text-gray-200 border border-transparent"
+          data-mode="combined">
+          <span class="w-2.5 h-2.5 rounded-full bg-gray-600 shrink-0"></span>
+          <span class="truncate">All Data</span>
+        </button>
+
+      </div>
+
     </div>
   </section>
 
   <!-- ========================================================================= -->
-  <!-- 2. OVERALL ANALYSIS BOX (DIRECTLY AFTER OFFICIAL / UNOFFICIAL SELECTION)   -->
+  <!-- 2. FOUR PRIMARY PERFORMANCE METRICS BAR                                   -->
   <!-- ========================================================================= -->
-  <section class="glass-panel p-5 sm:p-7 border-white/15 bg-gradient-to-b from-[#0e101a] to-[#08090f] shadow-2xl rounded-2xl space-y-5" id="overall-analysis-section">
+  <section class="glass-panel p-5 sm:p-6 border-white/10 space-y-4 shadow-2xl bg-black/60 backdrop-blur-xl rounded-2xl" id="hero-performance-overview">
     
-    <!-- Analysis Box Header -->
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/10 pb-4">
-      <div class="flex items-center gap-3">
-        <div class="w-10 h-10 rounded-xl bg-orange-500/20 border border-orange-500/30 flex items-center justify-center text-orange-400 shrink-0">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
-          </svg>
-        </div>
-        <div>
-          <span class="text-xs font-mono text-gray-400 uppercase tracking-wider block">TAG SQUAD SQUAD CAREER & TOURNAMENT ANALYSIS</span>
-          <h2 class="text-lg sm:text-xl font-display font-bold text-white tracking-wide" id="stat-card-title">
-            Official Tournament Stats & Performance
-          </h2>
-        </div>
-      </div>
-
+    <div class="flex items-center justify-between border-b border-white/5 pb-3">
       <div class="flex items-center gap-2">
-        <span class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-mono font-bold bg-[#ff4e00]/20 text-[#ff4e00] border border-[#ff4e00]/30 animate-pulse">
-          <span class="w-1.5 h-1.5 rounded-full bg-[#ff4e00] mr-1.5"></span>
-          LIVE ADD-UP
-        </span>
-        <a href="/analysis#map-analysis" class="btn-glass text-xs py-1.5 px-3 flex items-center gap-1.5 text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/10">
-          <svg class="w-3.5 h-3.5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/>
-          </svg>
-          <span>Map Analysis</span>
-        </a>
-        <a href="/analysis" class="btn-glass text-xs py-1.5 px-3 flex items-center gap-1.5">
-          <span>In-Depth Analysis</span>
-          <svg class="w-3.5 h-3.5 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
-          </svg>
-        </a>
+        <span class="w-2 h-2 rounded-full bg-[#ff4e00] animate-ping"></span>
+        <h3 id="stat-card-title" class="font-display text-lg font-bold text-white tracking-wider uppercase">
+          Official Tournament Stats
+        </h3>
       </div>
+      <span class="text-xs font-mono text-gray-400">
+        TAG Squad Verified Performance
+      </span>
     </div>
 
-    <!-- 4 Core Required Metrics Grid (TOTAL MATCHES, TOTAL KILLS, TOTAL BOOYAH, TOTAL KD) -->
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4" id="home-four-metrics-grid">
+    <!-- 4 Key Value Metric Cards -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
       
       <!-- 1. TOTAL MATCHES -->
-      <div class="stat-box p-4 rounded-xl bg-black/40 border border-white/10 hover:border-emerald-400/40 transition-all duration-300 flex flex-col justify-between">
+      <div class="stat-box p-4 rounded-xl bg-black/40 border border-white/10 hover:border-[#ff4e00]/40 transition-all duration-300 flex flex-col justify-between">
         <div class="text-xs text-gray-400 font-mono flex items-center justify-between mb-1">
           <span>TOTAL MATCHES</span>
-          <span class="w-2 h-2 rounded-full bg-emerald-400/70"></span>
+          <span class="w-2 h-2 rounded-full bg-orange-400"></span>
         </div>
-        <div class="stat-box-value text-3xl sm:text-4xl font-display font-bold text-white flex items-baseline gap-1 my-1">
+        <div class="stat-box-value text-3xl sm:text-4xl font-display font-bold text-white my-1">
           <span id="hero-stat-matches" class="transition-all duration-300">
-            <%= currentTourneySummary ? currentTourneySummary.official.matches : officialMatches.length %>
+            <%= currentTourneySummary ? currentTourneySummary.official.matches : (officialMatches ? officialMatches.length : 0) %>
           </span>
-          <span class="text-xs text-gray-500 font-mono font-normal">MATCHES</span>
         </div>
-        <div id="hero-stat-matches-sub" class="text-xs text-emerald-400 font-mono transition-all">
-          Official Tournament Circuit
+        <div id="hero-stat-matches-sub" class="text-[10px] text-emerald-400 font-mono mt-1 transition-all">
+          Official Matches
         </div>
       </div>
 
@@ -195,34 +151,6 @@
 
     </div>
 
-    <!-- Secondary Overall Performance Indicators & Context -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-3 pt-2">
-      <!-- Total Points -->
-      <div class="p-3 rounded-xl bg-black/30 border border-white/5 flex items-center justify-between">
-        <span class="text-xs text-gray-400 font-mono">Total Points Scored</span>
-        <span id="hero-stat-points" class="font-bold text-white font-mono text-sm">
-          <%= currentTourneySummary ? currentTourneySummary.official.points : 0 %> PTS
-        </span>
-      </div>
-
-      <!-- Tournaments Participated -->
-      <div class="p-3 rounded-xl bg-black/30 border border-white/5 flex items-center justify-between">
-        <span class="text-xs text-gray-400 font-mono">Career Tournaments</span>
-        <span class="font-bold text-orange-400 font-mono text-sm">
-          <%= careerSummary ? careerSummary.official.tournaments_played : allTournaments.length %> Tournaments
-        </span>
-      </div>
-
-      <!-- Squad Status -->
-      <div class="p-3 rounded-xl bg-black/30 border border-white/5 flex items-center justify-between">
-        <span class="text-xs text-gray-400 font-mono">Squad Status</span>
-        <span class="font-bold text-emerald-400 font-mono text-xs flex items-center gap-1">
-          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
-          Active Esports Roster
-        </span>
-      </div>
-    </div>
-
     <!-- Mode Context Alert Banner -->
     <div id="hero-context-box" class="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/25 text-emerald-300 text-xs flex items-start gap-2.5 transition-all">
       <svg class="w-4 h-4 shrink-0 mt-0.5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -236,19 +164,19 @@
   </section>
 
   <!-- ========================================================================= -->
-  <!-- 3. BANNER AND TITLE BOX WITH MAP AND DETAILS OF MATCH                     -->
+  <!-- 3. UNIFIED BLACK THEME BLUR GLASS TOURNAMENT & MATCH RESULTS BOX          -->
   <!-- ========================================================================= -->
   <% if (currentTournament) { %>
-    <section class="relative glass-panel overflow-hidden p-6 sm:p-8 md:p-10 border-white/15 shadow-2xl rounded-2xl transition-all duration-500 space-y-6" id="tournament-banner-title-box">
+    <section class="relative glass-panel bg-black/85 backdrop-blur-2xl overflow-hidden p-6 sm:p-8 md:p-10 border border-white/15 shadow-2xl rounded-3xl transition-all duration-500 space-y-8" id="tournament-banner-title-box">
       
       <!-- Dynamic Banner Poster Backdrop -->
-      <div id="hero-banner-bg" class="absolute inset-0 z-0 opacity-30 bg-cover bg-center transition-all duration-500" style="background-image: url('<%= currentTournament.banner_url %>'); filter: blur(1px);"></div>
-      <div class="absolute inset-0 bg-gradient-to-r from-[#050508] via-[#050508]/90 to-[#050508]/40 z-0"></div>
+      <div id="hero-banner-bg" class="absolute inset-0 z-0 opacity-25 bg-cover bg-center transition-all duration-500" style="background-image: url('<%= currentTournament.banner_url %>'); filter: blur(2px);"></div>
+      <div class="absolute inset-0 bg-gradient-to-b from-[#050508]/85 via-[#050508]/95 to-[#050508] z-0"></div>
 
-      <div class="relative z-10 space-y-6">
+      <div class="relative z-10 space-y-8">
         
         <!-- Header Tags & Prize Pool & Admin Controls -->
-        <div class="flex flex-wrap items-center justify-between gap-3">
+        <div class="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 pb-4">
           <div class="flex flex-wrap items-center gap-2.5">
             <span id="hero-status-badge" class="badge-live">
               <span class="live-dot"></span>
@@ -259,7 +187,7 @@
               OFFICIAL CIRCUIT
             </span>
             <span class="px-2.5 py-0.5 rounded-md text-xs font-mono bg-white/10 text-gray-200 border border-white/15">
-              <%= currentTournament.game_mode %>
+              <%= currentTournament.game_mode || 'Battle Royale Squad' %>
             </span>
           </div>
 
@@ -277,7 +205,7 @@
         </div>
 
         <!-- Tournament Main Title & Description -->
-        <div class="space-y-3">
+        <div class="space-y-2">
           <h1 id="hero-tournament-title" class="font-display text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-white leading-tight">
             <%= currentTournament.name %>
           </h1>
@@ -287,42 +215,232 @@
           </p>
         </div>
 
-        <!-- ========================================================================= -->
-        <!-- MATCH STANDINGS BOX (MOVED HERE IN PLACE OF FORMAT BOX)                   -->
-        <!-- ========================================================================= -->
-        <div class="p-4 sm:p-6 rounded-2xl bg-black/70 border border-white/15 backdrop-blur-xl shadow-2xl space-y-4" id="home-standings-box">
-          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/10 pb-3">
-            <div class="flex items-center gap-2.5">
-              <div class="w-3 h-3 rounded-full bg-gradient-to-r from-[#ff4e00] to-amber-500 animate-pulse"></div>
-              <h3 class="font-display text-lg sm:text-xl font-bold text-white tracking-wide">
-                Tournament Match Standings
-              </h3>
-              <span id="standings-mode-tag" class="badge-official text-[10px] py-0.5">OFFICIAL</span>
-            </div>
-            
-            <div class="flex items-center gap-3 text-xs font-mono">
-              <span class="text-slate-400">
-                Matches Logged: <strong id="standings-matches-count" class="text-white"><%= matches.length %></strong>
-              </span>
-              <a href="/tournament/<%= currentTournament.id %>" class="text-orange-400 hover:text-orange-300 flex items-center gap-1 font-bold">
-                <span>Detailed Hub</span>
-                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-              </a>
-            </div>
+        <!-- UNIFIED SUB-NAVIGATION SWITCHER (MATCHES, STANDINGS, MAPS) -->
+        <div class="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-white/10">
+          <div class="flex items-center gap-2 p-1 rounded-xl bg-black/60 border border-white/10">
+            <button type="button" onclick="switchHomeTab('matches')" id="home-tab-matches-btn" class="px-4 py-2 rounded-lg font-mono text-xs font-bold transition-all bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-lg shadow-orange-950/40 flex items-center gap-1.5">
+              <span>🎮 Match Results & Maps</span>
+              <span class="px-1.5 py-0.5 rounded bg-black/40 text-[10px] text-amber-200"><%= matches.length %></span>
+            </button>
+            <button type="button" onclick="switchHomeTab('standings')" id="home-tab-standings-btn" class="px-4 py-2 rounded-lg font-mono text-xs font-bold transition-all text-slate-400 hover:text-white flex items-center gap-1.5">
+              <span>🏆 Standings Leaderboard</span>
+            </button>
+            <button type="button" onclick="switchHomeTab('maps')" id="home-tab-maps-btn" class="px-4 py-2 rounded-lg font-mono text-xs font-bold transition-all text-slate-400 hover:text-white flex items-center gap-1.5">
+              <span>🗺️ Map Performance</span>
+            </button>
           </div>
 
-          <!-- Standings Table / List -->
-          <div class="overflow-x-auto">
+          <div class="flex items-center gap-2">
+            <button type="button" onclick="toggleHomeTotalPoints()" class="btn-glass text-xs py-2 px-3 flex items-center gap-1.5 text-amber-400 border-amber-500/30 hover:bg-amber-500/10">
+              <svg class="w-3.5 h-3.5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+              <span>Calculate Total Points</span>
+            </button>
+            <a href="/history" class="btn-glass text-xs py-2 px-3 text-slate-300 hover:text-white">
+              <span>All Tournaments (History) →</span>
+            </a>
+          </div>
+        </div>
+
+        <!-- Live All-Matches Total Points Calculated Summary Card (Collapsible) -->
+        <div id="home-total-points-card" class="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-orange-500/20 via-amber-500/15 to-orange-500/20 border border-orange-500/40 shadow-xl space-y-3 hidden">
+          <div class="flex items-center justify-between border-b border-white/10 pb-2">
+            <div class="flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse"></span>
+              <span class="font-display text-sm font-bold text-white uppercase tracking-wider">All Matches Total Points Summary</span>
+            </div>
+            <button type="button" onclick="toggleHomeTotalPoints()" class="text-xs font-mono text-slate-400 hover:text-white">✕ Close</button>
+          </div>
+
+          <% 
+            let homeAllMatches = matches || [];
+            let homeSumKills = 0;
+            let homeSumPlacePts = 0;
+            let homeSumBooyahs = 0;
+
+            homeAllMatches.forEach(m => {
+              if (m.results && m.results.length > 0) {
+                const tagRes = m.results.find(r => (r.team_tag === 'TAG' || (r.team_name || '').includes('TAG'))) || m.results[0];
+                if (tagRes) {
+                  homeSumKills += (tagRes.kills || 0);
+                  homeSumPlacePts += (tagRes.placement_points || 0);
+                  if (tagRes.placement === 1) homeSumBooyahs++;
+                }
+              }
+            });
+            const homeGrandTotalPts = homeSumKills + homeSumPlacePts;
+          %>
+
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 font-mono text-xs text-center">
+            <div class="p-2.5 rounded-xl bg-black/40 border border-white/10">
+              <div class="text-[10px] text-slate-400 uppercase">Matches Logged</div>
+              <div class="text-lg font-bold text-white"><%= homeAllMatches.length %></div>
+            </div>
+            <div class="p-2.5 rounded-xl bg-black/40 border border-white/10">
+              <div class="text-[10px] text-slate-400 uppercase">Position Points</div>
+              <div class="text-lg font-bold text-emerald-400"><%= homeSumPlacePts %> PTS</div>
+            </div>
+            <div class="p-2.5 rounded-xl bg-black/40 border border-white/10">
+              <div class="text-[10px] text-slate-400 uppercase">Kill Points</div>
+              <div class="text-lg font-bold text-red-400"><%= homeSumKills %> PTS</div>
+            </div>
+            <div class="p-2.5 rounded-xl bg-gradient-to-r from-orange-500/30 to-amber-500/30 border border-orange-500/50">
+              <div class="text-[10px] text-orange-300 uppercase font-bold">Total Points</div>
+              <div class="text-xl font-bold text-orange-400"><%= homeGrandTotalPts %> PTS</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ========================================================================= -->
+        <!-- TAB VIEW 1: MATCH RESULTS & MAPS (1–6)                                    -->
+        <!-- ========================================================================= -->
+        <div id="home-view-matches" class="space-y-4">
+          <% if (matches.length === 0) { %>
+            <div class="p-8 rounded-2xl bg-black/40 border border-white/10 text-center space-y-3">
+              <p class="font-mono text-sm text-slate-400">No matches logged yet (0 Matches). Ready to record fresh esports results.</p>
+              <% if (isAdmin) { %>
+                <a href="<%= adminHref('/admin/tournaments/' + currentTournament.id + '/edit') %>" class="btn-fire text-xs py-2 px-4 inline-block">
+                  Add Match #1 with Map & Players
+                </a>
+              <% } %>
+            </div>
+          <% } else { %>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4" id="matches-feed-container">
+              <% matches.forEach(match => { %>
+                <div 
+                  class="match-card glass-card bg-black/60 backdrop-blur-md p-5 rounded-2xl border-l-4 <%= match.is_official ? 'border-l-emerald-500' : 'border-l-amber-500' %> border border-white/10 transition-all space-y-4"
+                  data-is-official="<%= match.is_official ? 'true' : 'false' %>">
+                  
+                  <!-- Match Title Bar -->
+                  <div class="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 pb-3">
+                    <div class="flex items-center gap-3">
+                      <span class="font-display text-2xl font-bold text-white">MATCH #<%= match.match_number %></span>
+                      <span class="px-2.5 py-1 rounded-lg bg-orange-500/15 border border-orange-500/30 font-mono text-xs text-orange-300 font-bold flex items-center gap-1.5">
+                        <span class="w-1.5 h-1.5 rounded-full bg-orange-400"></span>
+                        Map: <%= match.map_name %>
+                      </span>
+                    </div>
+
+                    <div>
+                      <% if (match.is_official) { %>
+                        <span class="badge-official text-[10px]">
+                          OFFICIAL
+                        </span>
+                      <% } else { %>
+                        <span class="badge-unofficial text-[10px]">
+                          LOCAL
+                        </span>
+                      <% } %>
+                    </div>
+                  </div>
+
+                  <!-- Key Match Telemetry (Booyah Champion, TAG Squad, Match MVP) -->
+                  <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-xs font-mono">
+                    
+                    <!-- 1. Champion -->
+                    <div class="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20 flex flex-col justify-between">
+                      <span class="text-[9px] text-amber-400 uppercase font-bold block">👑 Champion</span>
+                      <span class="font-bold text-white truncate text-xs"><%= match.booyahTeam ? match.booyahTeam.team_name : 'N/A' %></span>
+                      <span class="text-[10px] text-amber-400 font-bold"><%= match.booyahTeam ? match.booyahTeam.kills + ' Kills' : '' %></span>
+                    </div>
+
+                    <!-- 2. TAG Result -->
+                    <div class="p-2.5 rounded-xl bg-orange-500/10 border border-orange-500/20 flex flex-col justify-between">
+                      <span class="text-[9px] text-orange-400 uppercase font-bold block">TAG Squad</span>
+                      <span class="font-bold text-white text-xs">#<%= match.tagResult ? match.tagResult.placement : 'N/A' %> Place</span>
+                      <span class="text-[10px] text-orange-400 font-bold"><%= match.tagResult ? match.tagResult.kills + ' Kills (' + match.tagResult.total_points + ' PTS)' : '0 Kills' %></span>
+                    </div>
+
+                    <!-- 3. MVP -->
+                    <div class="p-2.5 rounded-xl bg-red-500/10 border border-red-500/20 flex flex-col justify-between">
+                      <span class="text-[9px] text-red-400 uppercase font-bold block">⚔️ Match MVP</span>
+                      <span class="font-bold text-white truncate text-xs"><%= match.topPlayer ? (match.topPlayer.in_game_name || match.topPlayer.player_name) : (match.topFraggerTeam ? match.topFraggerTeam.team_name : 'N/A') %></span>
+                      <span class="text-[10px] text-red-400 font-bold"><%= match.topPlayer ? match.topPlayer.kills + ' Kills' : (match.topFraggerTeam ? match.topFraggerTeam.kills + ' Kills' : '') %></span>
+                    </div>
+
+                  </div>
+
+                  <!-- Individual Squad Player Kills Pills (Match Telemetry) -->
+                  <% if (match.player_stats && match.player_stats.length > 0) { %>
+                    <div class="p-3 rounded-xl bg-black/50 border border-white/5 space-y-2">
+                      <div class="flex items-center justify-between text-[11px] font-mono">
+                        <span class="text-slate-400 font-bold uppercase flex items-center gap-1.5">
+                          <span class="w-1.5 h-1.5 rounded-full bg-orange-400"></span>
+                          Squad Player Kills
+                        </span>
+                        <span class="text-orange-400 font-bold">
+                          Sum: <%= match.player_stats.reduce((acc, ps) => acc + Number(ps.kills || 0), 0) %> Kills
+                        </span>
+                      </div>
+
+                      <div class="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+                        <% match.player_stats.forEach((ps) => { %>
+                          <div class="p-1.5 rounded-lg bg-white/5 border border-white/5 flex items-center justify-between text-[11px] font-mono">
+                            <span class="text-white font-bold truncate pr-1"><%= ps.in_game_name || ps.player_name %></span>
+                            <span class="text-orange-400 font-bold shrink-0"><%= ps.kills %>K</span>
+                          </div>
+                        <% }); %>
+                      </div>
+                    </div>
+                  <% } %>
+
+                  <!-- Expandable 12-Squad Scoreboard -->
+                  <% if (match.results && match.results.length > 0) { %>
+                    <details class="group">
+                      <summary class="cursor-pointer text-xs font-mono text-slate-400 hover:text-orange-400 flex items-center gap-1.5 select-none pt-1">
+                        <svg class="w-3.5 h-3.5 text-orange-400 group-open:rotate-90 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                        <span>View 12-Squad Match Scoreboard</span>
+                      </summary>
+
+                      <div class="mt-2.5 overflow-x-auto rounded-xl border border-white/5 bg-black/40">
+                        <table class="w-full text-left text-[11px] font-mono">
+                          <thead>
+                            <tr class="bg-white/5 text-slate-400 border-b border-white/5">
+                              <th class="py-1.5 px-2.5">#</th>
+                              <th class="py-1.5 px-2.5">Team</th>
+                              <th class="py-1.5 px-2 text-center">Kills</th>
+                              <th class="py-1.5 px-2 text-center">Place PTS</th>
+                              <th class="py-1.5 px-2.5 text-right">Total PTS</th>
+                            </tr>
+                          </thead>
+                          <tbody class="divide-y divide-white/5">
+                            <% match.results.forEach(res => { 
+                              const isTag = (res.team_tag === 'TAG' || (res.team_name || '').includes('TAG'));
+                            %>
+                              <tr class="<%= res.placement === 1 ? 'bg-amber-500/10 text-amber-300 font-bold' : (isTag ? 'bg-orange-500/10 text-orange-300 font-bold' : 'text-slate-300 hover:bg-white/5') %>">
+                                <td class="py-1.5 px-2.5"><%= res.placement === 1 ? '👑 #1' : '#' + res.placement %></td>
+                                <td class="py-1.5 px-2.5 font-bold truncate max-w-[120px]"><%= res.team_name %></td>
+                                <td class="py-1.5 px-2 text-center text-red-400"><%= res.kills %></td>
+                                <td class="py-1.5 px-2 text-center text-slate-400"><%= res.placement_points %></td>
+                                <td class="py-1.5 px-2.5 text-right font-bold text-white"><%= res.total_points %></td>
+                              </tr>
+                            <% }); %>
+                          </tbody>
+                        </table>
+                      </div>
+                    </details>
+                  <% } %>
+
+                </div>
+              <% }); %>
+            </div>
+          <% } %>
+        </div>
+
+        <!-- ========================================================================= -->
+        <!-- TAB VIEW 2: 12-SQUAD STANDINGS TABLE                                      -->
+        <!-- ========================================================================= -->
+        <div id="home-view-standings" class="hidden space-y-4">
+          <div class="overflow-x-auto rounded-2xl border border-white/10 bg-black/60">
             <table class="w-full text-left text-xs font-mono">
               <thead>
-                <tr class="text-slate-400 uppercase border-b border-white/10 text-[11px]">
-                  <th class="py-2.5 px-3">#</th>
-                  <th class="py-2.5 px-3">Team</th>
-                  <th class="py-2.5 px-2 text-center">Matches</th>
-                  <th class="py-2.5 px-2 text-center">Booyah</th>
-                  <th class="py-2.5 px-2 text-center">Kills</th>
-                  <th class="py-2.5 px-2 text-center hidden sm:table-cell">Place Pts</th>
-                  <th class="py-2.5 px-3 text-right">Total PTS</th>
+                <tr class="bg-white/5 text-slate-400 uppercase border-b border-white/10 text-[11px]">
+                  <th class="py-3 px-4">#</th>
+                  <th class="py-3 px-4">Team</th>
+                  <th class="py-3 px-3 text-center">Matches</th>
+                  <th class="py-3 px-3 text-center text-amber-400 font-bold">Booyah</th>
+                  <th class="py-3 px-3 text-center text-red-400">Kills</th>
+                  <th class="py-3 px-3 text-center text-slate-400">Place PTS</th>
+                  <th class="py-3 px-4 text-right text-orange-400 font-bold">Total PTS</th>
                 </tr>
               </thead>
               <tbody id="home-standings-tbody" class="divide-y divide-white/5">
@@ -331,7 +449,7 @@
                   if (activeStandings.length === 0) { 
                 %>
                   <tr>
-                    <td colspan="7" class="py-6 text-center text-slate-500 font-mono text-xs">
+                    <td colspan="7" class="py-8 text-center text-slate-500 font-mono text-xs">
                       No team standings recorded yet. When Match #1 is logged, team scores will show here immediately.
                     </td>
                   </tr>
@@ -339,12 +457,12 @@
                   <% activeStandings.forEach((st, idx) => { 
                     const isTag = (st.team_tag === 'TAG' || (st.team_name || '').includes('TAG'));
                   %>
-                    <tr class="standings-row hover:bg-white/5 transition-colors <%= isTag ? 'bg-gradient-to-r from-[#ff4e00]/20 via-[#ff4e00]/10 to-transparent font-bold border-l-2 border-[#ff4e00]' : '' %>"
+                    <tr class="standings-row hover:bg-white/5 transition-colors <%= isTag ? 'bg-orange-500/15 font-bold border-l-2 border-orange-500' : '' %>"
                         data-team-id="<%= st.team_id %>">
-                      <td class="py-2.5 px-3 font-display text-sm <%= idx === 0 ? 'text-amber-400' : (idx === 1 ? 'text-slate-300' : (idx === 2 ? 'text-amber-600' : 'text-slate-400')) %>">
+                      <td class="py-3 px-4 font-display text-sm <%= idx === 0 ? 'text-amber-400 font-bold' : (idx === 1 ? 'text-slate-300' : (idx === 2 ? 'text-amber-600' : 'text-slate-400')) %>">
                         #<%= idx + 1 %>
                       </td>
-                      <td class="py-2.5 px-3">
+                      <td class="py-3 px-4">
                         <div class="flex items-center gap-2">
                           <img src="<%= st.team_logo %>" alt="<%= st.team_name %>" class="w-6 h-6 rounded object-cover border border-white/10 shrink-0" onerror="this.src='https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=100&auto=format&fit=crop'">
                           <div class="truncate max-w-[140px] sm:max-w-[200px]">
@@ -353,11 +471,11 @@
                           </div>
                         </div>
                       </td>
-                      <td class="py-2.5 px-2 text-center text-slate-300"><%= st.matches_played %></td>
-                      <td class="py-2.5 px-2 text-center text-amber-400 font-bold"><%= st.booyahs %></td>
-                      <td class="py-2.5 px-2 text-center text-red-400"><%= st.total_kills || st.kill_points %></td>
-                      <td class="py-2.5 px-2 text-center text-slate-400 hidden sm:table-cell"><%= st.placement_points %></td>
-                      <td class="py-2.5 px-3 text-right font-display text-sm font-bold <%= isTag ? 'text-orange-400' : 'text-white' %>">
+                      <td class="py-3 px-3 text-center text-slate-300"><%= st.matches_played %></td>
+                      <td class="py-3 px-3 text-center text-amber-400 font-bold"><%= st.booyahs %></td>
+                      <td class="py-3 px-3 text-center text-red-400"><%= st.total_kills || st.kill_points %></td>
+                      <td class="py-3 px-3 text-center text-slate-400"><%= st.placement_points %></td>
+                      <td class="py-3 px-4 text-right font-display text-sm font-bold <%= isTag ? 'text-orange-400' : 'text-white' %>">
                         <%= st.total_points %> <span class="text-[10px] font-normal text-slate-500">PTS</span>
                       </td>
                     </tr>
@@ -368,25 +486,63 @@
           </div>
         </div>
 
-        <!-- Action CTA Buttons -->
-        <div class="flex flex-wrap items-center gap-3 pt-2">
-          <a href="/tournament/<%= currentTournament.id %>" class="btn-fire">
+        <!-- ========================================================================= -->
+        <!-- TAB VIEW 3: MAP PERFORMANCE ANALYSIS (5 MAPS)                             -->
+        <!-- ========================================================================= -->
+        <div id="home-view-maps" class="hidden space-y-4">
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+            <% 
+              const defaultMaps = ['Bermuda', 'Purgatory', 'Kalahari', 'Alpine', 'Nexterra'];
+              defaultMaps.forEach(mapName => {
+                const mapMatches = matches.filter(m => m.map_name.toLowerCase() === mapName.toLowerCase());
+                let mapBooyahs = 0;
+                let mapKills = 0;
+                mapMatches.forEach(m => {
+                  const tagR = (m.results || []).find(r => r.team_tag === 'TAG' || (r.team_name || '').includes('TAG'));
+                  if (tagR) {
+                    if (tagR.placement === 1) mapBooyahs++;
+                    mapKills += Number(tagR.kills || 0);
+                  }
+                });
+                const winRate = mapMatches.length > 0 ? ((mapBooyahs / mapMatches.length) * 100).toFixed(0) : '0';
+            %>
+              <div class="p-4 rounded-2xl bg-black/60 border border-white/10 space-y-2">
+                <div class="flex items-center justify-between">
+                  <span class="font-display font-bold text-white text-base"><%= mapName %></span>
+                  <span class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-white/5 text-slate-400"><%= mapMatches.length %> M</span>
+                </div>
+                <div class="grid grid-cols-2 gap-1.5 text-[11px] font-mono">
+                  <div class="p-1.5 rounded bg-black/40">
+                    <span class="text-[9px] text-slate-500 block">Win Rate</span>
+                    <span class="font-bold text-amber-400"><%= winRate %>%</span>
+                  </div>
+                  <div class="p-1.5 rounded bg-black/40">
+                    <span class="text-[9px] text-slate-500 block">TAG Kills</span>
+                    <span class="font-bold text-orange-400"><%= mapKills %></span>
+                  </div>
+                </div>
+              </div>
+            <% }); %>
+          </div>
+        </div>
+
+        <!-- Action CTA Buttons Footer -->
+        <div class="flex flex-wrap items-center gap-3 pt-4 border-t border-white/10">
+          <a href="/tournament/<%= currentTournament.id %>" class="btn-fire text-xs py-2.5 px-4 flex items-center gap-2">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
             </svg>
-            View Full Tournament Hub
+            <span>View Full Tournament Hub</span>
           </a>
-          <a href="/analysis#map-analysis" class="btn-glass text-slate-300 hover:text-emerald-400">
+          <a href="/history" class="btn-glass text-xs py-2.5 px-4 text-slate-300 hover:text-white flex items-center gap-2">
+            <svg class="w-4 h-4 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            <span>Match History & All Saved Tournaments</span>
+          </a>
+          <a href="/analysis" class="btn-glass text-xs py-2.5 px-4 text-slate-300 hover:text-emerald-400 flex items-center gap-2">
             <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
             </svg>
-            Map Analysis
-          </a>
-          <a href="#matches-feed-container" class="btn-glass">
-            <svg class="w-4 h-4 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"/>
-            </svg>
-            Jump to Match Results
+            <span>Overall Analysis</span>
           </a>
         </div>
 
@@ -415,166 +571,24 @@
   <% } %>
 
   <!-- ========================================================================= -->
-  <!-- 4. MATCH RESULTS & MAPS + TOP PLAYERS                                      -->
+  <!-- 4. TOP FRAGGERS (MVP) & SQUAD ROSTER SPOTLIGHT                            -->
   <!-- ========================================================================= -->
-  <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-    
-    <!-- MATCH RESULTS LIST -->
-    <div class="lg:col-span-2 space-y-4">
-      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div class="flex items-center gap-2">
-          <h3 class="font-display text-2xl font-bold text-white tracking-wide">Match Results & Maps</h3>
-          <span id="match-count-badge" class="px-2 py-0.5 rounded-md text-xs font-mono bg-white/5 text-gray-300 border border-white/10">
-            <%= officialMatches.length %> Matches
-          </span>
-        </div>
-        <div class="flex items-center gap-2">
-          <button type="button" onclick="toggleHomeTotalPoints()" class="btn-glass text-xs py-1.5 px-3 flex items-center gap-1.5 text-amber-400 border-amber-500/30 hover:bg-amber-500/10">
-            <svg class="w-3.5 h-3.5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
-            <span>Calculate Total Points</span>
-          </button>
-          <span id="match-filter-indicator" class="badge-official text-[10px]">OFFICIAL MATCHES</span>
-        </div>
+  <section class="space-y-4">
+    <div class="flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <span class="w-2.5 h-2.5 rounded-full bg-[#ff4e00]"></span>
+        <h3 class="font-display text-2xl font-bold text-white tracking-wide">Top Fraggers (MVP Leaderboard)</h3>
       </div>
-
-      <!-- Live All-Matches Total Points Calculated Card (Collapsible) -->
-      <div id="home-total-points-card" class="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-orange-500/20 via-amber-500/15 to-orange-500/20 border border-orange-500/40 shadow-xl space-y-3 hidden">
-        <div class="flex items-center justify-between border-b border-white/10 pb-2">
-          <div class="flex items-center gap-2">
-            <span class="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse"></span>
-            <span class="font-display text-sm font-bold text-white uppercase tracking-wider">All Matches Total Points Summary</span>
-          </div>
-          <button type="button" onclick="toggleHomeTotalPoints()" class="text-xs font-mono text-slate-400 hover:text-white">✕ Close</button>
-        </div>
-
-        <% 
-          let homeAllMatches = matches || [];
-          let homeSumKills = 0;
-          let homeSumPlacePts = 0;
-          let homeSumBooyahs = 0;
-
-          homeAllMatches.forEach(m => {
-            if (m.results && m.results.length > 0) {
-              const tagRes = m.results.find(r => (r.team_tag === 'TAG' || (r.team_name || '').includes('TAG'))) || m.results[0];
-              if (tagRes) {
-                homeSumKills += (tagRes.kills || 0);
-                homeSumPlacePts += (tagRes.placement_points || 0);
-                if (tagRes.placement === 1) homeSumBooyahs++;
-              }
-            }
-          });
-          const homeGrandTotalPts = homeSumKills + homeSumPlacePts;
-        %>
-
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 font-mono text-xs text-center">
-          <div class="p-2.5 rounded-xl bg-black/40 border border-white/10">
-            <div class="text-[10px] text-slate-400 uppercase">Matches Logged</div>
-            <div class="text-lg font-bold text-white"><%= homeAllMatches.length %></div>
-          </div>
-          <div class="p-2.5 rounded-xl bg-black/40 border border-white/10">
-            <div class="text-[10px] text-slate-400 uppercase">Position Points</div>
-            <div class="text-lg font-bold text-emerald-400"><%= homeSumPlacePts %> PTS</div>
-          </div>
-          <div class="p-2.5 rounded-xl bg-black/40 border border-white/10">
-            <div class="text-[10px] text-slate-400 uppercase">Kill Points</div>
-            <div class="text-lg font-bold text-red-400"><%= homeSumKills %> PTS</div>
-          </div>
-          <div class="p-2.5 rounded-xl bg-gradient-to-r from-orange-500/30 to-amber-500/30 border border-orange-500/50">
-            <div class="text-[10px] text-orange-300 uppercase font-bold">Total Points</div>
-            <div class="text-xl font-bold text-orange-400"><%= homeGrandTotalPts %> PTS</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- No matches state -->
-      <div id="no-matches-message" class="glass-card p-8 text-center text-gray-400 <%= matches.length === 0 ? '' : 'hidden' %>">
-        <p class="font-mono text-sm">No matches logged yet (0 Matches). Ready to record fresh esports results.</p>
-      </div>
-
-      <!-- Match Cards Container -->
-      <div class="space-y-4" id="matches-feed-container">
-        <% matches.forEach(match => { %>
-          <div 
-            class="match-card glass-card p-5 border-l-4 <%= match.is_official ? 'border-l-emerald-500' : 'border-l-amber-500' %> transition-all duration-300"
-            data-is-official="<%= match.is_official ? 'true' : 'false' %>">
-            
-            <div class="flex flex-wrap items-center justify-between gap-2 border-b border-white/5 pb-3 mb-3">
-              <div class="flex items-center gap-3">
-                <span class="font-display text-2xl font-bold text-white">MATCH #<%= match.match_number %></span>
-                <span class="px-2.5 py-0.5 rounded-md bg-white/5 font-mono text-xs text-gray-300 border border-white/5 flex items-center gap-1.5">
-                  <span class="w-1.5 h-1.5 rounded-full bg-orange-400"></span>
-                  Map: <%= match.map_name %>
-                </span>
-              </div>
-
-              <div class="flex items-center gap-3">
-                <% if (match.is_official) { %>
-                  <span class="badge-official">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                    OFFICIAL TOURNAMENT
-                  </span>
-                <% } else { %>
-                  <span class="badge-unofficial">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                    LOCAL ORGANIZER
-                  </span>
-                <% } %>
-              </div>
-            </div>
-
-            <% if (match.notes) { %>
-              <p class="text-xs text-gray-400 mb-3 italic"><%= match.notes %></p>
-            <% } %>
-
-            <!-- Match Team Placement Grid: Position, Position Points, Kill Points & Total Points -->
-            <% if (match.results && match.results.length > 0) { %>
-              <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5 text-xs font-mono">
-                <% match.results.forEach(res => { 
-                  const isTagTeam = (res.team_tag === 'TAG' || (res.team_name || '').includes('TAG'));
-                %>
-                  <div class="p-3 rounded-xl <%= res.placement === 1 ? 'bg-amber-500/15 border border-amber-500/40' : (isTagTeam ? 'bg-orange-500/15 border border-orange-500/30' : 'bg-black/35 border border-white/5') %> space-y-1.5">
-                    
-                    <div class="flex items-center justify-between gap-1">
-                      <div class="flex items-center gap-1.5 truncate">
-                        <span class="font-bold <%= res.placement === 1 ? 'text-amber-400' : 'text-slate-400' %>">
-                          #<%= res.placement %> <%= res.placement === 1 ? '🏆 Booyah' : '' %>
-                        </span>
-                        <span class="font-semibold text-white truncate"><%= res.team_name %></span>
-                      </div>
-                      <span class="font-display text-sm font-bold text-orange-400 shrink-0">
-                        <%= res.total_points %> PTS
-                      </span>
-                    </div>
-
-                    <!-- Kill Points & Position Points Breakdown -->
-                    <div class="flex items-center justify-between text-[11px] pt-1 border-t border-white/5 text-slate-400">
-                      <span>Kills: <strong class="text-red-400"><%= res.kills %></strong></span>
-                      <span>Place PTS: <strong class="text-emerald-400"><%= res.placement_points %></strong></span>
-                      <span>Total: <strong class="text-white"><%= res.total_points %></strong></span>
-                    </div>
-
-                  </div>
-                <% }); %>
-              </div>
-            <% } %>
-          </div>
-        <% }); %>
-      </div>
+      <span id="top-players-badge" class="badge-official text-[10px]">OFFICIAL</span>
     </div>
-
-    <!-- TOP FRAGGERS & MVP SPOTLIGHT (UPDATES TO ACTIVE MODE) -->
-    <div class="space-y-4">
-      <div class="flex items-center justify-between">
-        <h3 class="font-display text-2xl font-bold text-white tracking-wide">Top Fraggers (MVP)</h3>
-        <span id="top-players-badge" class="badge-official text-[10px]">OFFICIAL</span>
-      </div>
+    
+    <div class="glass-panel bg-black/75 backdrop-blur-xl p-6 rounded-3xl border border-white/10 space-y-4 shadow-2xl" id="top-players-container">
       
-      <div class="glass-panel p-5 space-y-4" id="top-players-container">
-        
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <!-- Rendered Top Player Cards -->
         <% allPlayerStats.forEach((p, idx) => { %>
           <div 
-            class="top-player-row flex items-center justify-between p-3 rounded-xl bg-black/30 border border-white/5 hover:border-[#ff4e00]/30 transition-all"
+            class="top-player-row flex items-center justify-between p-3.5 rounded-2xl bg-black/40 border border-white/5 hover:border-[#ff4e00]/40 transition-all"
             data-official-kills="<%= p.official.kills %>"
             data-official-matches="<%= p.official.matches_played %>"
             data-unofficial-kills="<%= p.unofficial.kills %>"
@@ -583,15 +597,15 @@
             data-combined-matches="<%= p.combined.matches_played %>">
             
             <div class="flex items-center gap-3">
-              <span class="player-rank-num font-display text-xl font-bold <%= idx === 0 ? 'text-amber-400' : 'text-gray-600' %>">
+              <span class="player-rank-num font-display text-xl font-bold <%= idx === 0 ? 'text-amber-400' : 'text-gray-500' %>">
                 #<%= idx + 1 %>
               </span>
-              <img src="<%= p.avatar_url %>" alt="<%= p.in_game_name %>" class="w-10 h-10 rounded-full object-cover border border-white/10" onerror="this.src='https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=300&auto=format&fit=crop'">
+              <img src="<%= p.avatar_url %>" alt="<%= p.in_game_name %>" class="w-10 h-10 rounded-xl object-cover border border-white/10" onerror="this.src='https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=300&auto=format&fit=crop'">
               <div>
                 <a href="/player/<%= p.player_id %>" class="font-bold text-sm text-white hover:text-[#ff4e00] transition-colors block">
                   <%= p.in_game_name %>
                 </a>
-                <p class="text-xs text-gray-400 font-mono"><%= p.role || 'Player' %></p>
+                <p class="text-[11px] text-gray-400 font-mono"><%= p.role || 'Player' %></p>
               </div>
             </div>
 
@@ -601,19 +615,63 @@
             </div>
           </div>
         <% }); %>
+      </div>
 
-        <div class="pt-2">
-          <a href="/teams" class="btn-glass w-full text-center text-xs py-2.5 justify-center flex items-center gap-2">
-            <span>View Complete Squad Profiles</span>
-            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
-          </a>
-        </div>
+      <div class="pt-2 flex items-center justify-center">
+        <a href="/teams" class="btn-glass text-center text-xs py-2.5 px-6 justify-center flex items-center gap-2">
+          <span>View Complete Squad Profiles & Rosters</span>
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+        </a>
       </div>
     </div>
-
-  </div>
+  </section>
 
 </main>
+
+<script>
+  function switchHomeTab(tabName) {
+    const viewMatches = document.getElementById('home-view-matches');
+    const viewStandings = document.getElementById('home-view-standings');
+    const viewMaps = document.getElementById('home-view-maps');
+
+    const btnMatches = document.getElementById('home-tab-matches-btn');
+    const btnStandings = document.getElementById('home-tab-standings-btn');
+    const btnMaps = document.getElementById('home-tab-maps-btn');
+
+    if (!viewMatches || !viewStandings || !viewMaps) return;
+
+    // Hide all
+    viewMatches.classList.add('hidden');
+    viewStandings.classList.add('hidden');
+    viewMaps.classList.add('hidden');
+
+    // Reset button styles
+    const inactiveClass = 'px-4 py-2 rounded-lg font-mono text-xs font-bold transition-all text-slate-400 hover:text-white flex items-center gap-1.5';
+    const activeClass = 'px-4 py-2 rounded-lg font-mono text-xs font-bold transition-all bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-lg shadow-orange-950/40 flex items-center gap-1.5';
+
+    btnMatches.className = inactiveClass;
+    btnStandings.className = inactiveClass;
+    btnMaps.className = inactiveClass;
+
+    if (tabName === 'matches') {
+      viewMatches.classList.remove('hidden');
+      btnMatches.className = activeClass;
+    } else if (tabName === 'standings') {
+      viewStandings.classList.remove('hidden');
+      btnStandings.className = activeClass;
+    } else if (tabName === 'maps') {
+      viewMaps.classList.remove('hidden');
+      btnMaps.className = activeClass;
+    }
+  }
+
+  function toggleHomeTotalPoints() {
+    const card = document.getElementById('home-total-points-card');
+    if (card) {
+      card.classList.toggle('hidden');
+    }
+  }
+</script>
 
 <!-- Inject Server Stats JSON for smooth client transitions -->
 <script id="server-stats-data" type="application/json">
