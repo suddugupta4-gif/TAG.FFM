@@ -887,6 +887,11 @@ router.post('/teams/:id/edit', upload.single('logo'), async (req: Request, res: 
       WHERE id = $5
     `, [finalName, finalTag, finalLogoUrl, finalCountry, id]);
 
+    // If updating TAG team, sync site logo setting
+    if (finalTag === 'TAG' || id === 1 || finalName.toUpperCase().includes('TAG')) {
+      await TournamentService.updateSiteSetting('site_logo_url', finalLogoUrl);
+    }
+
     TournamentService.invalidateCache();
 
     if (req.headers['x-requested-with'] === 'XMLHttpRequest' || req.xhr) {
@@ -917,6 +922,11 @@ router.post('/teams/:id/logo', upload.single('logo'), async (req: Request, res: 
     }
 
     await db.query(`UPDATE teams SET logo_url = $1 WHERE id = $2`, [logoUrl, id]);
+    
+    if (existing?.tag === 'TAG' || id === 1 || (existing?.name || '').toUpperCase().includes('TAG')) {
+      await TournamentService.updateSiteSetting('site_logo_url', logoUrl);
+    }
+
     TournamentService.invalidateCache();
 
     if (req.headers['x-requested-with'] === 'XMLHttpRequest' || req.xhr) {
@@ -1109,10 +1119,39 @@ router.get('/settings', async (req: Request, res: Response) => {
     title: 'Site Customization & Background — Admin',
     settings,
     currentBg: settings?.site_background_url || null,
+    currentLogo: settings?.site_logo_url || '',
     siteTitle: settings?.site_title || 'TAGFREEFIREMAX',
     siteTagline: settings?.site_tagline || 'Premier Free Fire MAX Esports Hub',
     success: req.query.success as string || null
   });
+});
+
+// Upload / Update Squad & Website Logo (Sharp compressed + Cloudinary + DB setting + Synced to Navbar and Roster page)
+router.post('/settings/logo', upload.any(), async (req: Request, res: Response) => {
+  try {
+    if (req.body.reset_logo === 'true' || req.body.reset_logo === true) {
+      await TournamentService.updateSiteLogo('');
+      return adminRedirect(req, res, '/admin/settings?success=' + encodeURIComponent('Brand logo reset to default TAG flame emblem.'));
+    }
+
+    const uploadedFile = (req.files && Array.isArray(req.files) && req.files.length > 0) ? req.files[0] : req.file;
+
+    if (uploadedFile) {
+      const processed = await processAndUploadImage(uploadedFile.buffer, 'teams', 512, 90);
+      await TournamentService.updateSiteLogo(processed.url);
+      return adminRedirect(req, res, '/admin/settings?success=' + encodeURIComponent('Logo uploaded successfully and synchronized to Navbar & Roster page!'));
+    }
+    
+    if (req.body.logo_url !== undefined) {
+      const trimmed = (req.body.logo_url || '').trim();
+      await TournamentService.updateSiteLogo(trimmed);
+      return adminRedirect(req, res, '/admin/settings?success=' + encodeURIComponent('Logo updated and applied across Navbar & Roster page!'));
+    }
+
+    return adminRedirect(req, res, '/admin/settings');
+  } catch (err: any) {
+    res.status(500).render('error', { message: 'Failed to update logo: ' + err.message });
+  }
 });
 
 // Upload Site Background Image (Sharp compressed + Cloudinary + DB setting)

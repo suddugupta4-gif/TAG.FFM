@@ -240,7 +240,8 @@ export class TournamentService {
         const settings: { [key: string]: string } = {
           site_background_url: 'https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=2070&auto=format&fit=crop',
           site_title: 'TAGFREEFIREMAX',
-          site_tagline: 'Premier Free Fire MAX Esports Hub'
+          site_tagline: 'Premier Free Fire MAX Esports Hub',
+          site_logo_url: ''
         };
         res.rows.forEach(r => {
           settings[r.key] = r.value;
@@ -250,7 +251,8 @@ export class TournamentService {
         return {
           site_background_url: 'https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=2070&auto=format&fit=crop',
           site_title: 'TAGFREEFIREMAX',
-          site_tagline: 'Premier Free Fire MAX Esports Hub'
+          site_tagline: 'Premier Free Fire MAX Esports Hub',
+          site_logo_url: ''
         };
       }
     }, 60000);
@@ -262,6 +264,29 @@ export class TournamentService {
       ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = CURRENT_TIMESTAMP
     `, [key, value]);
     this.invalidateCache('site_settings');
+  }
+
+  // Synchronize Site Logo and TAG Team Logo across entire platform
+  static async updateSiteLogo(logoUrl: string) {
+    await this.updateSiteSetting('site_logo_url', logoUrl);
+    try {
+      if (logoUrl) {
+        await db.query(`
+          UPDATE teams 
+          SET logo_url = $1 
+          WHERE tag = 'TAG' OR id = 1 OR name ILIKE '%TAG%'
+        `, [logoUrl]);
+      } else {
+        await db.query(`
+          UPDATE teams 
+          SET logo_url = '' 
+          WHERE tag = 'TAG' OR id = 1 OR name ILIKE '%TAG%'
+        `);
+      }
+    } catch (err) {
+      console.warn('Sync team logo error:', err);
+    }
+    this.invalidateCache();
   }
 
   // Get current featured tournament

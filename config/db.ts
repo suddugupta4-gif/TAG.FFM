@@ -274,7 +274,7 @@ async function populatePostgresSeed() {
     // Single Team: TAGFREEFIREMAX
     const teamsRes = await client.query(`
       INSERT INTO teams (name, tag, logo_url, country) VALUES
-      ('TAGFREEFIREMAX', 'TAG', 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=400&auto=format&fit=crop', 'Global / India')
+      ('TAGFREEFIREMAX', 'TAG', '', 'Global / India')
       RETURNING id, name, tag;
     `);
 
@@ -310,7 +310,7 @@ function seedMemoryDb() {
       id: 1, 
       name: 'TAGFREEFIREMAX', 
       tag: 'TAG', 
-      logo_url: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=400&auto=format&fit=crop', 
+      logo_url: '', 
       country: 'Global / India', 
       created_at: new Date() 
     }

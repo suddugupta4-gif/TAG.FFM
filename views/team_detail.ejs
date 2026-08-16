@@ -6,9 +6,22 @@
   <%- include('partials/flash') %>
 
   <!-- Team Header -->
+  <%
+    const detailLogo = (team.tag === 'TAG' || team.id === 1 || (team.name || '').includes('TAG')) && typeof settings !== 'undefined' && settings.site_logo_url && settings.site_logo_url.trim() && !settings.site_logo_url.includes('photo-1618005182384-a83a8bd57fbe')
+      ? settings.site_logo_url.trim()
+      : (team.logo_url && !team.logo_url.includes('photo-1618005182384-a83a8bd57fbe') ? team.logo_url : null);
+  %>
   <div class="glass-panel p-6 sm:p-8 flex flex-col md:flex-row items-center md:items-start gap-6 border-orange-500/20">
     <div class="relative shrink-0 group/logo">
-      <img id="teamMainLogo" src="<%= team.logo_url %>" alt="<%= team.name %>" class="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl object-cover bg-slate-800 border-2 border-orange-500/40 shadow-xl" onerror="this.src='https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=200&auto=format&fit=crop'">
+      <div class="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl bg-gradient-to-br from-[#ff4e00] to-orange-950 border-2 border-orange-500/40 shadow-xl flex items-center justify-center overflow-hidden">
+        <% if (detailLogo) { %>
+          <img id="teamMainLogo" src="<%= detailLogo %>" alt="<%= team.name %>" class="w-full h-full object-cover" onerror="this.outerHTML='<svg class=\'w-12 h-12 text-white\' viewBox=\'0 0 24 24\' fill=\'currentColor\'><path d=\'M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5\'/></svg>'">
+        <% } else { %>
+          <svg class="w-12 h-12 sm:w-14 sm:h-14 text-white drop-shadow-md" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+          </svg>
+        <% } %>
+      </div>
       
       <% if (isAdmin) { %>
         <button 

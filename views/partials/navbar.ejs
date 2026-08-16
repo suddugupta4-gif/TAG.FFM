@@ -4,10 +4,14 @@
       
       <!-- Brand Logo -->
       <a href="/" class="flex items-center gap-3 group">
-        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-[#ff4e00] to-orange-800 flex items-center justify-center shadow-lg shadow-[#ff4e00]/20 group-hover:scale-105 transition-transform duration-200 border border-white/15">
-          <svg class="w-5 h-5 text-white" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
-          </svg>
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-[#ff4e00] to-orange-800 flex items-center justify-center shadow-lg shadow-[#ff4e00]/20 group-hover:scale-105 transition-transform duration-200 border border-white/15 overflow-hidden shrink-0">
+          <% if (typeof settings !== 'undefined' && settings.site_logo_url && settings.site_logo_url.trim() && !settings.site_logo_url.includes('photo-1618005182384-a83a8bd57fbe')) { %>
+            <img src="<%= settings.site_logo_url %>" alt="TAG Logo" class="w-full h-full object-cover" onerror="this.outerHTML='<svg class=\'w-5 h-5 text-white\' viewBox=\'0 0 24 24\' fill=\'currentColor\'><path d=\'M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5\'/></svg>'">
+          <% } else { %>
+            <svg class="w-5 h-5 text-white" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+            </svg>
+          <% } %>
         </div>
         <div>
           <div class="flex items-center gap-2">
