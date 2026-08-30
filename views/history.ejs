@@ -242,7 +242,20 @@
                             #<%= m.tagResult ? m.tagResult.placement : 1 %> Place
                           </span>
                           <span class="text-[10px] text-amber-400 font-bold">
-                            <%= m.tagResult ? (m.tagResult.placement_points || (m.tagResult.placement === 1 ? 12 : Math.max(1, 10 - m.tagResult.placement))) + ' Placement PTS' : '12 Placement PTS' %>
+                            <%
+                              let placePtsVal = 0;
+                              if (m.tagResult) {
+                                if (m.tagResult.placement_points !== undefined && m.tagResult.placement_points !== null) {
+                                  placePtsVal = Number(m.tagResult.placement_points);
+                                } else {
+                                  const p = Number(m.tagResult.placement);
+                                  placePtsVal = p === 1 ? 12 : (p === 2 ? 9 : (p === 3 ? 8 : (p === 4 ? 7 : (p === 5 ? 6 : (p === 6 ? 5 : (p === 7 ? 4 : (p === 8 ? 3 : (p === 9 ? 2 : (p === 10 ? 1 : 0)))))))));
+                                }
+                              } else {
+                                placePtsVal = 12;
+                              }
+                            %>
+                            <%= placePtsVal %> Placement PTS
                           </span>
                         </div>
 

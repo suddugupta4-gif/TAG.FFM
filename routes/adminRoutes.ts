@@ -2,7 +2,7 @@ import { Router, Request, Response, NextFunction } from 'express';
 import multer from 'multer';
 import crypto from 'crypto';
 import { db, memoryDb, isPostgresActive, resetAllWebsiteData } from '../config/db.js';
-import { TournamentService } from '../services/tournamentService.js';
+import { TournamentService, getPlacementPoints } from '../services/tournamentService.js';
 import { processAndUploadImage } from '../services/imageService.js';
 
 const router = Router();
@@ -692,8 +692,8 @@ router.post('/matches/new', async (req: Request, res: Response) => {
         }
         if (isNaN(kills)) kills = 0;
         
-        // Placement points: 1st=12, 2nd=9, 3rd=8, 4th=7, 5th=6, 6th=5, etc.
-        const placementPoints = placement === 1 ? 12 : Math.max(0, 10 - placement);
+        // Placement points: 1st=12, 2nd=9, 3rd=8, 4th=7, 5th=6, 6th=5, 7th=4, 8th=3, 9th=2, 10th=1, 11th=0, 12th=0
+        const placementPoints = getPlacementPoints(placement);
         const totalPoints = kills + placementPoints;
 
         await db.query(`

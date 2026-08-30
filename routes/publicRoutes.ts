@@ -165,7 +165,7 @@ router.get('/tournament/:id', async (req: Request, res: Response) => {
 });
 
 // 4. Teams & Player Cards Roster
-router.get('/teams', async (req: Request, res: Response) => {
+router.get(['/teams', '/players', '/roster'], async (req: Request, res: Response) => {
   try {
     const [teams, playerSummaries, careerSummary] = await Promise.all([
       TournamentService.getAllTeams(),

@@ -46,6 +46,11 @@ app.set('views', path.join(process.cwd(), 'views'));
 // Static Assets
 app.use(express.static(path.join(process.cwd(), 'public')));
 
+// Health check endpoint
+app.get(['/api/health', '/health'], (req: Request, res: Response) => {
+  res.json({ status: 'ok', uptime: process.uptime(), timestamp: new Date().toISOString() });
+});
+
 // Favicon & Robots Handlers to prevent 404 logs on Vercel
 app.get(['/favicon.ico', '/favicon.png', '/favicon.svg'], (req: Request, res: Response) => {
   res.sendFile(path.join(process.cwd(), 'public', 'favicon.svg'), {

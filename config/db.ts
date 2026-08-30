@@ -225,6 +225,36 @@ async function createTablesIfNotExist() {
       ALTER TABLE match_player_stats ADD COLUMN IF NOT EXISTS survival_time_sec INTEGER DEFAULT 0;
       ALTER TABLE match_player_stats ADD COLUMN IF NOT EXISTS is_official BOOLEAN DEFAULT FALSE;
       ALTER TABLE match_player_stats ADD COLUMN IF NOT EXISTS created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP;
+
+      -- Ensure correct official Free Fire points across any existing logged records
+      UPDATE match_team_results 
+      SET placement_points = CASE 
+        WHEN placement = 1 THEN 12 
+        WHEN placement = 2 THEN 9 
+        WHEN placement = 3 THEN 8 
+        WHEN placement = 4 THEN 7 
+        WHEN placement = 5 THEN 6 
+        WHEN placement = 6 THEN 5 
+        WHEN placement = 7 THEN 4 
+        WHEN placement = 8 THEN 3 
+        WHEN placement = 9 THEN 2 
+        WHEN placement = 10 THEN 1 
+        ELSE 0 
+      END,
+      kill_points = kills,
+      total_points = kills + CASE 
+        WHEN placement = 1 THEN 12 
+        WHEN placement = 2 THEN 9 
+        WHEN placement = 3 THEN 8 
+        WHEN placement = 4 THEN 7 
+        WHEN placement = 5 THEN 6 
+        WHEN placement = 6 THEN 5 
+        WHEN placement = 7 THEN 4 
+        WHEN placement = 8 THEN 3 
+        WHEN placement = 9 THEN 2 
+        WHEN placement = 10 THEN 1 
+        ELSE 0 
+      END;
     `);
   } finally {
     client.release();

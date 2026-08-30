@@ -25,6 +25,38 @@ export interface StandingsRow {
   };
 }
 
+// Official Free Fire Esports placement points distribution table
+// 1st: 12, 2nd: 9, 3rd: 8, 4th: 7, 5th: 6, 6th: 5, 7th: 4, 8th: 3, 9th: 2, 10th: 1, 11th: 0, 12th: 0
+export const PLACEMENT_POINTS_TABLE: Record<number, number> = {
+  1: 12,
+  2: 9,
+  3: 8,
+  4: 7,
+  5: 6,
+  6: 5,
+  7: 4,
+  8: 3,
+  9: 2,
+  10: 1,
+  11: 0,
+  12: 0
+};
+
+export function getPlacementPoints(pos: number | string | undefined | null): number {
+  const p = parseInt(String(pos), 10);
+  if (p === 1) return 12;
+  if (p === 2) return 9;
+  if (p === 3) return 8;
+  if (p === 4) return 7;
+  if (p === 5) return 6;
+  if (p === 6) return 5;
+  if (p === 7) return 4;
+  if (p === 8) return 3;
+  if (p === 9) return 2;
+  if (p === 10) return 1;
+  return 0;
+}
+
 export const ALL_FREE_FIRE_MAPS = [
   'Bermuda',
   'Purgatory',
@@ -501,7 +533,8 @@ export class TournamentService {
         const tagResult = m.results?.find((r: any) => r.team_id === tagTeamId || r.team_tag === 'TAG');
         if (tagResult) {
           const kills = Number(tagResult.kills) || 0;
-          const pts = Number(tagResult.total_points) || (kills + (tagResult.placement === 1 ? 12 : Math.max(0, 10 - tagResult.placement)));
+          const pPts = (tagResult.placement_points !== undefined && tagResult.placement_points !== null) ? Number(tagResult.placement_points) : getPlacementPoints(tagResult.placement);
+          const pts = Number(tagResult.total_points) || (kills + pPts);
           const isBooyah = tagResult.placement === 1;
 
           combinedStats.matches++;
@@ -654,7 +687,8 @@ export class TournamentService {
 
       for (const m of allMatches) {
         const kills = Number(m.kills) || 0;
-        const pts = Number(m.total_points) || (kills + (m.placement === 1 ? 12 : Math.max(0, 10 - (m.placement || 12))));
+        const pPts = (m.placement_points !== undefined && m.placement_points !== null) ? Number(m.placement_points) : getPlacementPoints(m.placement);
+        const pts = Number(m.total_points) || (kills + pPts);
         const isBooyah = m.placement === 1;
         const isOfficial = m.is_official === true && m.result_is_official !== false;
 
@@ -763,7 +797,7 @@ export class TournamentService {
             }
             const kills = Number(res.kills) || 0;
             const kPoints = Number(res.kill_points) || kills;
-            const pPoints = Number(res.placement_points) || (res.placement === 1 ? 12 : Math.max(1, 10 - res.placement));
+            const pPoints = (res.placement_points !== undefined && res.placement_points !== null) ? Number(res.placement_points) : getPlacementPoints(res.placement);
             const tPoints = Number(res.total_points) || (kPoints + pPoints);
 
             row.total_kills += kills;
@@ -1260,7 +1294,8 @@ export class TournamentService {
         const matchResults = resultsByMatch[m.id] || [];
         matchResults.forEach(r => {
           const kills = Number(r.kills) || 0;
-          const pts = Number(r.total_points) || (kills + (r.placement === 1 ? 12 : Math.max(0, 10 - r.placement)));
+          const pPts = (r.placement_points !== undefined && r.placement_points !== null) ? Number(r.placement_points) : getPlacementPoints(r.placement);
+          const pts = Number(r.total_points) || (kills + pPts);
           mapObj.total_kills += kills;
 
           if (!mapTeamStats[standardMap][r.team_id]) {
@@ -1529,7 +1564,7 @@ export class TournamentService {
           placement = currentPlacement;
         }
 
-        const placementPoints = placement === 1 ? 12 : (placement === 2 ? 9 : (placement === 3 ? 8 : (placement === 4 ? 7 : (placement === 5 ? 6 : (placement === 6 ? 5 : (placement === 7 ? 4 : (placement === 8 ? 3 : (placement === 9 ? 2 : (placement === 10 ? 1 : 0)))))))));
+        const placementPoints = getPlacementPoints(placement);
         const totalPoints = placementPoints + kills;
 
         if (isPostgresActive) {
