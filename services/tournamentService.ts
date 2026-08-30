@@ -29,7 +29,7 @@ export const ALL_FREE_FIRE_MAPS = [
   'Bermuda',
   'Purgatory',
   'Kalahari',
-  'Alpine',
+  'Solara',
   'Nexterra'
 ];
 
@@ -49,10 +49,10 @@ export const MAP_METADATA: { [key: string]: { description: string; banner: strin
     banner: 'https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?q=80&w=600&auto=format&fit=crop',
     color: 'from-amber-500/20 to-yellow-600/10 border-amber-500/30'
   },
-  'Alpine': {
-    description: 'Snowy high-altitude peaks, cable car stations, and Snowfall outposts.',
-    banner: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?q=80&w=600&auto=format&fit=crop',
-    color: 'from-cyan-500/20 to-blue-600/10 border-cyan-500/30'
+  'Solara': {
+    description: 'High-tech floating solar research island with modern energy grids and coastal complexes.',
+    banner: 'https://images.unsplash.com/photo-1508739773434-c26b3d09e071?q=80&w=600&auto=format&fit=crop',
+    color: 'from-yellow-500/20 to-amber-600/10 border-yellow-500/30'
   },
   'Nexterra': {
     description: 'Futuristic battleground with anti-gravity Grav Labs and Deca Square.',
@@ -1243,7 +1243,7 @@ export class TournamentService {
         if (!standardMap) {
           if (rawMap.toLowerCase().includes('purgatory')) standardMap = 'Purgatory';
           else if (rawMap.toLowerCase().includes('kalahari')) standardMap = 'Kalahari';
-          else if (rawMap.toLowerCase().includes('alpine')) standardMap = 'Alpine';
+          else if (rawMap.toLowerCase().includes('solara') || rawMap.toLowerCase().includes('alpine')) standardMap = 'Solara';
           else if (rawMap.toLowerCase().includes('nexterra')) standardMap = 'Nexterra';
           else standardMap = 'Bermuda';
         }

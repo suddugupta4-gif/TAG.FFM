@@ -13,7 +13,7 @@ const upload = multer({
   limits: { fileSize: 10 * 1024 * 1024 } // 10MB limit
 });
 
-const OFFICIAL_FF_MAPS = ['Bermuda', 'Purgatory', 'Kalahari', 'Alpine', 'Nexterra'];
+const OFFICIAL_FF_MAPS = ['Bermuda', 'Purgatory', 'Kalahari', 'Solara', 'Nexterra'];
 
 // Dynamic in-memory store for active admin tickets/tokens generated ONLY upon valid password verification
 export const activeAdminTokens = new Map<string, number>();
@@ -757,7 +757,7 @@ router.post('/matches/batch', async (req: Request, res: Response) => {
       match_1_map || 'Bermuda',
       match_2_map || 'Purgatory',
       match_3_map || 'Kalahari',
-      match_4_map || 'Alpine',
+      match_4_map || 'Solara',
       match_5_map || 'Nexterra',
       match_6_map || 'Random'
     ];

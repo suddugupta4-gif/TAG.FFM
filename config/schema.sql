@@ -39,7 +39,7 @@ CREATE TABLE IF NOT EXISTS matches (
     id SERIAL PRIMARY KEY,
     tournament_id INTEGER REFERENCES tournaments(id) ON DELETE CASCADE,
     match_number INTEGER NOT NULL,
-    map_name VARCHAR(100) DEFAULT 'Bermuda', -- Bermuda, Purgatory, Kalahari, Alpine, NexTerra
+    map_name VARCHAR(100) DEFAULT 'Bermuda', -- Bermuda, Purgatory, Kalahari, Solara, Nexterra
     played_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     status VARCHAR(50) DEFAULT 'completed', -- 'scheduled', 'live', 'completed'
     is_official BOOLEAN DEFAULT FALSE, -- Official verified results vs Unofficial / Live provisional
