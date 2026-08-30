@@ -18,6 +18,51 @@ const OFFICIAL_FF_MAPS = ['Bermuda', 'Purgatory', 'Kalahari', 'Solara', 'Nexterr
 // Dynamic in-memory store for active admin tickets/tokens generated ONLY upon valid password verification
 export const activeAdminTokens = new Map<string, number>();
 
+// In-memory failed login tracking for brute-force protection
+interface LoginThrottle {
+  attempts: number;
+  lockedUntil: number;
+}
+const loginThrottles = new Map<string, LoginThrottle>();
+
+function getClientIp(req: Request): string {
+  const forwarded = req.headers['x-forwarded-for'];
+  if (typeof forwarded === 'string') {
+    return forwarded.split(',')[0].trim();
+  }
+  return req.ip || req.socket.remoteAddress || 'unknown';
+}
+
+function verifyAdminPassword(entered: string, actual: string): boolean {
+  if (!entered || !actual) return false;
+  const bufEntered = Buffer.from(entered);
+  const bufActual = Buffer.from(actual);
+  if (bufEntered.length !== bufActual.length) {
+    // Constant-time check on dummy buffer to avoid length timing leak
+    crypto.timingSafeEqual(bufEntered, bufEntered);
+    return false;
+  }
+  return crypto.timingSafeEqual(bufEntered, bufActual);
+}
+
+export function safeInternalRedirect(url?: any, defaultUrl = '/admin'): string {
+  if (!url || typeof url !== 'string') return defaultUrl;
+  const trimmed = url.trim();
+  if (
+    trimmed.startsWith('/') &&
+    !trimmed.startsWith('//') &&
+    !trimmed.startsWith('/\\') &&
+    !trimmed.includes('://') &&
+    !trimmed.includes('\\')
+  ) {
+    if (trimmed.includes('/admin/login') || trimmed.includes('/admin/logout')) {
+      return defaultUrl;
+    }
+    return trimmed;
+  }
+  return defaultUrl;
+}
+
 export function issueAdminToken(): string {
   const token = 'tk_' + crypto.randomBytes(16).toString('hex');
   activeAdminTokens.set(token, Date.now() + 7 * 24 * 60 * 60 * 1000); // 7-day expiry
@@ -125,34 +170,71 @@ router.use((req: Request, res: Response, next: NextFunction) => {
 router.get('/login', (req: Request, res: Response) => {
   const auth = validateAdminRequest(req);
   if (auth.isValid) {
-    return res.redirect(req.query.redirect as string || '/admin');
+    const rawRedir = req.query.redirect as string;
+    return res.redirect(safeInternalRedirect(rawRedir, '/admin'));
   }
 
   res.render('admin/login', {
     title: 'Admin Access — TAGFREEFIREMAX',
     error: req.query.error as string || null,
     success: req.query.success as string || null,
-    redirect: req.query.redirect as string || '/admin'
+    redirect: safeInternalRedirect(req.query.redirect as string, '/admin')
   });
 });
 
-// 2. Admin Login (POST) - Validates configured password and establishes session
+// 2. Admin Login (POST) - Validates configured password, enforces rate limiting, and establishes session
 router.post('/login', (req: Request, res: Response) => {
   const { password, redirect } = req.body;
+  const ip = getClientIp(req);
+  const now = Date.now();
+
+  // Rate Limiting / Brute-force Defense
+  const throttle = loginThrottles.get(ip);
+  if (throttle && throttle.lockedUntil > now) {
+    const remainingSec = Math.ceil((throttle.lockedUntil - now) / 1000);
+    const msg = `Too many failed attempts. Please wait ${remainingSec} seconds before retrying.`;
+    if (req.xhr || req.headers.accept?.includes('application/json') || req.body.ajax === 'true') {
+      return res.status(429).json({ success: false, message: msg });
+    }
+    return res.status(429).render('admin/login', {
+      title: 'Admin Access — TAGFREEFIREMAX',
+      error: msg,
+      success: null,
+      redirect: safeInternalRedirect(redirect, '/admin')
+    });
+  }
+
   const adminPassword = (process.env.ADMIN_PASSWORD || 'Taggontoppp379@').trim();
   const enteredPassword = (password || '').trim();
 
-  if (!enteredPassword || enteredPassword !== adminPassword) {
+  const isPasswordValid = verifyAdminPassword(enteredPassword, adminPassword);
+
+  if (!isPasswordValid) {
+    // Record failed attempt
+    const currentAttempts = (throttle?.attempts || 0) + 1;
+    let lockedUntil = 0;
+    if (currentAttempts >= 5) {
+      lockedUntil = now + 15 * 60 * 1000; // 15-minute lockout after 5 consecutive failures
+    }
+    loginThrottles.set(ip, { attempts: currentAttempts, lockedUntil });
+
+    const errorMsg = currentAttempts >= 5
+      ? 'Too many failed login attempts. Account temporarily locked for 15 minutes.'
+      : `Invalid admin password. (${5 - currentAttempts} attempts remaining before lockout)`;
+
     if (req.xhr || req.headers.accept?.includes('application/json') || req.body.ajax === 'true') {
-      return res.status(401).json({ success: false, message: 'Invalid admin password. Please try again.' });
+      return res.status(401).json({ success: false, message: errorMsg });
     }
     return res.render('admin/login', {
       title: 'Admin Access — TAGFREEFIREMAX',
-      error: 'Invalid admin password. Please try again.',
+      error: errorMsg,
       success: null,
-      redirect: redirect || '/admin'
+      redirect: safeInternalRedirect(redirect, '/admin')
     });
   }
+
+  // Clear throttle on successful login
+  loginThrottles.delete(ip);
 
   const sessionToken = issueAdminToken();
 
@@ -178,7 +260,7 @@ router.post('/login', (req: Request, res: Response) => {
     });
   } catch (_) {}
 
-  const cleanRedirect = redirect && !redirect.includes('/admin/login') && !redirect.includes('/admin/logout') ? redirect : '/admin';
+  const cleanRedirect = safeInternalRedirect(redirect, '/admin');
   const sep = cleanRedirect.includes('?') ? '&' : '?';
   const targetWithToken = cleanRedirect.includes('tk=') ? cleanRedirect : `${cleanRedirect}${sep}tk=${sessionToken}`;
 

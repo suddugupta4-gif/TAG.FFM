@@ -14,8 +14,19 @@ dotenv.config();
 const app = express();
 const PORT = 3000;
 
+// Disable fingerprinting header
+app.disable('x-powered-by');
+
 // Trust reverse proxy for Cloud Run and iframe hosting
 app.set('trust proxy', 1);
+
+// Security Headers Middleware
+app.use((req: Request, res: Response, next: NextFunction) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  next();
+});
 
 // Body & Cookie Parsers
 app.use(express.json());
