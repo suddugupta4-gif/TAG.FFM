@@ -62,6 +62,51 @@ app.get(['/api/health', '/health'], (req: Request, res: Response) => {
   res.json({ status: 'ok', uptime: process.uptime(), timestamp: new Date().toISOString() });
 });
 
+// Live Visitors Counter JSON Endpoint & Recording Endpoint
+const recordedVisitors = new Set<string>();
+
+app.get(['/api/visitors', '/api/views'], async (req: Request, res: Response) => {
+  try {
+    const visitors = await TournamentService.getVisitorsCount();
+    res.json({
+      success: true,
+      visitors: visitors,
+      formattedVisitors: visitors.toLocaleString('en-US')
+    });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Dedicated endpoint to record genuinely unique visitors only once per device/browser
+app.post(['/api/visitors/record', '/api/visitors'], async (req: Request, res: Response) => {
+  try {
+    const visitorId = req.body?.visitorId;
+    if (visitorId && typeof visitorId === 'string' && visitorId.length >= 5) {
+      if (!recordedVisitors.has(visitorId)) {
+        recordedVisitors.add(visitorId);
+        if (recordedVisitors.size > 50000) recordedVisitors.clear();
+        const newCount = await TournamentService.recordVisitor(true);
+        return res.json({
+          success: true,
+          isNew: true,
+          visitors: newCount,
+          formattedVisitors: newCount.toLocaleString('en-US')
+        });
+      }
+    }
+    const current = await TournamentService.getVisitorsCount();
+    return res.json({
+      success: true,
+      isNew: false,
+      visitors: current,
+      formattedVisitors: current.toLocaleString('en-US')
+    });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 // Favicon & Robots Handlers to prevent 404 logs on Vercel
 app.get(['/favicon.ico', '/favicon.png', '/favicon.svg'], (req: Request, res: Response) => {
   res.sendFile(path.join(process.cwd(), 'public', 'favicon.svg'), {
@@ -85,6 +130,16 @@ app.use(async (req: Request, res: Response, next: NextFunction) => {
       site_title: 'TAGFREEFIREMAX',
       site_tagline: 'Premier Free Fire MAX Esports Hub'
     };
+  }
+
+  // Visitor Telemetry (Read current count for SSR views without mutating on refresh)
+  try {
+    const visitors = await TournamentService.getVisitorsCount();
+    res.locals.visitorsCount = visitors;
+    res.locals.formattedVisitors = visitors.toLocaleString('en-US');
+  } catch (err) {
+    res.locals.visitorsCount = 0;
+    res.locals.formattedVisitors = '0';
   }
 
   // Admin verification check (Explicit password-authenticated session or active dynamic token)

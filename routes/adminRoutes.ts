@@ -1267,6 +1267,17 @@ router.post('/settings/general', async (req: Request, res: Response) => {
   return adminRedirect(req, res, '/admin/settings?success=' + encodeURIComponent('General settings saved!'));
 });
 
+// Update Live Visitors Telemetry Baseline
+router.post(['/settings/visitors', '/settings/views'], async (req: Request, res: Response) => {
+  try {
+    const uniqueVisitors = req.body.unique_visitors !== undefined ? parseInt(req.body.unique_visitors, 10) : 0;
+    await TournamentService.updateVisitorsCount(isNaN(uniqueVisitors) ? 0 : uniqueVisitors);
+    return adminRedirect(req, res, '/admin/settings?success=' + encodeURIComponent('Visitor counter successfully saved!'));
+  } catch (err: any) {
+    res.status(500).render('error', { message: 'Failed to update visitor counter: ' + err.message });
+  }
+});
+
 // Reset Website Data (Clears all tournaments, matches, and stats to 0)
 router.all('/settings/reset-database', async (req: Request, res: Response) => {
   try {

@@ -321,6 +321,93 @@ export class TournamentService {
     this.invalidateCache();
   }
 
+  // ==================== VISITOR TELEMETRY ====================
+
+  static async recordVisitor(isUniqueVisitor: boolean = false): Promise<number> {
+    try {
+      let totalVisitors = 0;
+
+      if (isPostgresActive) {
+        if (isUniqueVisitor) {
+          await db.query(`
+            INSERT INTO site_settings (key, value)
+            VALUES ('unique_visitors_count', '1')
+            ON CONFLICT (key) 
+            DO UPDATE SET value = (COALESCE(NULLIF(site_settings.value, ''), '0')::bigint + 1)::text, updated_at = CURRENT_TIMESTAMP
+          `);
+        } else {
+          // Ensure key exists
+          await db.query(`
+            INSERT INTO site_settings (key, value)
+            VALUES ('unique_visitors_count', '0')
+            ON CONFLICT (key) DO NOTHING
+          `);
+        }
+
+        const res = await db.query(`SELECT value FROM site_settings WHERE key = 'unique_visitors_count'`);
+        if (res.rows.length > 0) {
+          totalVisitors = parseInt(res.rows[0].value, 10) || 0;
+        }
+      } else {
+        if (memoryDb.site_settings['unique_visitors_count'] === undefined) {
+          memoryDb.site_settings['unique_visitors_count'] = '0';
+        }
+
+        let curVisitors = parseInt(memoryDb.site_settings['unique_visitors_count'] || '0', 10);
+        if (isUniqueVisitor) {
+          curVisitors += 1;
+          memoryDb.site_settings['unique_visitors_count'] = String(curVisitors);
+        }
+        totalVisitors = curVisitors;
+      }
+
+      return totalVisitors;
+    } catch (err) {
+      console.warn('Error recording visitor telemetry:', err);
+      return 0;
+    }
+  }
+
+  static async getVisitorsCount(): Promise<number> {
+    try {
+      let visitors = 0;
+      if (isPostgresActive) {
+        const res = await db.query(`SELECT value FROM site_settings WHERE key = 'unique_visitors_count'`);
+        if (res.rows.length > 0) {
+          visitors = parseInt(res.rows[0].value, 10) || 0;
+        }
+      } else {
+        visitors = parseInt(memoryDb.site_settings['unique_visitors_count'] || '0', 10);
+      }
+      return visitors;
+    } catch (err) {
+      return 0;
+    }
+  }
+
+  static async updateVisitorsCount(visitors: number = 0) {
+    const val = Math.max(0, visitors || 0);
+    await this.updateSiteSetting('unique_visitors_count', String(val));
+    this.invalidateCache();
+  }
+
+  // Backwards compatible aliases
+  static async recordPageView(isUniqueVisitor: boolean = false): Promise<{ views: number; visitors: number }> {
+    const v = await this.recordVisitor(isUniqueVisitor);
+    return { views: v, visitors: v };
+  }
+
+  static async getViewsStats(): Promise<{ views: number; visitors: number }> {
+    const v = await this.getVisitorsCount();
+    return { views: v, visitors: v };
+  }
+
+  static async updateViewsStats(_views?: number, visitors?: number) {
+    if (visitors !== undefined && !isNaN(visitors)) {
+      await this.updateVisitorsCount(visitors);
+    }
+  }
+
   // Get current featured tournament
   static async getCurrentTournament() {
     return getOrSetCache('current_tournament', async () => {

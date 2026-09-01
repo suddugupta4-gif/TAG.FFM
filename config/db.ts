@@ -35,7 +35,8 @@ const memoryDb: InMemoryData = {
     site_background_url: 'https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=2070&auto=format&fit=crop',
     site_title: 'TAGFREEFIREMAX',
     site_tagline: 'Premier Free Fire MAX Esports Hub',
-    admin_contact: 'admin@tagfreefiremax.com'
+    admin_contact: 'admin@tagfreefiremax.com',
+    unique_visitors_count: '0'
   }
 };
 
@@ -297,8 +298,9 @@ async function populatePostgresSeed() {
       INSERT INTO site_settings (key, value) VALUES
       ('site_background_url', 'https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=2070&auto=format&fit=crop'),
       ('site_title', 'TAGFREEFIREMAX'),
-      ('site_tagline', 'TAGFREEFIREMAX Esports Command Center')
-      ON CONFLICT (key) DO NOTHING;
+      ('site_tagline', 'TAGFREEFIREMAX Esports Command Center'),
+      ('unique_visitors_count', '0')
+      ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value;
     `);
 
     // Single Team: TAGFREEFIREMAX
