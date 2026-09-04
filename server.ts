@@ -118,6 +118,15 @@ app.get('/robots.txt', (req: Request, res: Response) => {
   res.type('text/plain').send('User-agent: *\nAllow: /\nDisallow: /admin\n');
 });
 
+// Google Search Console Site Verification file routes
+app.get([
+  '/google_kWbwASv7kgV_SDw6Z8ds7zVk-DEAYeHBeUzh2qhWNs.html',
+  '/_kWbwASv7kgV_SDw6Z8ds7zVk-DEAYeHBeUzh2qhWNs.html',
+  '/google_kWbwASv7kgV_SDw6Z8ds7zVk-DEAYeHBeUzh2qhWNs'
+], (req: Request, res: Response) => {
+  res.type('text/html').send('google-site-verification: google_kWbwASv7kgV_SDw6Z8ds7zVk-DEAYeHBeUzh2qhWNs.html');
+});
+
 // Global Request Logger, Site Context & Session Helper injection (Runs for ALL routes including /admin)
 app.use(async (req: Request, res: Response, next: NextFunction) => {
   try {
