@@ -120,6 +120,14 @@ app.get('/robots.txt', (req: Request, res: Response) => {
 
 // Google Search Console Site Verification file routes
 app.get([
+  '/googleXwwKp8c9rGEIboQUHE_AQeP7sw0L_3nSAVgnuSLAG7I.html',
+  '/XwwKp8c9rGEIboQUHE_AQeP7sw0L_3nSAVgnuSLAG7I.html',
+  '/googleXwwKp8c9rGEIboQUHE_AQeP7sw0L_3nSAVgnuSLAG7I'
+], (req: Request, res: Response) => {
+  res.type('text/html').send('google-site-verification: googleXwwKp8c9rGEIboQUHE_AQeP7sw0L_3nSAVgnuSLAG7I.html');
+});
+
+app.get([
   '/google_kWbwASv7kgV_SDw6Z8ds7zVk-DEAYeHBeUzh2qhWNs.html',
   '/_kWbwASv7kgV_SDw6Z8ds7zVk-DEAYeHBeUzh2qhWNs.html',
   '/google_kWbwASv7kgV_SDw6Z8ds7zVk-DEAYeHBeUzh2qhWNs'
